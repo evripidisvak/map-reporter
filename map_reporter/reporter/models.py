@@ -36,9 +36,17 @@ class Product(models.Model):
         return self.product_name
 
 
+class Source(models.Model):
+    name = models.CharField(max_length=100)
+    domain = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.name
+
 class Shop(models.Model):
     name = models.CharField(max_length=100)
     key_account = models.BooleanField(default=False)
+    source = models.ForeignKey(Source, on_delete=models.CASCADE, default=None, blank=False, null=False)
 
     def __str__(self):
         return self.name
@@ -47,7 +55,9 @@ class Shop(models.Model):
 class Page(models.Model):
     url = models.URLField(max_length=9999)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, default=None)
-    shop = models.ForeignKey(Shop, on_delete=models.CASCADE, default=None)
+    # shop = models.ForeignKey(Shop, on_delete=models.CASCADE, default=None)
+    source = models.ForeignKey(
+        Source, on_delete=models.CASCADE, default=None, blank=False, null=False)
 
     def __str__(self):
         return self.url

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, Page, Shop, RetailPrice
+from .models import Category, Product, Source, Page, Shop, RetailPrice
 
 
 class PageInline(admin.TabularInline):
@@ -23,6 +23,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Product, ProductAdmin)
+admin.site.register(Source)
 admin.site.register(Page)
 admin.site.register(Shop)
 admin.site.register(RetailPrice)

@@ -44,7 +44,7 @@ class Command(BaseCommand):
             while len(page_list) > 0:
                 future_to_url = {executor.submit(
                     parse_urls, url): url for url in page_list}
-                urls = []
+                page_list = []
                 for future in concurrent.futures.as_completed(future_to_url):
                     url = future_to_url[future]
                     time.sleep(random.random() + 2)
@@ -54,20 +54,23 @@ class Command(BaseCommand):
                         print('%r generated an exception: %s' %
                               (url, traceback.format_exc()))
                         # print('%r generated an exception: %s' % (url, exc))
-                        urls.append(url)
+                        page_list.append(url)
                     else:
-                        records.append(data)
-                        todayDate = datetime.today().strftime('%d-%m-%Y')
-                        time_needed = datetime.now() - startTime
-                        time_needed = str(time_needed)
-                        print('*** *** *** Processed URLs: ' +
-                              format(len(records)) + ' in ' + format(time_needed))
+                        if data != 'Key Account':
+                            records.append(data)
+                            todayDate = datetime.today().strftime('%d-%m-%Y')
+                            time_needed = datetime.now() - startTime
+                            time_needed = str(time_needed)
+                            print('*** *** *** Processed URLs: ' +
+                                format(len(records)) + ' in ' + format(time_needed))
+                        else:
+                            print('Key account page scraped: ', url)
         geckodriver_proc = "geckodriver"  # or chromedriver or IEDriverServer
         chromedriver_proc = "chromedriver"  # or geckodriver or IEDriverServer
-        for proc in psutil.process_iter():
+        # for proc in psutil.process_iter():
             # check whether the process name matches
-            if geckodriver_proc in proc.name() or chromedriver_proc in proc.name():
-                proc.kill()
+            # if geckodriver_proc in proc.name() or chromedriver_proc in proc.name():
+            #     proc.kill()
         create_files_and_send_emails(records)
 
         print('Time to complete: ', time_needed)
@@ -79,7 +82,7 @@ def parse_urls(page_list_item):
     # TODO Make sure the we get the correct values, no matter the way the list  page_list_item is sorted
     page_id = page_list_item.id
     product_id = page_list_item.product_id
-    shop_id = page_list_item.shop_id
+    source_id = page_list_item.source_id
     url = page_list_item.url
     global my_proxies
     global proxy
@@ -96,7 +99,7 @@ def parse_urls(page_list_item):
             print('+++ Proxy used: ', proxy)
             print('+++ URL: ', url)
             options = Options()
-            # options.headless = True
+            options.headless = True
 
             driver = webdriver.Firefox(options=options)
             driver.set_page_load_timeout(30)
@@ -123,115 +126,239 @@ def parse_urls(page_list_item):
     # sleep for random amount of time
     secs = random.random() + 1
     time.sleep(secs)
-    # execute script to scroll down the page
-    try:
-        len_of_page = driver.execute_script(
-            "var len_of_page=document.body.scrollHeight;return len_of_page;")
-    except:
-        # driver.quit()
-        raise ValueError('Page has no length')
-    current_height = 0
-    while current_height < len_of_page:
-        scroll_height = random.randint(250, 350)
-        driver.execute_script(
-            "window.scrollBy({top: " + str(scroll_height) + ", left: 0, behavior: 'smooth'});")
-        time.sleep(random.random() + 0.5)
-        current_height = current_height + scroll_height
 
-    # sleep for random amount of time
-    time.sleep(random.random() + 0.3)
-    soup = BeautifulSoup(driver.page_source, 'lxml')
-    driver.quit()
-    # if product does not have a dedicated page
-    if soup.find("h1", class_="page-title"):
-        h1 = soup.find("h1", class_="page-title")
-        print(h1)
-    else:
-        print("NO PROPER H1 FOUND")
-    if soup.find("a", class_="closable-tag"):
-        title = soup.find("a", class_="closable-tag")
-        if title:
-            title = title.text
-        shop = soup.findAll("button", class_="js-shop-info-link")
-        for s in shop:
-            if s and len(s) > 0:
-                shop[shop.index(s)] = s.text
-            else:
-                shop[shop.index(s)] = 'NAN'
-        price = soup.findAll("a", class_="js-sku-link product-link")
-        for pri in price:
-            if pri and len(pri) > 0:
-                for span in pri.findAll('span'):
-                    span.decompose()
-                price[price.index(pri)] = pri.text.strip(
-                    ' €').replace('.', '').replace(',', '.')
-            else:
-                price[price.index(pri)] = '9999'
-        off_seller = soup.findAll("span", class_="payment-options")
-        for os in off_seller:
-            if 'Επίσημος μεταπωλητής' in os.text:
-                off_seller[off_seller.index(os)] = 'Επίσημος μεταπωλητής'
-            else:
-                off_seller[off_seller.index(os)] = ''
-    else:
-        # if product has a dedicated product page
-        title = soup.find("h1", class_="page-title")
-        if title:
-            title = title.text
-        shop = soup.findAll("p", class_="shop-name")
-        if soup.find("span", class_="obsolete-sku") or soup.find("div", class_="obsolete-sku") or soup.find("div", class_="unavailable-sku"):
-            shop = 'Μ/Δ'
-            price = '9999'
-            off_seller = 'Μ/Δ'
+    if source_id == 1: #Skroutz
+    # execute script to scroll down the page
+        try:
+            len_of_page = driver.execute_script(
+                "var len_of_page=document.body.scrollHeight;return len_of_page;")
+        except:
+            # driver.quit()
+            raise ValueError('Page has no length')
+        current_height = 0
+        while current_height < len_of_page:
+            scroll_height = random.randint(250, 350)
+            driver.execute_script(
+                "window.scrollBy({top: " + str(scroll_height) + ", left: 0, behavior: 'smooth'});")
+            time.sleep(random.random() + 0.5)
+            current_height = current_height + scroll_height
+
+        # sleep for random amount of time
+        time.sleep(random.random() + 0.3)
+        soup = BeautifulSoup(driver.page_source, 'lxml')
+        driver.quit()
+        # if product does not have a dedicated page
+        if soup.find("h1", class_="page-title"):
+            h1 = soup.find("h1", class_="page-title")
+            print(h1)
         else:
-            if len(shop) < 1:
-                raise ValueError
-            price = soup.findAll("strong", class_="dominant-price")
-            off_seller = soup.findAll("div", class_="shop-info-row")
-            # Clean data
-            if title and len(title) > 0:
-                title = title.strip()
-            else:
-                # title = 'NAN'
-                raise TypeError
+            print("NO PROPER H1 FOUND")
+        if soup.find("a", class_="closable-tag"):
+            title = soup.find("a", class_="closable-tag")
+            if title:
+                title = title.text
+            shop = soup.findAll("button", class_="js-shop-info-link")
             for s in shop:
                 if s and len(s) > 0:
                     shop[shop.index(s)] = s.text
                 else:
                     shop[shop.index(s)] = 'NAN'
+            price = soup.findAll("a", class_="js-sku-link product-link")
             for pri in price:
                 if pri and len(pri) > 0:
-                    if pri.find('span', 'vatfree-price'):
-                        pri.find('span', 'vatfree-price').decompose()
+                    for span in pri.findAll('span'):
+                        span.decompose()
                     price[price.index(pri)] = pri.text.strip(
                         ' €').replace('.', '').replace(',', '.')
                 else:
                     price[price.index(pri)] = '9999'
+            off_seller = soup.findAll("span", class_="payment-options")
             for os in off_seller:
                 if 'Επίσημος μεταπωλητής' in os.text:
-                    off_seller[off_seller.index(os)] = 1
+                    off_seller[off_seller.index(os)] = 'Επίσημος μεταπωλητής'
                 else:
-                    off_seller[off_seller.index(os)] = 0
-    info.append(url)
-    info.append(title)
-    info.append(shop)
-    info.append(price)
-    info.append(off_seller)
-    info.append(page_id)
-    save_prices(price, product_id, shop, off_seller)
-    return info
+                    off_seller[off_seller.index(os)] = ''
+        else:
+            # if product has a dedicated product page
+            title = soup.find("h1", class_="page-title")
+            if title:
+                title = title.text
+            shop = soup.findAll("p", class_="shop-name")
+            if soup.find("span", class_="obsolete-sku") or soup.find("div", class_="obsolete-sku") or soup.find("div", class_="unavailable-sku"):
+                shop = 'Μ/Δ'
+                price = '9999'
+                off_seller = 'Μ/Δ'
+            else:
+                if len(shop) < 1:
+                    raise ValueError
+                price = soup.findAll("strong", class_="dominant-price")
+                off_seller = soup.findAll("div", class_="shop-info-row")
+                # Clean data
+                if title and len(title) > 0:
+                    title = title.strip()
+                else:
+                    # title = 'NAN'
+                    raise TypeError
+                for s in shop:
+                    if s and len(s) > 0:
+                        shop[shop.index(s)] = s.text
+                    else:
+                        shop[shop.index(s)] = 'NAN'
+                for pri in price:
+                    if pri and len(pri) > 0:
+                        if pri.find('span', 'vatfree-price'):
+                            pri.find('span', 'vatfree-price').decompose()
+                        price[price.index(pri)] = pri.text.strip(
+                            ' €').replace('.', '').replace(',', '.')
+                    else:
+                        price[price.index(pri)] = '9999'
+                for os in off_seller:
+                    if 'Επίσημος μεταπωλητής' in os.text:
+                        off_seller[off_seller.index(os)] = 1
+                    else:
+                        off_seller[off_seller.index(os)] = 0
+        info.append(url)
+        info.append(title)
+        info.append(shop)
+        info.append(price)
+        info.append(off_seller)
+        # info.append(page_id)
+        # save_prices(price, product_id, shop, off_seller, source_id)
+
+    elif source_id == 2: #Plaisio
+        soup = BeautifulSoup(driver.page_source, 'lxml')
+        if soup.find('body', class_="neterror") or soup.find('h1').text == 'Access Denied':
+            print('*** Network Error ***')
+            raise ValueError('Network Error')
+        pricear = soup.select(".pdp-price-container .pdp-price-container__price .product-price .price")
+        if pricear:
+            price = pricear[0].text.strip(' €').strip().replace(',', '.')
+            price = [price]
+            shop = ['Plaisio']
+            off_seller = ['1']
+            # save_prices(price, product_id, shop, off_seller, source_id)
+
+    elif source_id == 3: #Praktiker
+        soup = BeautifulSoup(driver.page_source, 'lxml')
+        if soup.find('body', class_="neterror") or soup.find('h1').text == 'Access Denied':
+            print('*** Network Error ***')
+            raise ValueError('Network Error')
+        pricear = soup.select("span.product__price.product__price--main")
+        pricear_sale = soup.select("span.product__price.product__price--main.product__price--discounted")
+        shop = 'Praktiker'
+        if pricear:
+            price = pricear[0].text.strip().replace(',', '.').rstrip().strip('€')
+        elif pricear_sale:
+            price = pricear_sale[0].text.strip().replace(',', '.').rstrip().strip('€')
+        if price is not None:
+            price = [price]
+            shop = ['Praktiker']
+            off_seller = ['1']
+            # save_prices(price, product_id, shop, off_seller, source_id)
+    
+    elif source_id == 4: #Kotsovolos
+        pricear = soup.select(".prDetail .priceWithVat .simplePrice")
+        pricear_sale = soup.select(".prDetail .priceWithVat .price")
+        shop = 'Kotsovolos'
+        if pricear:
+            pricear[0].find('span', 'main-price').decompose()
+            price = pricear[0].text.strip().replace(',', '.')
+        elif pricear_sale:
+            for elem in pricear_sale:
+                if elem.find('span', 'main-price'):
+                    elem.find('span', 'main-price').decompose()
+                    price = elem.text.strip().replace(',', '.')
+        if price is not None:
+            price = [price]
+            shop = ['Kotsovolos']
+            off_seller = ['1']
+            # save_prices(price, product_id, shop, off_seller, source_id)
+
+    elif source_id == 5: #Public
+        pricear = soup.select(
+            "div.product__price.product__price--xlarge.text-primary")
+        if pricear and pricear != '' and '\n' not in pricear[0].text:
+            price = pricear[0].text.strip(' €').replace(',', '.')
+        if price is not None:
+            price = [price]
+            shop = ['Public']
+            off_seller = ['1']
+            # save_prices(price, product_id, shop, off_seller, source_id)
+
+    elif source_id == 6: #You
+        pricear = soup.select("div.price.new-price span.final-price")
+        shop = 'You'
+        if pricear:
+            price = pricear[0].text.strip(' €').replace(',', '.')
+        if price is not None:
+            price = [price]
+            shop = ['You']
+            off_seller = ['1']
+    
+    elif source_id == 7: #Media Markt
+        pricear = soup.select("div.article__price.ng-star-inserted")
+        if pricear:
+            price = pricear[0].text.replace(',', '.')
+        if price is not None:
+            price = [price]
+            shop = ['Media Markt']
+            off_seller = ['1']
+
+    elif source_id == 8: #Germanos
+        pricear = soup.select("div.product-price span.price")
+        pricear_sale = soup.select("div.product-price span.special-price")
+        if pricear:
+            price = pricear[0].text.strip().replace(',', '.').rstrip().strip('€')
+        elif pricear_sale:
+            price = pricear_sale[0].text.strip().replace(',', '.').rstrip().strip('€')
+        if price is not None:
+            price = [price]
+            shop = ['Germanos']
+            off_seller = ['1']
+    
+    elif source_id == 9: #Electronet
+        pricear = soup.select(
+            "td.commerce-price-savings-formatter-price span.price-amount")
+        if pricear:
+            price = pricear[0].text.strip().replace(',', '.').rstrip().strip('€').strip()
+        if price is not None:
+            price = [price]
+            shop = ['Electronet']
+            off_seller = ['1']
+
+    else:
+        print('A scraper for this source does not exist')
+        return True
+
+    # info.append(url)
+    # info.append(title)
+    # info.append(shop)
+    # info.append(price)
+    # info.append(off_seller)
+    # info.append(page_id)
+    # save_prices(price, product_id, shop, off_seller)
+    try:
+        save_prices(price, product_id, shop, off_seller, source_id)
+    except Exception as e:
+        print(e)
+        return False
+    if source_id == 1:
+        return info
+    else:
+        return 'Key Account'
 
 
-def save_prices(price_list, product_id, shop, official_reseller):
+def save_prices(price_list, product_id, shop, official_reseller, source_id):
     # The below stores time in UTC, but Django can convert and compare time by itself using the user's timezone. In case you definately need the local time use this: timenow = timezone.localtime(timezone.now())
     timenow = timezone.now()
     product_obj = Product.objects.get(id=product_id)
+    source_obj = Source.objects.get(id=source_id)
     for index in range(len(price_list)):
         rp = RetailPrice(
             price=float(price_list[index]),
             timestamp=timenow,
             product=product_obj,
-            shop=Shop.objects.get_or_create(name=shop[index]),
+            shop=Shop.objects.get_or_create(name=shop[index], source=source_obj)[0],
             official_reseller=official_reseller[index]
             )
         rp.save()
@@ -363,16 +490,19 @@ def create_files_and_send_emails(records):
     writer = pd.ExcelWriter("Reports\\recordsDf.xlsx", engine='xlsxwriter')
     autofit_and_save(writer, recordsDf)
 
+    webSkrList = pd.read_csv("Reports\\map-products.csv")
+    webSkrList['MAP'] = webSkrList['MAP'].astype(float)
+
     mergedData = xplode(recordsDf, ['SKR_Shop', 'SKR_Price', 'Official_Seller'])
-    # mergedData = recordsDf.apply(pd.Series.explode)
     mergedData = pd.merge(mergedData, webSkrList, on='URL', how='inner')
 
     # Update sellers file
-    sellers = pd.read_excel('stores-sellers.xlsx')
+    sellers = pd.read_excel('Reports\\stores-sellers.xlsx')
     sellers_upd = pd.DataFrame(mergedData['SKR_Shop'].drop_duplicates())
     sellers_upd.rename(columns={'SKR_Shop': 'Κατάστημα'}, inplace=True)
     sellers_upd = pd.merge(sellers_upd, sellers,on='Κατάστημα', how='outer')
-    writer = pd.ExcelWriter("stores-sellers.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(
+        "Reports\\stores-sellers.xlsx", engine='xlsxwriter')
     autofit_and_save(writer, sellers_upd)
     sellers = sellers[['Κατάστημα', 'Επωνυμία', 'Πωλητής']]
     sellers.rename(columns={'Κατάστημα': 'SKR_Shop'}, inplace=True)
@@ -437,7 +567,8 @@ def create_files_and_send_emails(records):
     writer = pd.ExcelWriter("Reports\\MAP_Hatzikiriakidis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, hatzikiriakidis)
 
-    fileNames_Admin = ['MAP-Report.xlsx', 'MAP_only_below.xlsx', 'debug.log']
+    fileNames_Admin = ['MAP-Report.xlsx', 'MAP_only_below.xlsx']
+    # fileNames_Admin = ['MAP-Report.xlsx', 'MAP_only_below.xlsx', 'debug.log']
     fileNames_Christoforos = ['MAP-Report-SKU.xlsx', 'MAP-products.xlsx']
     fileNames_Michou = ['MAP-Report.xlsx', 'MAP_only_below.xlsx', 'MAP-products.xlsx', 'MAP-Report-SKU.xlsx']
     fileNames_Alexandridou = ['MAP-Report.xlsx', 'MAP_only_below.xlsx']
