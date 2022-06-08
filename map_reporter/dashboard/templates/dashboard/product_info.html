@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-    {% url 'dashboard:' %}
-    <h1>sdfsdfsdf</h1>
-</html>
+{% extends "dashboard_base.html" %}
+{% block main %}
+    <h1>{{ product.product_name }}</h1>
+{% endblock %}
