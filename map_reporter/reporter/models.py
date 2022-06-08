@@ -71,6 +71,7 @@ class Shop(models.Model):
     key_account = models.BooleanField(default=False)
     source = models.ForeignKey(
         Source, on_delete=models.CASCADE, default=None, blank=False, null=False)
+        # TODO Add Seller user
 
     def __str__(self):
         return self.name
