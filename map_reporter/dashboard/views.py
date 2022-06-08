@@ -36,8 +36,13 @@ class Login(View):
             return render(request, self.template, {'form': form})
 
 
-class ProductInfo(View):
-    template = 'dashboard/product_info.html'
+class ProductInfo(generic.DetailView):
+    model = Product
+    template_name = 'dashboard/product_info.html'
 
-    def get(self, request):
-        return render(request, self.template)
+    # def get_queryset(self):
+    #     return Product.objects.filter(pk = 2)
+    
+
+    # def get(self, request):
+    #     return render(request, self.template)
