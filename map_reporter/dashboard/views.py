@@ -34,3 +34,10 @@ class Login(View):
             return HttpResponseRedirect('/')
         else:
             return render(request, self.template, {'form': form})
+
+
+class ProductInfo(View):
+    template = 'dashboard/product_info.html'
+
+    def get(self, request):
+        return render(request, self.template)
