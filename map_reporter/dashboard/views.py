@@ -41,11 +41,9 @@ class Login(View):
 #     template = 'dashboard/product_info.html'
 
 #     def get_
-    
 
     # def get_queryset(self):
     #     return Product.objects.filter(pk = 2)
-    
 
     # def get(self, request):
     #     return render(request, self.template)
@@ -56,7 +54,6 @@ class Login(View):
 
 #     def get_queryset(self):
 #         return Page.objects.filter(product_id = self.kwargs['pk'])
-    
 
     # def get(self, request):
     #     return render(request, self.template)
@@ -70,4 +67,16 @@ class ProductInfo(TemplateView):
             "product": Product.objects.get(id=kwargs['pk']),
             "urls": Page.objects.filter(product_id=kwargs['pk'])
         })
+        return context
+
+
+class ShopInfo(TemplateView):
+    template_name = "dashboard/shop_page.html"
+
+    def get_context_data(self, **kwargs):
+        context = context = super(ShopInfo, self).get_context_data(**kwargs)
+        # context.update({
+        #     "shop": Shop.objects.get(id=kwargs['pk']),
+        #     # "urls": Page.objects.filter(product_id=kwargs['pk'])
+        # })
         return context
