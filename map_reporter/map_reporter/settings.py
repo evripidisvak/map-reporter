@@ -56,9 +56,11 @@ ROOT_URLCONF = 'map_reporter.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates',
-                BASE_DIR / 'dashboard/templates'
-                ],
+        'DIRS': [
+            BASE_DIR / 'templates',
+            BASE_DIR / 'dashboard/templates',
+            BASE_DIR / 'dashboard/templates/dashboard',
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

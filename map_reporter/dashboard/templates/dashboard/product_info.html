@@ -1,0 +1,14 @@
+{% extends "dashboard_base.html" %}
+{% block main %}
+<div class="container-fluid px-4">
+    <h1 class="mt-4">{{ product.product_name }}</h1>
+    <p class="mt-4">{{ product.sku }}</p>
+    <p class="mt-4">{{ product.map_price }}</p>
+    <p class="mt-4">{{ product.key_acc_price }}</p>
+    <p class="mt-4">{{ product.main_category }}</p>
+    {% for url in urls %}
+    <p class="mt-4"> {{ url }} </p>
+    {% endfor %}
+
+</div>
+{% endblock %}
