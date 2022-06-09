@@ -1,3 +1,5 @@
+from enum import unique
+import re
 from django.db import models
 from decimal import Decimal
 from django.utils import timezone
@@ -57,6 +59,9 @@ class Product(models.Model):
     def __str__(self):
         return self.product_name
 
+    def get_active(self):
+        return self.active
+
 
 class Source(models.Model):
     name = models.CharField(max_length=100)
@@ -71,10 +76,16 @@ class Shop(models.Model):
     key_account = models.BooleanField(default=False)
     source = models.ForeignKey(
         Source, on_delete=models.CASCADE, default=None, blank=False, null=False)
-        # TODO Add Seller user
+    # TODO Add Seller user
 
     def __str__(self):
         return self.name
+
+    def is_key_account(self):
+        if self.key_account == True:
+            return 'Ναι'
+        else:
+            return 'Όχι'
 
 
 class Page(models.Model):
@@ -97,6 +108,15 @@ class RetailPrice(models.Model):
         Product, on_delete=models.CASCADE, default=None)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, default=None)
     official_reseller = models.BooleanField(default=False)
+
+    def get_shop_products(shop_id):
+        retailprices = RetailPrice.objects.filter(shop=shop_id)
+        productList = []
+
+        for price in retailprices:
+            if not price.product in productList:
+                productList.append(price.product)
+        return productList
 
 
 class MapPrice(models.Model):

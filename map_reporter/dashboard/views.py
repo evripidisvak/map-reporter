@@ -76,7 +76,7 @@ class ShopsPage(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(ShopsPage, self).get_context_data(**kwargs)
         context.update({
-            'shops': Shop.objects.all()
+            'shops': Shop.objects.all(),
         })
         return context
 
@@ -88,6 +88,7 @@ class ShopInfo(TemplateView):
         context = context = super(ShopInfo, self).get_context_data(**kwargs)
         context.update({
             "shop": Shop.objects.get(id=kwargs['pk']),
-            # "urls": Page.objects.filter(product_id=kwargs['pk'])
+            "prices": RetailPrice.objects.filter(shop=kwargs['pk']),
+            "products": RetailPrice.get_shop_products(shop_id=kwargs['pk']),
         })
         return context

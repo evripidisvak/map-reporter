@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        {% block head %}
+        {% block headStart %}
         {% endblock %}
         <meta charset="utf-8" />
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -11,8 +11,13 @@
         <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" />
         <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/styles.css' %}">
         <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/custom-styles.css' %}">
+        <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
         <link rel="icon" type="image/x-icon" href="{% static '/meerkat-icon.ico' %}">
         <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+        <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
+        {% block headEnd %}
+        {% endblock %}
     </head>
     <body class="sb-nav-fixed">
         <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
@@ -98,26 +103,29 @@
                         </div>
                     </div>
                     <div class="sb-sidenav-footer">
-                        <div class="small">Logged in as:</div>
-                        Start Bootstrap
+                        <div class="small">Χρήστης:</div>
+                        {{ request.user.username }}
+                        admin@admin.admin
                     </div>
                 </nav>
             </div>
             <div id="layoutSidenav_content">
                 <main>
+                    <div class="container-fluid px-4 mt-4">
                     {% block main %}
                     
                     {% endblock %}
+                    </div>
                 </main>
                 <footer class="py-4 bg-light mt-auto">
                     <div class="container-fluid px-4">
                         <div class="d-flex align-items-center justify-content-between small">
-                            <div class="text-muted">Copyright &copy; Your Website 2022</div>
-                            <div>
+                            <div class="text-muted">Copyright &copy; MeerKat 2022 </div>
+                            {% comment %} <div>
                                 <a href="#">Privacy Policy</a>
                                 &middot;
                                 <a href="#">Terms &amp; Conditions</a>
-                            </div>
+                            </div> {% endcomment %}
                         </div>
                     </div>
                 </footer>
