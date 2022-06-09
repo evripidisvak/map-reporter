@@ -1,4 +1,12 @@
 {% extends "dashboard_base.html" %}
 {% block main %}
-<h1>Manolis</h1>
+
+{% for shop in shops %}
+
+<a href="{% url 'shop_info' shop.id %}" style="display: block;">
+    {{shop.name}}
+</a>
+{% endfor %}
+
+
 {% endblock %}
