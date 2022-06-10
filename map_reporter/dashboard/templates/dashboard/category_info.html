@@ -34,11 +34,11 @@
                 <th>Προϊόν</th>
                 <th>Τιμή MAP</th>
                 <th>Τιμή Key Account</th>
-                <th>Κατηγορία</th>
+                <th>Γονική Κατηγορία</th>
             </tr>
         </thead>
         <tbody>
-            {% for product in products %} 
+            {% for product in products %}
             <tr>
                 <td>
                 <a href="{% url 'product_info' product.id %}">{{product}}</a> 
