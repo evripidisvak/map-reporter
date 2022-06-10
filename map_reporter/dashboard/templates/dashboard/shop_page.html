@@ -1,0 +1,59 @@
+{% extends "dashboard_base.html" %}
+{% load static %}
+
+{% block headEnd %}
+<script src="{% static '/map_reporter/js/shop-page-data-table.js' %}"></script>
+<style>
+    label {
+    padding: 5px;
+}
+#shops-table_wrapper{
+    padding:5px;
+}
+</style>
+{% endblock %}
+
+{% block main %}
+
+    <h1 class="mb-4">Καταστήματα</h1>
+    <div class="card mb-4">
+        <div class="card-header mb-4">
+            <i class="fas fa-table me-1"></i>
+            Καταστήματα
+        </div>
+        {% comment %} <div class="card-body"> {% endcomment %}
+            <table id='shops-table' class=''>
+                <thead>
+                <tr>
+                    <th>Όνομα καταστήματος</th>
+                    <th>Key Account</th>
+                    <th>Πηγή</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for shop in shops %}
+                <tr>
+                    <td>
+                        <a href="{% url 'shop_info' shop.id %}">
+                            {{shop.name}}
+                        </a> 
+                    </td>                
+                    <td>
+                        <p>
+                            {{shop.is_key_account}}
+                        </p> 
+                    </td>
+                    <td>
+                        <p>
+                            {{shop.source}}
+                        </p> 
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+    </div>
+
+
+
+{% endblock %}
