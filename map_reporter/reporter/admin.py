@@ -20,11 +20,20 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ['name']
     # ordering = ['-parent','name']
 
+class MapPriceView(admin.ModelAdmin):
+    list_display = ('product', 'price', 'timestamp')
+    search_fields = ['product']
+    list_filter = ['product']
+
+class RetailPriceView(admin.ModelAdmin):
+    list_display = ('product', 'price', 'shop', 'official_reseller', 'timestamp')
+    list_filter = ['product', 'shop']
+
 
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Source)
 admin.site.register(Page)
 admin.site.register(Shop)
-admin.site.register(RetailPrice)
-admin.site.register(MapPrice)
+admin.site.register(RetailPrice, RetailPriceView)
+admin.site.register(MapPrice, MapPriceView)
