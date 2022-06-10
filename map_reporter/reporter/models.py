@@ -114,6 +114,16 @@ class Page(models.Model):
     def __str__(self):
         return self.url
 
+class MapPrice(models.Model):
+    price = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal(
+        '0.00'), null=False, blank=False)
+    timestamp = models.DateTimeField()
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, blank=False, null=False, default=None)
+
+    def __str__(self):
+        return str(self.price)
+
 
 class RetailPrice(models.Model):
     price = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(
@@ -123,6 +133,8 @@ class RetailPrice(models.Model):
         Product, on_delete=models.CASCADE, default=None)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, default=None)
     official_reseller = models.BooleanField(default=False)
+    curr_target_price = models.DecimalField(max_digits=6, decimal_places=2, default=Decimal(
+        '0.00'), null=False, blank=False)
 
     def get_shop_products(shop_id):
         retailprices = RetailPrice.objects.filter(shop=shop_id)
@@ -132,17 +144,6 @@ class RetailPrice(models.Model):
             if not price.product in productList:
                 productList.append(price.product)
         return productList
-
-
-class MapPrice(models.Model):
-    price = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal(
-        '0.00'), null=False, blank=False)
-    timestamp = models.DateTimeField()
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, blank=False, null=False, default=None)
-
-    def __str__(self):
-        return self.price
 
 
 class KeyAccPrice(models.Model):

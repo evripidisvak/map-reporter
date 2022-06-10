@@ -42,17 +42,47 @@ class ProductInfo(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = context = super(ProductInfo, self).get_context_data(**kwargs)
+
+        product = Product.objects.get(id=kwargs['pk'])
+        urls = Page.objects.filter(product_id=kwargs['pk'])
+
         retailprices = RetailPrice.objects.filter(product=kwargs['pk'])
-        min_retailprices = retailprices.aggregate(Min('price'))
-        max_retailprices = retailprices.aggregate(Max('price'))
+        
+        min_retailprice_list  = retailprices.values(
+            'timestamp').annotate(min_price=Min('price')).order_by()
+
+        min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
+        max_retailprice = min_retailprice_list.aggregate(Max('min_price'))
+
+        mapprices = MapPrice.objects.filter(product=kwargs['pk'])
+        keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk'])
+
+        productsbelow = 0
+        productsequal = 0
+        productsabove = 0
+
+        for price in retailprices:
+            if price.price < price.curr_target_price:
+                productsbelow += 1
+            elif price.price == price.curr_target_price:
+                productsequal += 1
+            elif price.price > price.curr_target_price:
+                productsabove += 1
+
+
+        # mapprices = mapprices.filter(timestamp__day='10')
         context.update({
-            "product": Product.objects.get(id=kwargs['pk']),
-            "urls": Page.objects.filter(product_id=kwargs['pk']),
+            "product": product,
+            "urls": urls,
             "retailprices": retailprices,
-            "min_retailprices": min_retailprices,
-            "max_retailprices": max_retailprices,
-            "mapprices": MapPrice.objects.filter(product=kwargs['pk']),
-            "keyaccprices": KeyAccPrice.objects.filter(product=kwargs['pk']),
+            "min_retailprice": min_retailprice,
+            "max_retailprice": max_retailprice,
+            "mapprices": mapprices,
+            "keyaccprices": keyaccprices,
+            "min_retailprice_list": min_retailprice_list,
+            "productsbelow": productsbelow,
+            "productsequal": productsequal,
+            "productsabove": productsabove,
         })
         return context
 

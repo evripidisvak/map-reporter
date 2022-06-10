@@ -1,9 +1,8 @@
 {% extends "dashboard_base.html" %}
-
+{% load dashboard_tags %}
 {% block title %}
 {{product.product_name}}
 {% endblock %}
-
 {% block main %}
 
 <div class="container-fluid px-4">
@@ -37,26 +36,84 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
-                    Area Chart Example
+                    Min Prices Chart
                 </div>
                 <div class="card-body"><canvas id="MinPriceChart" width="100%" height="40"></canvas></div>
+                <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
             </div>
         </div>
+
         <div class="col-xl-6">
             <div class="card mb-4">
                 <div class="card-header">
-                    <i class="fas fa-chart-bar me-1"></i>
-                    Bar Chart Example
+                    <i class="fas fa-chart-pie me-1"></i>
+                    OK Products Pie Chart
                 </div>
-                <div class="card-body"><canvas id="myBarChart" width="100%" height="40"></canvas></div>
+                <div class="card-body"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
+                <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
             </div>
         </div>
+        <div class="card mb-4">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Product Prices Table
+        </div>
+        <div class="card-body">
+            <table id="ProductPricesTable">
+                <thead>
+                    <tr>
+                        <th>Κατάστημα</th>
+                        <th>Λ. Τιμή</th>
+                        <th>Target Price</th>
+                        <th>Diff</th>
+                        <th>Diff %</th>
+                        <th>Επ. Μεταπωλητής</th>
+                        <th>Πωλητής</th>
+                        <th>Ημερομηνία</th>
+                    </tr>
+                </thead>
+                <tfoot>
+                    <tr>
+                        <th>Κατάστημα</th>
+                        <th>Λ. Τιμή</th>
+                        <th>Target Price</th>
+                        <th>Diff</th>
+                        <th>Diff %</th>
+                        <th>Επ. Μεταπωλητής</th>
+                        <th>Πωλητής</th>
+                        <th>Ημερομηνία</th>
+                    </tr>
+                </tfoot>
+                <tbody>
+                    {% for retailprice in retailprices %}
+                    <tr>
+                        <td><a href="{% url 'shop_info' retailprice.shop.id %}">{{retailprice.shop}}</a></td>
+                        <td>{{retailprice.price}}</td>
+                        <td>{{retailprice.curr_target_price}}</td>
+                        <td>{{retailprice.price|sub:retailprice.curr_target_price}}</td>
+                        <td>{{retailprice.price|per_sub:retailprice.curr_target_price}}</td>
+                        <td>{% if retailprice.official_reseller == False %}
+                                <p class="text-danger">Όχι</p>
+                            {% else %}
+                                <p class="text-success">Ναι</p>
+                            {% endif %}
+                        </td>
+                        <td>Seller</td>
+                        <td>{{retailprice.timestamp}}</td>
+                    </tr>
+                    {% endfor %}
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
     </div>
 </div>
 <script>
     // Set new default font family and font color to mimic Bootstrap's default styling
     Chart.defaults.global.defaultFontFamily = '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
     Chart.defaults.global.defaultFontColor = '#292b2c';
+
     // Area Chart Data
     timestamps = [];
     prices = [];
@@ -71,8 +128,8 @@
     type: 'line',
     data: {
         labels: [
-            {% for retailprice in retailprices %}
-                '{{retailprice.timestamp}}',
+            {% for min_retailprice in min_retailprice_list %}
+                '{{min_retailprice.timestamp}}',
             {% endfor %}
         ],
         datasets: [{
@@ -88,8 +145,8 @@
         pointHitRadius: 50,
         pointBorderWidth: 2,
         data: [
-            {% for retailprice in retailprices %}
-                '{{retailprice.price}}',
+            {% for min_retailprice in min_retailprice_list %}
+                '{{min_retailprice.min_price}}',
             {% endfor %}
         ],
         }],
@@ -104,13 +161,13 @@
             display: false
             },
             ticks: {
-            maxTicksLimit: 7
+            maxTicksLimit: 10
             }
         }],
         yAxes: [{
             ticks: {
-            min: {{min_retailprices.price__min}},
-            max: {{max_retailprices.price__max}},
+            min: {{min_retailprice.min_price__min|add:"-10"}},
+            max: {{max_retailprice.min_price__max|add:"10"}},
             maxTicksLimit: 5
             },
             gridLines: {
@@ -123,5 +180,25 @@
         }
     }
     });
+        
+    // Pie Chart Example
+    var ctx = document.getElementById("myPieChart");
+    var myPieChart = new Chart(ctx, {
+    type: 'pie',
+    data: {
+        labels: ["Κάτω", "Ακριβώς", "Πάνω"],
+        datasets: [{
+        data: [{{productsbelow}}, {{productsequal}}, {{productsabove}}],
+        backgroundColor: ['#dc3545', '#ffc107', '#28a745'],
+        }],
+    },
+    });
+
+    // Call the dataTables jQuery plugin
+    $(document).ready(function() {
+    $('#ProductPricesTable').DataTable();
+    });
+
+
 </script>
 {% endblock %}
