@@ -37,8 +37,7 @@ class Login(View):
             return HttpResponseRedirect('/')
         else:
             return render(request, self.template, {'form': form})
-
-
+          
 class ProductInfo(TemplateView):
     template_name = "dashboard/product_info.html"
 
@@ -55,5 +54,29 @@ class ProductInfo(TemplateView):
             "max_retailprices": max_retailprices,
             "mapprices": MapPrice.objects.filter(product=kwargs['pk']),
             "keyaccprices": KeyAccPrice.objects.filter(product=kwargs['pk']),
+        })
+        return context
+
+
+class ShopsPage(TemplateView):
+    template_name = "dashboard/shop_page.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(ShopsPage, self).get_context_data(**kwargs)
+        context.update({
+            'shops': Shop.objects.all(),
+        })
+        return context
+
+
+class ShopInfo(TemplateView):
+    template_name = "dashboard/shop_info.html"
+
+    def get_context_data(self, **kwargs):
+        context = context = super(ShopInfo, self).get_context_data(**kwargs)
+        context.update({
+            "shop": Shop.objects.get(id=kwargs['pk']),
+            "prices": RetailPrice.objects.filter(shop=kwargs['pk']),
+            "products": RetailPrice.get_shop_products(shop_id=kwargs['pk']),
         })
         return context
