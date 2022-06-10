@@ -3,26 +3,40 @@ import re
 from django.db import models
 from decimal import Decimal
 from django.utils import timezone
+from mptt.models import MPTTModel, TreeForeignKey
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=100)
-    parent = models.ForeignKey(
-        'self', models.SET_NULL, blank=True, null=True, related_query_name='children')
+class Category(MPTTModel):
+    name = models.CharField(max_length=50, unique=True)
+    parent = TreeForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
 
-    def get_categories(self):
-        if self.parent is None:
-            return self.name
-        else:
-            return self.parent.get_categories() + ' > ' + self.name
+    class MPTTMeta:
+        order_insertion_by = ['name']
 
     def __str__(self):
-        return self.get_categories()
-
+        return self.name
+    
     class Meta:
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
 
+# class Category(models.Model):
+#     name = models.CharField(max_length=100)
+#     parent = models.ForeignKey(
+#         'self', models.SET_NULL, blank=True, null=True, related_query_name='children')
+
+#     def get_categories(self):
+#         if self.parent is None:
+#             return self.name
+#         else:
+#             return self.parent.get_categories() + ' > ' + self.name
+
+#     def __str__(self):
+#         return self.get_categories()
+
+#     class Meta:
+#         verbose_name = 'Category'
+#         verbose_name_plural = 'Categories'
 
 class Product(models.Model):
     # TODO add manufacturer

@@ -1,17 +1,28 @@
 {% extends "dashboard_base.html" %}
 {% load dashboard_tags %}
+{% block title %}
+{{product.product_name}}
+{% endblock %}
 {% block main %}
+
 <div class="container-fluid px-4">
     <h3 class="mt-4">{{ product.product_name }}</h3>
     <div class="row row-cols-2 p-2">
         <h5 class="p-sm-2 col-2 bg-secondary bg-opacity-25">SKU</h5>
         <h5 class="p-sm-2 col-10 bg-secondary bg-opacity-25">{{ product.sku }}</h5>
-        <h5 class="p-sm-2 col-2">mapo</h5>
+        <h5 class="p-sm-2 col-2">map</h5>
         <h5 class="p-sm-2 col-10">{{ product.map_price }}</h5>
         <h5 class="p-sm-2 col-2 bg-secondary bg-opacity-25">key acc</h5>
         <h5 class="p-sm-2 col-10 bg-secondary bg-opacity-25">{{ product.key_acc_price }}</h5>
         <h5 class="p-sm-2 col-2">cat</h5>
-        <h5 class="p-sm-2 col-10">{{ product.main_category }}</h5>
+        <p class="p-sm-2 col-10">
+            {% for category in product.main_category.get_family %}
+                <a href="{% url 'category_info' product.main_category.id %}">{{category}}</a>
+                {% if not forloop.last %}
+                    >
+                {% endif %}
+            {% endfor %}
+        </p>
         <h5 class="p-sm-2 col-12 bg-secondary bg-opacity-25">urls</h5>
     </div>
     <div class="row ps-4 bg-secondary bg-opacity-25">

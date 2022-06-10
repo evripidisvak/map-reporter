@@ -1,0 +1,53 @@
+{% extends "dashboard_base.html" %}
+{% load static %}
+{% block headEnd %}
+<script src="{% static '/map_reporter/js/categories-page-data-table.js' %}"></script>
+<style>
+    label {
+    padding: 5px;
+}
+#categories-table_wrapper{
+    padding:5px;
+}
+</style>
+{% endblock %}
+
+
+
+{% block main %}
+
+<h1 class="mb-4">Κατηγορίες</h1>
+    <div class="card mb-4">
+        <div class="card-header mb-4">
+            <i class="fas fa-table me-1"></i>
+            Κατηγορίες
+        </div>
+        {% comment %} <div class="card-body"> {% endcomment %}
+            <table id='categories-table' class=''>
+                <thead>
+                <tr>
+                    <th>Όνομα κατηγορίας</th>
+                    <th>Γονική κατηγορία</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for category in categories %}
+                <tr>
+                    <td>
+                        <a href="{% url 'category_info' category.id %}">
+                            {{category.name}}
+                        </a> 
+                    </td>                
+                    <td>
+                        <p>
+                            {{category.get_categories}}
+                        </p> 
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+    </div>
+
+
+{% endblock %}

@@ -12,7 +12,6 @@ from django.db.models import *
 from reporter.models import *
 
 
-
 class Index(View):
     template = 'dashboard/index.html'
 
@@ -110,3 +109,34 @@ class ShopInfo(TemplateView):
             "products": RetailPrice.get_shop_products(shop_id=kwargs['pk']),
         })
         return context
+
+
+class CategoriesPage(TemplateView):
+    template_name = "dashboard/categories_page.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(CategoriesPage, self).get_context_data(**kwargs)
+        context.update({
+            'categories': Category.objects.all(),
+        })
+        return context
+
+class CategoryInfo(TemplateView):
+    template_name = "dashboard/category_info.html"
+
+    def get_context_data(self, **kwargs):
+        context = context = super(CategoryInfo, self).get_context_data(**kwargs)
+        category_descendants = Category.objects.get(id=kwargs['pk']).get_descendants(include_self=True)
+        children_id_list = []
+
+        for child in category_descendants:
+            children_id_list.append(child.id)
+
+        products = Product.objects.filter(main_category__in=children_id_list)
+
+        context.update({
+            "category": Category.objects.get(id=kwargs['pk']),
+            "products": products,
+        })
+        return context
+
