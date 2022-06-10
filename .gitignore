@@ -7,6 +7,7 @@
 *.pot
 *.pyc
 __pycache__
+**/__pycache__
 db.sqlite3
 media
 
@@ -39,3 +40,4 @@ sftp-config.json
 !.vscode/launch.json
 !.vscode/extensions.json
 .history
+

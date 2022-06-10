@@ -6,9 +6,11 @@ from django.views import View
 from django.views.generic.base import TemplateView
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate
-from reporter.models import *
 from django.views import generic
 from django.urls import reverse
+from django.db.models import *
+from reporter.models import *
+
 
 
 class Index(View):
@@ -35,37 +37,23 @@ class Login(View):
             return HttpResponseRedirect('/')
         else:
             return render(request, self.template, {'form': form})
-
-
-# class ProductInfo(View):
-#     template = 'dashboard/product_info.html'
-
-#     def get_
-
-    # def get_queryset(self):
-    #     return Product.objects.filter(pk = 2)
-
-    # def get(self, request):
-    #     return render(request, self.template)
-
-# class ProductInfo(generic.DetailView):
-#     model = Product
-#     template_name = 'dashboard/product_info.html'
-
-#     def get_queryset(self):
-#         return Page.objects.filter(product_id = self.kwargs['pk'])
-
-    # def get(self, request):
-    #     return render(request, self.template)
-
+          
 class ProductInfo(TemplateView):
     template_name = "dashboard/product_info.html"
 
     def get_context_data(self, **kwargs):
         context = context = super(ProductInfo, self).get_context_data(**kwargs)
+        retailprices = RetailPrice.objects.filter(product=kwargs['pk'])
+        min_retailprices = retailprices.aggregate(Min('price'))
+        max_retailprices = retailprices.aggregate(Max('price'))
         context.update({
             "product": Product.objects.get(id=kwargs['pk']),
-            "urls": Page.objects.filter(product_id=kwargs['pk'])
+            "urls": Page.objects.filter(product_id=kwargs['pk']),
+            "retailprices": retailprices,
+            "min_retailprices": min_retailprices,
+            "max_retailprices": max_retailprices,
+            "mapprices": MapPrice.objects.filter(product=kwargs['pk']),
+            "keyaccprices": KeyAccPrice.objects.filter(product=kwargs['pk']),
         })
         return context
 

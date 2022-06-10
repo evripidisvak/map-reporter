@@ -25,6 +25,7 @@ class Category(models.Model):
 
 
 class Product(models.Model):
+    # TODO add manufacturer
     product_name = models.CharField(max_length=100)
     sku = models.CharField(max_length=20)
     active = models.BooleanField(default=True)
