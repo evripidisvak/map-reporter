@@ -354,12 +354,15 @@ def save_prices(price_list, product_id, shop, official_reseller, source_id):
     product_obj = Product.objects.get(id=product_id)
     source_obj = Source.objects.get(id=source_id)
     for index in range(len(price_list)):
+        thisShop = Shop.objects.get_or_create(
+            name=shop[index], source=source_obj)[0]
         rp = RetailPrice(
             price=float(price_list[index]),
             timestamp=timenow,
             product=product_obj,
-            shop=Shop.objects.get_or_create(name=shop[index], source=source_obj)[0],
-            official_reseller=official_reseller[index]
+            shop=thisShop,
+            official_reseller=official_reseller[index],
+            curr_target_price=product_obj.map_price if thisShop.key_account == 1 else product_obj.key_acc_price
             )
         rp.save()
 
