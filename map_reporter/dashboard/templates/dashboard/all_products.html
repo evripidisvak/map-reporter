@@ -7,21 +7,24 @@
 {% endblock %}
 
 {% block headEnd %}
-<script src='{% static '/map_reporter/js/shop-page-data-table.js' %}'></script>
-<style>
-    label {
-    padding: 5px;
-}
-#shops-table_wrapper{
-    padding:5px;
-}
-</style>
+<script src='{% static '/map_reporter/js/all-products-page-data-table.js' %}'></script>
+{% comment %} <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.css"/> {% endcomment %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script>
+
 {% endblock %}
-
 {% block main %}
-
     <h1 class='mb-4'>Ολα τα προϊόντα</h1>
-    <div class='col-xl-6'>
+
+    <div class="row pt-lg-5">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                {% lorem 1 p random %}
+            </div>
+        </div>
+
+        <div class='col-xl-6'>
             <div class='card mb-4'>
                 <div class='card-header'>
                     <i class='fas fa-chart-pie me-1'></i>
@@ -31,73 +34,156 @@
                 <div class='card-footer small text-muted'>Updated yesterday at 11:59 PM</div>
             </div>
         </div>
+    </div>
 
-    <div class='card mb-4'>
-        <div class='card-header mb-4'>
-            <i class='fas fa-table me-1'></i>
-            Ολα τα προϊόντα
+    <div class="row pt-lg-5">
+        <div class='card mb-4'>
+            <div class='card-header mb-4'>
+                <i class='fas fa-table me-1'></i>
+                Όλα τα προϊόντα
+            </div>
+                <table id='all-products-table' class=''>
+                    <thead>
+                        <tr>
+                            <th class='add_select'>Active</th>
+                            <th>Όνομα</th>
+                            <th>MAP Price</th>
+                            <th>Key Acc Price</th>
+                            <th># Καταστημάτων</th>
+                            <th>Κατ. below</th>
+                            <th>Κατ. equal</th>
+                            <th>Κατ. above</th>
+                        </tr>
+                        <tr>
+                            <th>Active</th>
+                            <th>Όνομα</th>
+                            <th>MAP Price</th>
+                            <th>Key Acc Price</th>
+                            <th># Καταστημάτων</th>
+                            <th>Κατ. below</th>
+                            <th>Κατ. equal</th>
+                            <th>Κατ. above</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td>
+                            {{product.active}}
+                        </td>
+                        <td>
+                            <a href='{% url 'product_info' product.id %}'>
+                                {{product.product_name}}
+                            </a>
+                        </td>
+                        <td>
+                            {{product.map_price}}
+                        </td>
+                        <td>
+                            {{product.key_acc_price}}
+                        </td>
+                        <td>
+                            {{product.shop_count}}
+                        </td>
+                        <td>
+                            {{product.shops_below}}
+                        </td>
+                        <td>
+                            {{product.shops_equal}}
+                        </td>
+                        <td>
+                            {{product.shops_above}}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
         </div>
-            <table id='shops-table' class=''>
-                <thead>
-                <tr>
-                    <th>Όνομα</th>
-                    <th>Κατάστημα</th>
-                    <th>Τιμή</th>
-                    <th>Target Price</th>
-                    <th>Diff</th>
-                    <th>Diff %</th>
-                    <th>Επ. Μεταπωλητής</th>
-                    <th>Πωλητής</th>
-                    <th>Date</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for retailprice in retailprices %}
-                <tr>
-                    <td>
-                        <a href='{% url 'product_info' retailprice.product.id %}'>
-                            {{retailprice.product}}
-                        </a>
-                    </td>
-                    <td>
-                        {{retailprice.shop}}
-                    </td>
-                    <td>
-                        {{retailprice.price}}
-                    </td>
-                    <td>
-                        {{retailprice.curr_target_price}}
-                    </td>
-                    <td>
-                        {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
-                            <p class='text-danger'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
-                        {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
-                            <p class='text-success'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
-                        {% else %}
-                            <p class='text-black'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+    </div>
+
+    <div class="row pt-lg-5">
+        <div class='card mb-4'>
+            <div class='card-header mb-4'>
+                <i class='fas fa-table me-1'></i>
+                Τελευταίες τιμές όλων των ενεργών προϊόντων
+            </div>
+                <table id='all-products-prices-table' class=''>
+                    <thead>
+                    <tr>
+                        <th>Όνομα</th>
+                        <th class='add_select'>Κατάστημα</th>
+                        <th>Τιμή</th>
+                        <th>Target Price</th>
+                        <th>Diff</th>
+                        <th>Diff %</th>
+                        <th>Επ. Μεταπωλητής</th>
+                        <th class='add_select'>Πωλητής</th>
+                        <th>Date</th>
+                    </tr>
+                    <tr>
+                        <th>Όνομα</th>
+                        <th>Κατάστημα</th>
+                        <th>Τιμή</th>
+                        <th>Target Price</th>
+                        <th>Diff</th>
+                        <th>Diff %</th>
+                        <th>Επ. Μεταπωλητής</th>
+                        <th>Πωλητής</th>
+                        <th>Date</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for retailprice in retailprices %}
+                        {% if retailprice.product.active == True %}
+                            <tr>
+                                <td>
+                                    <a href='{% url 'product_info' retailprice.product.id %}'>
+                                        {{retailprice.product}}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href='{% url 'shop_info' retailprice.shop.id %}'>
+                                        {{retailprice.shop}}
+                                    </a>
+                                </td>
+                                <td>
+                                    {{retailprice.price}}
+                                </td>
+                                <td>
+                                    {{retailprice.curr_target_price}}
+                                </td>
+                                <td>
+                                    {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
+                                        <p class='text-danger'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                    {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
+                                        <p class='text-success'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                    {% else %}
+                                        <p class='text-black'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if retailprice.price|ch_sub:retailprice.curr_target_price < 0 %}
+                                        <p class='text-danger'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                    {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
+                                        <p class='text-success'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                    {% else %}
+                                        <p class='text-black'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                    {% endif %}
+                                </td>
+                                <td>{% if retailprice.official_reseller == False %}
+                                        <p class='text-danger'>Όχι</p>
+                                    {% else %}
+                                        <p class='text-success'>Ναι</p>
+                                    {% endif %}
+                                </td>
+                                <td>Seller</td>
+                                <td>{{retailprice.timestamp}}</td>
+                            </tr>
                         {% endif %}
-                    </td>
-                    <td>
-                        {% if retailprice.price|ch_sub:retailprice.curr_target_price < 0 %}
-                            <p class='text-danger'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
-                        {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
-                            <p class='text-success'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
-                        {% else %}
-                            <p class='text-black'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
-                        {% endif %}
-                    </td>
-                    <td>{% if retailprice.official_reseller == False %}
-                            <p class='text-danger'>Όχι</p>
-                        {% else %}
-                            <p class='text-success'>Ναι</p>
-                        {% endif %}
-                    </td>
-                    <td>Seller</td>
-                    <td>{{retailprice.timestamp}}</td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
+                    {% endfor %}
+                    </tbody>
+                </table>
+        </div>
     </div>
 
     <script>
@@ -108,8 +194,8 @@
         data: {
             labels: ['Κάτω', 'Ακριβώς', 'Πάνω'],
             datasets: [{
-            data: [{{productsbelow}}, {{productsequal}}, {{productsabove}}],
-            backgroundColor: ['#dc3545', '#ffc107', '#28a745'],
+            data: [{{products_below}}, {{products_equal}}, {{products_above}}],
+            backgroundColor: ['#dc3545', '#28a745', '#007bff'],
             }],
         },
         });
