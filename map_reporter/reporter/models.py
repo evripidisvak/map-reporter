@@ -20,23 +20,7 @@ class Category(MPTTModel):
         verbose_name = 'Category'
         verbose_name_plural = 'Categories'
 
-# class Category(models.Model):
-#     name = models.CharField(max_length=100)
-#     parent = models.ForeignKey(
-#         'self', models.SET_NULL, blank=True, null=True, related_query_name='children')
 
-#     def get_categories(self):
-#         if self.parent is None:
-#             return self.name
-#         else:
-#             return self.parent.get_categories() + ' > ' + self.name
-
-#     def __str__(self):
-#         return self.get_categories()
-
-#     class Meta:
-#         verbose_name = 'Category'
-#         verbose_name_plural = 'Categories'
 
 class Product(models.Model):
     # TODO add manufacturer
@@ -91,7 +75,10 @@ class Shop(models.Model):
     key_account = models.BooleanField(default=False)
     source = models.ForeignKey(
         Source, on_delete=models.CASCADE, default=None, blank=False, null=False)
-    products = models.ManyToManyField(Product)
+    products = models.ManyToManyField(
+        Product,
+        through='RetailPrice',
+        )
     # TODO Add Seller user
 
     def __str__(self):
