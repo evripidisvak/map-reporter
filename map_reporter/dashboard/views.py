@@ -10,6 +10,7 @@ from django.views import generic
 from django.urls import reverse
 from django.db.models import *
 from reporter.models import *
+from django.db.models import Count
 
 
 class Index(View):
@@ -37,6 +38,10 @@ class Login(View):
         else:
             return render(request, self.template, {'form': form})
           
+
+
+
+
 class ProductInfo(TemplateView):
     template_name = "dashboard/product_info.html"
 
@@ -87,13 +92,20 @@ class ProductInfo(TemplateView):
         return context
 
 
-class ShopsPage(TemplateView):
-    template_name = "dashboard/shop_page.html"
 
+
+#add number of products for each shop
+class ShopsPage(TemplateView):
+    template_name = "dashboard/shops_page.html"
+    
     def get_context_data(self, **kwargs):
         context = super(ShopsPage, self).get_context_data(**kwargs)
+        # all_products = Product.objects.annotate(prod_count=Count('shop', distinct=True))
+        shops = Shop.objects.annotate(prod_count=Count('products', distinct=True))
+        
+            
         context.update({
-            'shops': Shop.objects.all(),
+            'shops': shops,
         })
         return context
 
