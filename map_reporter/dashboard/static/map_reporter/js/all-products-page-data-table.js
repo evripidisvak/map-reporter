@@ -1,0 +1,99 @@
+// $(document).ready(function () {
+//     $('#all-products-prices-table').DataTable();
+// });
+
+
+$(document).ready(function () {
+    // Setup - add a text input to each footer cell
+    $('#all-products-table thead tr:eq(1) th').each(function () {
+        var title = $(this).text();
+        $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search" />');
+    });
+
+    // DataTable
+    var table = $('#all-products-table').DataTable({
+        orderCellsTop: true,
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        initComplete: function () {
+            this.api().columns('.add_select').every(function () {
+                var column = this;
+                var select = $('<select><option value=""></option></select>')
+                    .appendTo($("#all-products-table thead tr:eq(1) th").eq(column.index()).empty())
+                    .on('change', function () {
+                        var val = $.fn.dataTable.util.escapeRegex(
+                            $(this).val()
+                        );
+
+                        column
+                            .search(val ? '^' + val + '$' : '', true, false)
+                            .draw();
+                    });
+
+                column.data().unique().sort().each(function (d, j) {
+                    select.append('<option value="' + d + '">' + d + '</option>');
+                });
+            });
+        }
+    });
+
+    // Apply the search
+    $('#all-products-table thead').on('keyup', ".column_search", function () {
+        table
+            .column($(this).parent().index())
+            .search(this.value)
+            .draw();
+    });
+
+});
+
+
+$(document).ready(function () {
+    // Setup - add a text input to each footer cell
+    $('#all-products-prices-table thead tr:eq(1) th').each(function () {
+        var title = $(this).text();
+        $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search" />');
+    });
+
+    // DataTable
+    var table = $('#all-products-prices-table').DataTable({
+        orderCellsTop: true,
+        dom: 'Bfrtip',
+        buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+        ],
+        initComplete: function () {
+            this.api().columns('.add_select').every(function () {
+                var column = this;
+                var select = $('<select><option value=""></option></select>')
+                    .appendTo($("#all-products-prices-table thead tr:eq(1) th").eq(column.index()).empty())
+                    .on('change', function () {
+                        var val = $.fn.dataTable.util.escapeRegex(
+                            $(this).val()
+                        );
+
+                        column
+                            .search(val ? '^' + val + '$' : '', true, false)
+                            .draw();
+                    });
+
+                column.data().unique().sort().each(function (d, j) {
+                    select.append('<option value="' + d + '">' + d + '</option>');
+                });
+            });
+        }
+    });
+
+    // Apply the search
+    $('#all-products-table thead').on('keyup', ".column_search", function () {
+        table
+            .column($(this).parent().index())
+            .search(this.value)
+            .draw();
+    });
+
+});
+
+

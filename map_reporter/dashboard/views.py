@@ -62,17 +62,17 @@ class ProductInfo(TemplateView):
         mapprices = MapPrice.objects.filter(product=kwargs['pk'])
         keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk'])
 
-        productsbelow = 0
-        productsequal = 0
-        productsabove = 0
+        products_below = 0
+        products_equal = 0
+        products_above = 0
 
         for price in retailprices:
             if price.price < price.curr_target_price:
-                productsbelow += 1
+                products_below += 1
             elif price.price == price.curr_target_price:
-                productsequal += 1
+                products_equal += 1
             elif price.price > price.curr_target_price:
-                productsabove += 1
+                products_above += 1
 
         context.update({
             'product': product,
@@ -83,9 +83,9 @@ class ProductInfo(TemplateView):
             'mapprices': mapprices,
             'keyaccprices': keyaccprices,
             'min_retailprice_list': min_retailprice_list,
-            'productsbelow': productsbelow,
-            'productsequal': productsequal,
-            'productsabove': productsabove,
+            'products_below': products_below,
+            'products_equal': products_equal,
+            'products_above': products_above,
         })
         return context
 
@@ -97,29 +97,48 @@ class AllProducts(TemplateView):
         context = super(AllProducts, self).get_context_data(**kwargs)
 
         products = Product.objects.all()
+        # products = Product.objects.annotate(shop_count=Count('shop', distinct=True))
         retailprices = []
-        productsbelow = 0
-        productsequal = 0
-        productsabove = 0
+        products_below = 0
+        this_products_below = 0
+        products_equal = 0
+        this_products_equal = 0
+        products_above = 0
+        this_products_above = 0
+
 
         for product in products:
-            latest_timestamp = RetailPrice.objects.filter(product_id=product.id).latest('timestamp').timestamp
-            tmp = RetailPrice.objects.filter(timestamp=latest_timestamp)
-            for tmp_pr in tmp:
-                retailprices.append(tmp_pr)
-                if tmp_pr.price < tmp_pr.curr_target_price:
-                    productsbelow += 1
-                elif tmp_pr.price == tmp_pr.curr_target_price:
-                    productsequal += 1
-                elif tmp_pr.price > tmp_pr.curr_target_price:
-                    productsabove += 1
-
+            try:
+                latest_timestamp = RetailPrice.objects.filter(product_id=product.id).latest('timestamp').timestamp
+                this_products_below = 0
+                this_products_equal = 0
+                this_products_above = 0
+                tmp = RetailPrice.objects.filter(timestamp=latest_timestamp, product=product)
+                for tmp_pr in tmp:
+                    retailprices.append(tmp_pr)
+                    if tmp_pr.price < tmp_pr.curr_target_price:
+                        products_below += 1
+                        this_products_below += 1
+                    elif tmp_pr.price == tmp_pr.curr_target_price:
+                        products_equal += 1
+                        this_products_equal += 1
+                    elif tmp_pr.price > tmp_pr.curr_target_price:
+                        products_above += 1
+                        this_products_above += 1
+                product.shops_below = this_products_below
+                product.shops_equal = this_products_equal
+                product.shops_above = this_products_above
+                product.shop_count = this_products_below + this_products_equal + this_products_above
+            
+            except:
+                pass
+        
         context.update({
             'products': products,
             'retailprices': retailprices,
-            'productsbelow': productsbelow,
-            'productsequal': productsequal,
-            'productsabove': productsabove,
+            'products_below': products_below,
+            'products_equal': products_equal,
+            'products_above': products_above,
         })
         return context
 
