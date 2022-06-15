@@ -53,6 +53,7 @@
                 <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
             </div>
         </div>
+        
         <div class="card mb-4">
         <div class="card-header">
             <i class="fas fa-table me-1"></i>
@@ -72,7 +73,7 @@
                         <th>Ημερομηνία</th>
                     </tr>
                 </thead>
-                <tfoot>
+                {% comment %} <tfoot>
                     <tr>
                         <th>Κατάστημα</th>
                         <th>Λ. Τιμή</th>
@@ -83,15 +84,35 @@
                         <th>Πωλητής</th>
                         <th>Ημερομηνία</th>
                     </tr>
-                </tfoot>
+                </tfoot> {% endcomment %}
                 <tbody>
                     {% for retailprice in retailprices %}
                     <tr>
                         <td><a href="{% url 'shop_info' retailprice.shop.id %}">{{retailprice.shop}}</a></td>
-                        <td>{{retailprice.price}}</td>
-                        <td>{{retailprice.curr_target_price}}</td>
-                        <td>{{retailprice.price|sub:retailprice.curr_target_price}}</td>
-                        <td>{{retailprice.price|per_sub:retailprice.curr_target_price}}</td>
+                        <td>
+                            {{retailprice.price}}
+                        </td>
+                        <td>
+                            {{retailprice.curr_target_price}}
+                        </td>
+                        <td>
+                            {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
+                                <p class="text-danger">{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                            {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
+                                <p class="text-success">{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                            {% else %}
+                                <p class="text-black">{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if retailprice.price|per_sub:retailprice.curr_target_price < 0 %}
+                                <p class="text-danger">{{retailprice.price|per_sub:retailprice.curr_target_price}}</p>
+                            {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
+                                <p class="text-success">{{retailprice.price|per_sub:retailprice.curr_target_price}}</p>
+                            {% else %}
+                                <p class="text-black">{{retailprice.price|per_sub:retailprice.curr_target_price}}</p>
+                            {% endif %}
+                        </td>
                         <td>{% if retailprice.official_reseller == False %}
                                 <p class="text-danger">Όχι</p>
                             {% else %}

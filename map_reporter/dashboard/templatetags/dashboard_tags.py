@@ -16,8 +16,8 @@ def sub(value, arg):
         except Exception:
             return ""
 
-@register.filter(name="per_sub")
-def per_sub(value, arg):
+@register.filter(name="ch_sub")
+def ch_sub(value, arg):
     """Find the percent change between the arg and the value."""
     if value == 0 or arg == 0:
         return "-"
