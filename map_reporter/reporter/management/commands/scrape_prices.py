@@ -362,7 +362,7 @@ def save_prices(price_list, product_id, shop, official_reseller, source_id):
             product=product_obj,
             shop=thisShop,
             official_reseller=official_reseller[index],
-            curr_target_price=product_obj.map_price if thisShop.key_account == 1 else product_obj.key_acc_price
+            curr_target_price=product_obj.map_price if thisShop.key_account == False else product_obj.key_acc_price
             )
         rp.save()
 

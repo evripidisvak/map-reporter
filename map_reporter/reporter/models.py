@@ -79,7 +79,6 @@ class Shop(models.Model):
         Product,
         through='RetailPrice',
         )
-   
     # TODO Add Seller user
 
     def __str__(self):

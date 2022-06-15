@@ -43,7 +43,7 @@ class Login(View):
 
 
 class ProductInfo(TemplateView):
-    template_name = "dashboard/product_info.html"
+    template_name = 'dashboard/product_info.html'
 
     def get_context_data(self, **kwargs):
         context = context = super(ProductInfo, self).get_context_data(**kwargs)
@@ -74,24 +74,54 @@ class ProductInfo(TemplateView):
             elif price.price > price.curr_target_price:
                 productsabove += 1
 
-
-        # mapprices = mapprices.filter(timestamp__day='10')
         context.update({
-            "product": product,
-            "urls": urls,
-            "retailprices": retailprices,
-            "min_retailprice": min_retailprice,
-            "max_retailprice": max_retailprice,
-            "mapprices": mapprices,
-            "keyaccprices": keyaccprices,
-            "min_retailprice_list": min_retailprice_list,
-            "productsbelow": productsbelow,
-            "productsequal": productsequal,
-            "productsabove": productsabove,
+            'product': product,
+            'urls': urls,
+            'retailprices': retailprices,
+            'min_retailprice': min_retailprice,
+            'max_retailprice': max_retailprice,
+            'mapprices': mapprices,
+            'keyaccprices': keyaccprices,
+            'min_retailprice_list': min_retailprice_list,
+            'productsbelow': productsbelow,
+            'productsequal': productsequal,
+            'productsabove': productsabove,
         })
         return context
 
 
+class AllProducts(TemplateView):
+    template_name='dashboard/all_products.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super(AllProducts, self).get_context_data(**kwargs)
+
+        products = Product.objects.all()
+        retailprices = []
+        productsbelow = 0
+        productsequal = 0
+        productsabove = 0
+
+        for product in products:
+            latest_timestamp = RetailPrice.objects.filter(product_id=product.id).latest('timestamp').timestamp
+            tmp = RetailPrice.objects.filter(timestamp=latest_timestamp)
+            for tmp_pr in tmp:
+                retailprices.append(tmp_pr)
+                if tmp_pr.price < tmp_pr.curr_target_price:
+                    productsbelow += 1
+                elif tmp_pr.price == tmp_pr.curr_target_price:
+                    productsequal += 1
+                elif tmp_pr.price > tmp_pr.curr_target_price:
+                    productsabove += 1
+
+        context.update({
+            'products': products,
+            'retailprices': retailprices,
+            'productsbelow': productsbelow,
+            'productsequal': productsequal,
+            'productsabove': productsabove,
+        })
+        return context
 
 
 #add number of products for each shop
@@ -111,20 +141,20 @@ class ShopsPage(TemplateView):
 
 
 class ShopInfo(TemplateView):
-    template_name = "dashboard/shop_info.html"
+    template_name = 'dashboard/shop_info.html'
 
     def get_context_data(self, **kwargs):
         context = context = super(ShopInfo, self).get_context_data(**kwargs)
         context.update({
-            "shop": Shop.objects.get(id=kwargs['pk']),
-            "prices": RetailPrice.objects.filter(shop=kwargs['pk']),
-            "products": RetailPrice.get_shop_products(shop_id=kwargs['pk']),
+            'shop': Shop.objects.get(id=kwargs['pk']),
+            'prices': RetailPrice.objects.filter(shop=kwargs['pk']),
+            'products': RetailPrice.get_shop_products(shop_id=kwargs['pk']),
         })
         return context
 
 
 class CategoriesPage(TemplateView):
-    template_name = "dashboard/categories_page.html"
+    template_name = 'dashboard/categories_page.html'
 
     def get_context_data(self, **kwargs):
         context = super(CategoriesPage, self).get_context_data(**kwargs)
@@ -134,7 +164,7 @@ class CategoriesPage(TemplateView):
         return context
 
 class CategoryInfo(TemplateView):
-    template_name = "dashboard/category_info.html"
+    template_name = 'dashboard/category_info.html'
 
     def get_context_data(self, **kwargs):
         context = context = super(CategoryInfo, self).get_context_data(**kwargs)
@@ -147,8 +177,8 @@ class CategoryInfo(TemplateView):
         products = Product.objects.filter(main_category__in=children_id_list)
 
         context.update({
-            "category": Category.objects.get(id=kwargs['pk']),
-            "products": products,
+            'category': Category.objects.get(id=kwargs['pk']),
+            'products': products,
         })
         return context
 
