@@ -1,4 +1,5 @@
 from array import array
+from ast import And
 from itertools import product
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
@@ -149,13 +150,50 @@ class ShopsPage(TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super(ShopsPage, self).get_context_data(**kwargs)
-        # all_products = Product.objects.annotate(prod_count=Count('shop', distinct=True))
-        shops = Shop.objects.annotate(prod_count=Count('products', distinct=True))
-        
-            
+        # shops = Shop.objects.annotate(prod_count=Count('products', distinct=True))
+
+        products = Product.objects.filter(active=True)
+
+        shops = Shop.objects.all()
+
+        this_shop_below = 0
+        this_shop_equal = 0
+        this_shop_above = 0
+
+        shops_below = 0
+        shops_equal = 0
+        shops_above = 0
+
+        for shop in shops:
+            this_shop_below = 0
+            this_shop_equal = 0
+            this_shop_above = 0
+            for product in products:
+                try:
+                    ltst_pr_rec = RetailPrice.objects.filter(shop = shop, product=product).latest('timestamp')
+                    if ltst_pr_rec.price < ltst_pr_rec.curr_target_price:
+                        this_shop_below += 1
+                        shops_below += 1
+                    elif ltst_pr_rec.price == ltst_pr_rec.curr_target_price:
+                        this_shop_equal += 1
+                        shops_equal += 1
+                    elif ltst_pr_rec.price > ltst_pr_rec.curr_target_price:
+                        this_shop_above += 1
+                        shops_above += 1
+                except:
+                    pass
+            shop.this_shop_below = this_shop_below
+            shop.this_shop_equal = this_shop_equal
+            shop.this_shop_above = this_shop_above
+            shop.prod_count = this_shop_below + this_shop_equal + this_shop_above
+
+
         context.update({
             'shops': shops,
-        })
+            'shops_below' : shops_below,
+            'shops_equal' : shops_equal,
+            'shops_above' : shops_above,
+            })
         return context
 
 
