@@ -1,0 +1,115 @@
+{% extends 'dashboard_base.html' %}
+{% load dashboard_tags %}
+{% load static %}
+
+{% block headEnd %}
+<script src='{% static '/map_reporter/js/shop-page-data-table.js' %}'></script>
+<style>
+    label {
+    padding: 5px;
+}
+#shops-table_wrapper{
+    padding:5px;
+}
+</style>
+{% endblock %}
+
+{% block main %}
+
+    <h1 class='mb-4'>Ολα τα προϊόντα</h1>
+    <div class='col-xl-6'>
+            <div class='card mb-4'>
+                <div class='card-header'>
+                    <i class='fas fa-chart-pie me-1'></i>
+                    OK Products Pie Chart
+                </div>
+                <div class='card-body'><canvas id='myPieChart' width='100%' height='50'></canvas></div>
+                <div class='card-footer small text-muted'>Updated yesterday at 11:59 PM</div>
+            </div>
+        </div>
+
+    <div class='card mb-4'>
+        <div class='card-header mb-4'>
+            <i class='fas fa-table me-1'></i>
+            Ολα τα προϊόντα
+        </div>
+            <table id='shops-table' class=''>
+                <thead>
+                <tr>
+                    <th>Όνομα</th>
+                    <th>Κατάστημα</th>
+                    <th>Τιμή</th>
+                    <th>Target Price</th>
+                    <th>Diff</th>
+                    <th>Diff %</th>
+                    <th>Επ. Μεταπωλητής</th>
+                    <th>Πωλητής</th>
+                    <th>Date</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for retailprice in retailprices %}
+                <tr>
+                    <td>
+                        <a href='{% url 'product_info' retailprice.product.id %}'>
+                            {{retailprice.product}}
+                        </a>
+                    </td>
+                    <td>
+                        {{retailprice.shop}}
+                    </td>
+                    <td>
+                        {{retailprice.price}}
+                    </td>
+                    <td>
+                        {{retailprice.curr_target_price}}
+                    </td>
+                    <td>
+                        {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
+                            <p class='text-danger'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                        {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
+                            <p class='text-success'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                        {% else %}
+                            <p class='text-black'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if retailprice.price|ch_sub:retailprice.curr_target_price < 0 %}
+                            <p class='text-danger'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                        {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
+                            <p class='text-success'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                        {% else %}
+                            <p class='text-black'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                        {% endif %}
+                    </td>
+                    <td>{% if retailprice.official_reseller == False %}
+                            <p class='text-danger'>Όχι</p>
+                        {% else %}
+                            <p class='text-success'>Ναι</p>
+                        {% endif %}
+                    </td>
+                    <td>Seller</td>
+                    <td>{{retailprice.timestamp}}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+    </div>
+
+    <script>
+        // Pie Chart Example
+        var ctx = document.getElementById('myPieChart');
+        var myPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Κάτω', 'Ακριβώς', 'Πάνω'],
+            datasets: [{
+            data: [{{productsbelow}}, {{productsequal}}, {{productsabove}}],
+            backgroundColor: ['#dc3545', '#ffc107', '#28a745'],
+            }],
+        },
+        });
+    </script>
+
+
+{% endblock %}

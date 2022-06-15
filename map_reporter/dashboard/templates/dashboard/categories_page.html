@@ -40,7 +40,11 @@
                     </td>                
                     <td>
                         <p>
-                            {{category.get_categories}}
+                            {% if not category.parent %}
+                                Καμία
+                            {% else %}
+                                {{category.parent}}
+                            {% endif %}
                         </p> 
                     </td>
                 </tr>
