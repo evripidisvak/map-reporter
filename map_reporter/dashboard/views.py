@@ -1,14 +1,14 @@
-from array import array
-from ast import And
-from itertools import product
+# from array import array
+# from ast import And
+# from itertools import product
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.views.generic.base import TemplateView
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate
-from django.views import generic
-from django.urls import reverse
+# from django.views import generic
+# from django.urls import reverse
 from django.db.models import *
 from reporter.models import *
 from django.db.models import Count
