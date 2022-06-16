@@ -7,7 +7,8 @@
 {% endblock %}
 
 {% block headEnd %}
-<script src='{% static '/map_reporter/js/all-products-page-data-table.js' %}'></script>
+<script src="{% static '/map_reporter/js/all-products-page-data-table.js' %}"></script>
+
 {% comment %} <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.css"/> {% endcomment %}
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
@@ -116,7 +117,7 @@
                         <th>Target Price</th>
                         <th>Diff</th>
                         <th>Diff %</th>
-                        <th>Επ. Μεταπωλητής</th>
+                        <th class='add_select'>Επ. Μεταπωλητής</th>
                         <th class='add_select'>Πωλητής</th>
                         <th>Date</th>
                     </tr>
@@ -142,9 +143,7 @@
                                     </a>
                                 </td>
                                 <td>
-                                    <a href='{% url 'shop_info' retailprice.shop.id %}'>
-                                        {{retailprice.shop}}
-                                    </a>
+                                    <a href="{% url 'shop_info' retailprice.shop.id %}">{{retailprice.shop}}</a>
                                 </td>
                                 <td>
                                     {{retailprice.price}}
