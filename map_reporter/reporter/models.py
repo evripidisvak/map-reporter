@@ -21,9 +21,11 @@ class Category(MPTTModel):
         return self.name
 
     class Meta:
-        verbose_name = "Category"
-        verbose_name_plural = "Categories"
-
+        verbose_name = 'Category'
+        verbose_name_plural = 'Categories'
+    
+    def get_recursive_product_count(self):
+        return Product.objects.filter(main_category__in=self.get_descendants(include_self=True)).count()
 
 class Manufacturer(models.Model):
     name = models.CharField(max_length=50)

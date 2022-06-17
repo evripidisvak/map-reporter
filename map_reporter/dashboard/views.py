@@ -11,7 +11,7 @@ from django.views import generic
 from django.urls import reverse
 from django.db.models import *
 from reporter.models import *
-from django.db.models import Count
+
 
 
 class Index(View):
@@ -37,7 +37,7 @@ class Login(View):
             login(request, user)
             return HttpResponseRedirect("/")
         else:
-            return render(request, self.template, {"form": form})
+            return render(request, self.template, {'form': form})
 
 
 class ProductInfo(TemplateView):
@@ -92,7 +92,7 @@ class ProductInfo(TemplateView):
 
 
 class AllProducts(TemplateView):
-    template_name = "dashboard/all_products.html"
+    template_name = 'dashboard/all_products.html'
 
     def get_context_data(self, **kwargs):
         context = super(AllProducts, self).get_context_data(**kwargs)
@@ -110,17 +110,13 @@ class AllProducts(TemplateView):
 
         for product in products:
             try:
-                latest_timestamp = (
-                    RetailPrice.objects.filter(product_id=product.id)
-                    .latest("timestamp")
-                    .timestamp
-                )
+                latest_timestamp = RetailPrice.objects.filter(
+                    product_id=product.id).latest('timestamp').timestamp
                 this_products_below = 0
                 this_products_equal = 0
                 this_products_above = 0
                 tmp = RetailPrice.objects.filter(
-                    timestamp=latest_timestamp, product=product
-                )
+                    timestamp=latest_timestamp, product=product)
                 for tmp_pr in tmp:
                     retailprices.append(tmp_pr)
                     if tmp_pr.price < tmp_pr.curr_target_price:
@@ -200,14 +196,12 @@ class ShopsPage(TemplateView):
             shop.this_shop_above = this_shop_above
             shop.prod_count = this_shop_below + this_shop_equal + this_shop_above
 
-        context.update(
-            {
-                "shops": shops,
-                "shops_below": shops_below,
-                "shops_equal": shops_equal,
-                "shops_above": shops_above,
-            }
-        )
+        context.update({
+            'shops': shops,
+            'shops_below': shops_below,
+            'shops_equal': shops_equal,
+            'shops_above': shops_above,
+        })
         return context
 
 
@@ -231,11 +225,33 @@ class CategoriesPage(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(CategoriesPage, self).get_context_data(**kwargs)
-        context.update(
-            {
-                "categories": Category.objects.all(),
-            }
-        )
+        categories = Category.objects.all()
+        products = Product.objects.all()
+        prods_below = 0
+        prods_equal = 0
+        prods_above = 0
+
+        for category in categories:
+            category.asc_count = category.get_ancestors(ascending=False, include_self=False)
+            for product in products:
+                if product.main_category == category:
+                    try:
+                        ltst_pr_rec = RetailPrice.objects.filter(product=product).latest('timestamp')
+                        if ltst_pr_rec.price < ltst_pr_rec.curr_target_price:
+                            prods_below += 1
+                        elif ltst_pr_rec.price == ltst_pr_rec.curr_target_price:
+                            prods_equal += 1
+                        elif ltst_pr_rec.price > ltst_pr_rec.curr_target_price:
+                            prods_above += 1
+                    except:
+                        pass
+            category.prods_below = prods_below
+            category.prods_equal = prods_equal
+            category.prods_above = prods_above
+
+        context.update({
+            'categories': categories,
+        })
         return context
 
 
