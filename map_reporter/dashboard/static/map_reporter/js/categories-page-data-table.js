@@ -1,3 +1,5 @@
 $(document).ready(function () {
-    $('#categories-table').DataTable();
+    $('#categories-table').DataTable({
+        "ordering": false
+    });
 });
