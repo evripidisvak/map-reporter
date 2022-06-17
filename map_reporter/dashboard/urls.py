@@ -1,5 +1,7 @@
 from django.urls import include, path
 from dashboard import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 # app_name = 'dashboard'
 
@@ -13,3 +15,6 @@ urlpatterns = [
     path('categories/', views.CategoriesPage.as_view(), name='categories_page'),
     path('category/<int:pk>/', views.CategoryInfo.as_view(), name='category_info'),
 ]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
