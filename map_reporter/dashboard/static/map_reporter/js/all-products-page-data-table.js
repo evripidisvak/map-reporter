@@ -2,7 +2,9 @@ $(document).ready(function () {
     // Setup - add a text input to each footer cell
     $('#all-products-table thead tr:eq(1) th').each(function () {
         var title = $(this).text();
-        $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-table" />');
+        if (! $(this).hasClass('no_filter')) {
+            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-table" />');
+        }
     });
 
     // DataTable
@@ -27,6 +29,8 @@ $(document).ready(function () {
                     });
 
                 column.data().unique().sort().each(function (d, j) {
+                    const regex = /(<([^>]+)>)/ig;
+                    d = d.replace(regex, "");
                     select.append('<option value="' + d + '">' + d + '</option>');
                 });
             });
@@ -48,7 +52,9 @@ $(document).ready(function () {
     // Setup - add a text input to each footer cell
     $('#all-products-prices-table thead tr:eq(1) th').each(function () {
         var title = $(this).text();
-        $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-prices-table" />');
+        if (! $(this).hasClass('no_filter')) {
+            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-prices-table" />');
+        }
     });
 
     // DataTable

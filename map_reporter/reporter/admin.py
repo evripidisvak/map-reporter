@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, Source, Page, Shop, RetailPrice, MapPrice
+from .models import Manufacturer, Category, Product, Source, Page, Shop, RetailPrice, MapPrice
 from mptt.admin import MPTTModelAdmin, DraggableMPTTAdmin, TreeRelatedFieldListFilter
 
 
@@ -11,19 +11,20 @@ class PageInline(admin.TabularInline):
 
 class ProductAdmin(admin.ModelAdmin):
     inlines = [PageInline]
-    list_display = ('product_name', 'sku', 'map_price',
+    list_display = ('name', 'sku', 'map_price',
                     'key_acc_price', 'main_category', 'active')
-    search_fields = ['product_name', 'sku']
+    search_fields = ['name', 'sku']
     list_filter = (('main_category', TreeRelatedFieldListFilter), 'active',)
     # list_filter = ['main_category', 'active']
     list_select_related = ('main_category',)
+    readonly_fields = ('image_preview',)
 
+    def image_preview(self, obj):
+        return obj.image_preview
+    
+    image_preview.short_description = 'Image Preview'
+    image_preview.allow_tags = True
 
-# class CategoryAdmin(admin.ModelAdmin):
-#     search_fields = ['name']
-#     mptt_level_indent = 20
-#     list_display = ('name', 'parent')
-#     # ordering = ['-parent','name']
 
 class CategoryAdmin(DraggableMPTTAdmin):
     search_fields = ['name']
@@ -69,15 +70,6 @@ class RetailPriceView(admin.ModelAdmin):
     list_display = ('product', 'price', 'shop', 'official_reseller', 'timestamp')
     list_filter = ['product', 'shop']
 
-
-
-# admin.site.register(Category, CategoryAdmin)
-# admin.site.register(
-#     Category, 
-#     DraggableMPTTAdmin,
-#     list_display=('tree_actions', 'indented_title', 'parent',),
-#     list_display_links=('indented_title',),
-#     )
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Source)
