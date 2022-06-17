@@ -1,34 +1,61 @@
 {% extends "dashboard_base.html" %}
 {% load dashboard_tags %}
+{% load thumbnail %}
 {% block title %}
-{{product.product_name}}
+{{product.name}}
 {% endblock %}
 {% block main %}
 
 <div class="container-fluid px-4">
-    <h3 class="mt-4">{{ product.product_name }}</h3>
-    <div class="row row-cols-2 p-2">
-        <h5 class="p-sm-2 col-2 bg-secondary bg-opacity-25">SKU</h5>
-        <h5 class="p-sm-2 col-10 bg-secondary bg-opacity-25">{{ product.sku }}</h5>
-        <h5 class="p-sm-2 col-2">map</h5>
-        <h5 class="p-sm-2 col-10">{{ product.map_price }}</h5>
-        <h5 class="p-sm-2 col-2 bg-secondary bg-opacity-25">key acc</h5>
-        <h5 class="p-sm-2 col-10 bg-secondary bg-opacity-25">{{ product.key_acc_price }}</h5>
-        <h5 class="p-sm-2 col-2">cat</h5>
-        <p class="p-sm-2 col-10">
-            {% for category in product.main_category.get_family %}
-                <a href="{% url 'category_info' product.main_category.id %}">{{category}}</a>
-                {% if not forloop.last %}
-                    >
-                {% endif %}
-            {% endfor %}
-        </p>
-        <h5 class="p-sm-2 col-12 bg-secondary bg-opacity-25">urls</h5>
-    </div>
-    <div class="row ps-4 bg-secondary bg-opacity-25">
-        {% for url in urls %}
-            <a href={{ url }} target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
-        {% endfor %}
+    <h3 class="mt-4">{{ product.name }}</h3>
+
+    <div class="row pt-lg-5">
+        <div class="col-xl-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-area me-1"></i>
+                    Φωτογραφία
+                </div>
+                <img src="{{product.image.url}}" alt="product.name" width=100%>
+            </div>
+        </div>
+
+        <div class="col-xl-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-area me-1"></i>
+                    Χαρακτηριστικά
+                </div>
+
+                <div class="row bg-secondary bg-opacity-25">
+                    <div class="col-2">
+                        <h5 class="p-sm-2 ">SKU</h5>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="p-sm-2">{{ product.sku }}</h5>
+                    </div>
+                </div>
+                <h5 class="p-sm-2 col-2">map</h5>
+                <h5 class="p-sm-2 col-6">{{ product.map_price }}</h5>
+                <h5 class="p-sm-2 col-2 bg-secondary bg-opacity-25">key acc</h5>
+                <h5 class="p-sm-2 col-6 bg-secondary bg-opacity-25">{{ product.key_acc_price }}</h5>
+                <h5 class="p-sm-2 col-2">cat</h5>
+                <p class="p-sm-2 col-6">
+                    {% for category in product.main_category.get_family %}
+                        <a href="{% url 'category_info' product.main_category.id %}">{{category}}</a>
+                        {% if not forloop.last %}
+                            >
+                        {% endif %}
+                    {% endfor %}
+                </p>
+                <h5 class="p-sm-2 col-12 bg-secondary bg-opacity-25">urls</h5>
+                <div class="row ps-4 bg-secondary bg-opacity-25">
+                    {% for url in urls %}
+                        <a href={{ url }} target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row pt-lg-5">

@@ -1,6 +1,7 @@
 {% extends 'dashboard_base.html' %}
 {% load dashboard_tags %}
 {% load static %}
+{% load thumbnail %}
 
 {% block title %}
 Προϊόντα
@@ -45,8 +46,10 @@
                 <table id='all-products-table' class=''>
                     <thead>
                         <tr>
+                            <th>Φωτογραφία</th>
                             <th class='add_select'>Active</th>
-                            <th>Όνομα</th>
+                            <th class='add_select'>Κατασκευαστής</th>
+                            <th>Μοντέλο</th>
                             <th>MAP Price</th>
                             <th>Key Acc Price</th>
                             <th># Καταστημάτων</th>
@@ -55,25 +58,37 @@
                             <th>Κατ. above</th>
                         </tr>
                         <tr>
-                            <th>Active</th>
-                            <th>Όνομα</th>
-                            <th>MAP Price</th>
-                            <th>Key Acc Price</th>
-                            <th># Καταστημάτων</th>
-                            <th>Κατ. below</th>
-                            <th>Κατ. equal</th>
-                            <th>Κατ. above</th>
+                            <th class='no_filter'></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                     {% for product in products %}
                     <tr>
                         <td>
+                            {% thumbnail product.image table_image_size as im %}
+                                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="product.name">
+                            {% endthumbnail %}
+                        </td>
+                        <td>
                             {{product.active}}
                         </td>
                         <td>
                             <a href='{% url 'product_info' product.id %}'>
-                                {{product.product_name}}
+                                {{product.manufacturer}}
+                            </a>
+                        </td>
+                        <td>
+                            <a href='{% url 'product_info' product.id %}'>
+                                {{product.model}}
                             </a>
                         </td>
                         <td>
@@ -110,7 +125,9 @@
                 <table id='all-products-prices-table' class=''>
                     <thead>
                     <tr>
-                        <th>Όνομα</th>
+                        <th>Φωτογραφία</th>
+                        <th class='add_select'>Κατασκευαστής</th>
+                        <th>Μοντέλο</th>
                         <th class='add_select'>Κατάστημα</th>
                         <th>Τιμή</th>
                         <th>Target Price</th>
@@ -121,15 +138,17 @@
                         <th>Date</th>
                     </tr>
                     <tr>
-                        <th>Όνομα</th>
-                        <th>Κατάστημα</th>
-                        <th>Τιμή</th>
-                        <th>Target Price</th>
-                        <th>Diff</th>
-                        <th>Diff %</th>
-                        <th>Επ. Μεταπωλητής</th>
-                        <th>Πωλητής</th>
-                        <th>Date</th>
+                        <th class='no_filter'></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -137,8 +156,19 @@
                         {% if retailprice.product.active %}
                             <tr>
                                 <td>
+                                    {% thumbnail retailprice.product.image table_image_size as im %}
+                                        <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="product.name">
+                                    {% endthumbnail %}
+                                    
+                                </td>
+                                <td>
                                     <a href='{% url 'product_info' retailprice.product.id %}'>
-                                        {{retailprice.product}}
+                                        {{retailprice.product.manufacturer}}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href='{% url 'product_info' retailprice.product.id %}'>
+                                        {{retailprice.product.model}}
                                     </a>
                                 </td>
                                 <td>
