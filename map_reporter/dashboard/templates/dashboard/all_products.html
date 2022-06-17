@@ -134,7 +134,7 @@
                     </thead>
                     <tbody>
                     {% for retailprice in retailprices %}
-                        {% if retailprice.product.active == True %}
+                        {% if retailprice.product.active %}
                             <tr>
                                 <td>
                                     <a href='{% url 'product_info' retailprice.product.id %}'>

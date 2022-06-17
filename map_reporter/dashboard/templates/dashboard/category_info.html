@@ -103,7 +103,8 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for product in active_products %}
+                        {% for product in products %}
+                        {% if product.active %}                                        
                         <tr>
                             <td>
                             <a href="{% url 'product_info' product.id %}">{{product}}</a> 
@@ -118,6 +119,7 @@
                             <p>{{product.main_category}}</p> 
                             </td>
                         </tr>
+                        {% endif %}
                         {% endfor %}
                     </tbody>
                 </table>
