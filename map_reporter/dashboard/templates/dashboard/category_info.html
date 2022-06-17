@@ -1,15 +1,19 @@
 {% extends "dashboard_base.html" %}
 {% load static %}
-
+{% block title %}{{category.name}}{% endblock title %}
 {% block headEnd %}
-    <script src="{% static '/map_reporter/js/categories-page-data-table.js' %}"></script>
+    <script src="{% static '/map_reporter/js/category-info-data-table.js' %}"></script>
     <style>
 
     label {
         padding: 5px;
     }
 
-    #categories-table_wrapper{
+    #all-products-table_wrapper{
+        padding:5px;
+    }
+
+    #active-products-table_wrapper{
         padding:5px;
     }
 
@@ -23,38 +27,120 @@
     {{ category.name }}
 </h1>
 
-<div class="card mb-4">
-    <div class="card-header mb-4">
-            <i class="fas fa-table me-1 MB-4"></i>
-           Προϊόντα στην κατηγορίας {{ category.name }}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col col-6">
+            <div class='card mb-4'>
+                <div class='card-header'>
+                    <i class='fas fa-chart-pie me-1'></i>
+                    OK Products Pie Chart
+                </div>
+                <div class='card-body'><canvas id='okProductsPieChart' width='100%' height='50'></canvas></div>
+                <div class='card-footer small text-muted'>Updated yesterday at 11:59 PM</div>
+            </div>
         </div>
-    <table id='categories-table' class=''>
-        <thead>
-            <tr>
-                <th>Προϊόν</th>
-                <th>Τιμή MAP</th>
-                <th>Τιμή Key Account</th>
-                <th>Γονική Κατηγορία</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for product in products %}
-            <tr>
-                <td>
-                <a href="{% url 'product_info' product.id %}">{{product}}</a> 
-                </td>                
-                <td>
-                <p>{{product.map_price}} €</p> 
-                </td>                
-                <td>
-                <p>{{product.key_acc_price}} €</p> 
-                </td>
-                <td>
-                <p>{{product.main_category}}</p> 
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        <div class="col col-6">
+            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quidem, quam libero obcaecati laboriosam ab explicabo neque quae, deserunt debitis quia provident. Placeat ad quaerat eum totam. Commodi vero sequi a!
+        </div>
+    </div>
 </div>
+
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col col-12">
+            <div class="card mb-4">
+                <div class="card-header mb-4">
+                        <i class="fas fa-table me-1 MB-4"></i>
+                       Όλα τα προϊόντα στην κατηγορία&nbsp;<b>{{ category.name }}</b>
+                    </div>
+                <table id='all-products-table' class=''>
+                    <thead>
+                        <tr>
+                            <th>Προϊόν</th>
+                            <th>Τιμή MAP</th>
+                            <th>Τιμή Key Account</th>
+                            <th>Γονική Κατηγορία</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>
+                            <a href="{% url 'product_info' product.id %}">{{product}}</a> 
+                            </td>                
+                            <td>
+                            <p>{{product.map_price}} €</p> 
+                            </td>                
+                            <td>
+                            <p>{{product.key_acc_price}} €</p> 
+                            </td>
+                            <td>
+                            <p>{{product.main_category}}</p> 
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col col-12">
+            <div class="card mb-4">
+                <div class="card-header mb-4">
+                        <i class="fas fa-table me-1 MB-4"></i>
+                       Όλα τα <b>ενεργά</b> προϊόντα στην κατηγορία&nbsp;<b>{{ category.name }}</b>
+                </div>
+                <table id="active-products-table">
+                    <thead>
+                        <tr>
+                            <th>Προϊόν</th>
+                            <th>Τιμή MAP</th>
+                            <th>Τιμή Key Account</th>
+                            <th>Γονική Κατηγορία</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in active_products %}
+                        <tr>
+                            <td>
+                            <a href="{% url 'product_info' product.id %}">{{product}}</a> 
+                            </td>                
+                            <td>
+                            <p>{{product.map_price}} €</p> 
+                            </td>                
+                            <td>
+                            <p>{{product.key_acc_price}} €</p> 
+                            </td>
+                            <td>
+                            <p>{{product.main_category}}</p> 
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--Pie Chart script-->
+<script>
+const pie_elem = $('#okProductsPieChart');
+const cat_pie_chart = new Chart( pie_elem, {
+    type: 'pie',
+    data: {
+        labels: ['Κάτω', 'Ακριβώς', 'Πάνω'],
+        datasets: [{
+        data: [{{category.prods_below}}, {{category.prods_equal}}, {{category.prods_above}}],
+        backgroundColor: ['#dc3545', '#28a745', '#007bff'],
+        }],
+    },
+})
+
+</script>
+
 {% endblock %}
