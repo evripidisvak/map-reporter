@@ -226,28 +226,29 @@ class CategoriesPage(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(CategoriesPage, self).get_context_data(**kwargs)
         categories = Category.objects.all()
-        products = Product.objects.all()
-        prods_below = 0
-        prods_equal = 0
-        prods_above = 0
-
+        products_below = 0
+        products_ok = 0
         for category in categories:
-            category.asc_count = category.get_ancestors(ascending=False, include_self=False)
+            products_below = 0
+            products_ok = 0
+            products = Product.objects.filter(main_category__in=category.get_descendants(include_self=True), active=True)
+            category.products_list = products
+            category.product_count = products.count
+            category.ansc_count = category.get_ancestors(ascending=False, include_self=False)
             for product in products:
-                if product.main_category == category:
-                    try:
-                        ltst_pr_rec = RetailPrice.objects.filter(product=product).latest('timestamp')
-                        if ltst_pr_rec.price < ltst_pr_rec.curr_target_price:
-                            prods_below += 1
-                        elif ltst_pr_rec.price == ltst_pr_rec.curr_target_price:
-                            prods_equal += 1
-                        elif ltst_pr_rec.price > ltst_pr_rec.curr_target_price:
-                            prods_above += 1
-                    except:
-                        pass
-            category.prods_below = prods_below
-            category.prods_equal = prods_equal
-            category.prods_above = prods_above
+                try:
+                    latest_timestamp = RetailPrice.objects.filter(product=product).latest('timestamp').timestamp
+                    ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=latest_timestamp)
+                    for retail_price in ltst_pr_rec:
+                        if retail_price.price < retail_price.curr_target_price:
+                            products_below += 1
+                            break
+                        else:
+                            products_ok += 1
+                except:
+                    pass
+            category.products_below = products_below
+            category.products_ok = products_ok
 
         context.update({
             'categories': categories,
