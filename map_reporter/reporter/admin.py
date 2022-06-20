@@ -1,7 +1,23 @@
 from django.contrib import admin
-from .models import Manufacturer, Category, Product, Source, Page, Shop, RetailPrice, MapPrice
+from django.db import models
 from mptt.admin import MPTTModelAdmin, DraggableMPTTAdmin, TreeRelatedFieldListFilter
+from django.contrib.admin.widgets import AdminFileWidget
+from django.utils.safestring import mark_safe
+from .models import Manufacturer, Category, Product, Source, Page, Shop, RetailPrice, MapPrice
 
+
+# Replace the default ImageField with one that shows a preview of the uploaded image
+class AdminImageWidget(AdminFileWidget):
+    def render(self, name, value, attrs=None, renderer=None):
+        output = []
+        if value and getattr(value, "url", None):
+            image_url = value.url
+            file_name = str(value)
+            output.append(
+                '<a href="{}" target="_blank"><img src="{}" alt="{}" style="max-height: 200px;"/></a>'.
+                    format(image_url, image_url, file_name))
+        output.append(super().render(name, value, attrs))
+        return mark_safe(u''.join(output))
 
 
 class PageInline(admin.TabularInline):
@@ -15,15 +31,10 @@ class ProductAdmin(admin.ModelAdmin):
                     'key_acc_price', 'main_category', 'active')
     search_fields = ['name', 'sku']
     list_filter = (('main_category', TreeRelatedFieldListFilter), 'active',)
-    # list_filter = ['main_category', 'active']
     list_select_related = ('main_category',)
-    readonly_fields = ('image_preview',)
-
-    def image_preview(self, obj):
-        return obj.image_preview
-    
-    image_preview.short_description = 'Image Preview'
-    image_preview.allow_tags = True
+    formfield_overrides = {
+        models.ImageField: {'widget': AdminImageWidget},
+    }
 
 
 class CategoryAdmin(DraggableMPTTAdmin):

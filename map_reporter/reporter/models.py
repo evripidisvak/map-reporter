@@ -6,6 +6,12 @@ from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey
 from django.core.validators import RegexValidator
 from django.utils.safestring import mark_safe
+import os, urllib, sys
+from urllib.parse import urlparse
+from urllib.request import urlretrieve
+from io import BytesIO
+from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
 class Category(MPTTModel):
@@ -48,7 +54,9 @@ class Product(models.Model):
         max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     )
     main_category = models.ForeignKey(Category, models.SET_NULL, blank=True, null=True)
+    upload_path = 'product_images'
     image = models.ImageField(upload_to='product_images', default='product_images/placeholder_img.png')
+    image_url = models.URLField(null=True, blank=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -56,6 +64,7 @@ class Product(models.Model):
         self.__original_key_acc_price = self.key_acc_price
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
+        # Create new MapPrice and KeyAccPrice objects when these prices change
         old_map_price = self.__original_map_price
         new_map_price = self.map_price
 
@@ -72,6 +81,29 @@ class Product(models.Model):
             KeyAccPrice.objects.create(
                 price=new_key_acc_price, timestamp=timezone.now(), product=self
             )
+        
+        # Save the image from the image_url field
+        if self.image_url:
+            upload_path = 'uploads/product_images'
+            filename = urlparse(self.image_url).path.split('/')[-1]
+            urllib.request.urlretrieve(self.image_url, os.path.join(upload_path, filename))
+            file_save_dir = 'product_images'
+            self.image = os.path.join(file_save_dir, filename)
+            self.image_url = ''
+        
+        # Optimize uploaded image
+        if self.image:
+            output = BytesIO()
+            img = Image.open(self.image)
+            output = BytesIO()
+            if img.mode != 'RGB':
+                img = img.convert('RGB')
+            if img.width > 800 or img.height > 800:
+                img.resize((800, 800))
+            img.save(output, format='jpeg', quality=80)
+            output.seek(0)
+            self.image = InMemoryUploadedFile(output,'ImageField', "%s.jpg" %self.image.name.split('.')[0], 'image/jpeg', sys.getsizeof(output), None)
+        super(Product, self).save()
 
     def get_active(self):
         return self.active
