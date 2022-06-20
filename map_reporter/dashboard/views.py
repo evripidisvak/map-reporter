@@ -264,16 +264,33 @@ class CategoryInfo(TemplateView):
             include_self=True
         )
         children_id_list = []
-
+        prods_below = 0
+        prods_equal = 0
+        prods_above = 0
         for child in category_descendants:
             children_id_list.append(child.id)
-
+        category = Category.objects.get(id=kwargs['pk'])
         products = Product.objects.filter(main_category__in=children_id_list)
 
-        context.update(
-            {
-                "category": Category.objects.get(id=kwargs["pk"]),
-                "products": products,
-            }
-        )
+        for product in products:
+            if product.active:
+                try:
+                    ltst_pr_rec = RetailPrice.objects.filter(product=product).latest('timestamp')
+                    if ltst_pr_rec.price < ltst_pr_rec.curr_target_price:
+                        prods_below += 1
+                    elif ltst_pr_rec.price == ltst_pr_rec.curr_target_price:
+                        prods_equal += 1
+                    elif ltst_pr_rec.price > ltst_pr_rec.curr_target_price:
+                        prods_above += 1
+                except:
+                    pass
+            category.prods_below = prods_below
+            category.prods_equal = prods_equal
+            category.prods_above = prods_above
+
+        context.update({
+            'category': category,
+            'products': products,
+        })
+
         return context
