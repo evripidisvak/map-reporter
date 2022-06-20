@@ -1,11 +1,24 @@
 {% extends "dashboard_base.html" %}
 {% load dashboard_tags %}
+{% load static %}
 {% load thumbnail %}
+
 {% block title %}
 {{product.name}}
 {% endblock %}
-{% block main %}
 
+{% block headEnd %}
+
+<script src="{% static '/map_reporter/js/product-info-data-table.js' %}"></script>
+
+{% comment %} <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.css"/> {% endcomment %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script>
+
+{% endblock %}
+
+{% block main %}
 <div class="container-fluid px-4">
     <h3 class="mt-4">{{ product.name }}</h3>
 
@@ -16,7 +29,7 @@
                     <i class="fas fa-chart-area me-1"></i>
                     Φωτογραφία
                 </div>
-                <img src="{{product.image.url}}" alt="product.name" width=100%>
+                <img class="p-3" src="{{product.image.url}}" alt="product.name" width=100%>
             </div>
         </div>
 
@@ -26,33 +39,83 @@
                     <i class="fas fa-chart-area me-1"></i>
                     Χαρακτηριστικά
                 </div>
-
-                <div class="row bg-secondary bg-opacity-25">
-                    <div class="col-2">
-                        <h5 class="p-sm-2 ">SKU</h5>
+                <div class="container">
+                    <div class="row gx-5 bg-secondary bg-opacity-25">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Ενεργό</h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2">{{ product.is_active }}</h5>
+                        </div>
                     </div>
-                    <div class="col-6">
-                        <h5 class="p-sm-2">{{ product.sku }}</h5>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Κατασκευαστής</h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            {% comment %} TODO add manufacturer url {% endcomment %}
+                            <h5 class="p-sm-2">{{ product.manufacturer }}</h5>
+                        </div>
                     </div>
-                </div>
-                <h5 class="p-sm-2 col-2">map</h5>
-                <h5 class="p-sm-2 col-6">{{ product.map_price }}</h5>
-                <h5 class="p-sm-2 col-2 bg-secondary bg-opacity-25">key acc</h5>
-                <h5 class="p-sm-2 col-6 bg-secondary bg-opacity-25">{{ product.key_acc_price }}</h5>
-                <h5 class="p-sm-2 col-2">cat</h5>
-                <p class="p-sm-2 col-6">
-                    {% for category in product.main_category.get_family %}
-                        <a href="{% url 'category_info' product.main_category.id %}">{{category}}</a>
-                        {% if not forloop.last %}
-                            >
-                        {% endif %}
-                    {% endfor %}
-                </p>
-                <h5 class="p-sm-2 col-12 bg-secondary bg-opacity-25">urls</h5>
-                <div class="row ps-4 bg-secondary bg-opacity-25">
-                    {% for url in urls %}
-                        <a href={{ url }} target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
-                    {% endfor %}
+                    <div class="row gx-5 bg-secondary bg-opacity-25">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Μοντέλο</h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2">{{ product.model }}</h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">SKU</h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2">{{ product.sku }}</h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5 bg-secondary bg-opacity-25">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Τιμή MAP</h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2">{{ product.map_price }}</h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Τιμή Key Account</h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2">{{ product.key_acc_price }}</h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5 bg-secondary bg-opacity-25">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Κατηγορία</h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <p class="p-sm-2">
+                                {% for category in product.main_category.get_family %}
+                                    <a class="link-dark fs-5" href="{% url 'category_info' category.id %}">{{category}}</a>
+                                    {% if not forloop.last %}
+                                        >
+                                    {% endif %}
+                                {% endfor %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Σελίδες</h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <div class="row g-0">
+                                {% for url in urls %}
+                                    <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -63,10 +126,10 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
-                    Min Prices Chart
+                    Ελάχιστες τιμές προϊόντος
                 </div>
                 <div class="card-body"><canvas id="MinPriceChart" width="100%" height="40"></canvas></div>
-                <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
+                <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
 
@@ -74,44 +137,42 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-pie me-1"></i>
-                    OK Products Pie Chart
+                    Κατάσταση τιμών καταστημάτων
                 </div>
                 <div class="card-body"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
-                <div class="card-footer small text-muted">Updated yesterday at 11:59 PM</div>
+                <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
         
         <div class="card mb-4">
         <div class="card-header">
             <i class="fas fa-table me-1"></i>
-            Product Prices Table
+            Πίνακας τιμών προϊόντος
         </div>
         <div class="card-body">
-            <table id="ProductPricesTable">
+            <table id="product_prices_table">
                 <thead>
                     <tr>
-                        <th>Κατάστημα</th>
+                        <th class='add_select'>Κατάστημα</th>
                         <th>Λ. Τιμή</th>
                         <th>Target Price</th>
                         <th>Diff</th>
                         <th>Diff %</th>
-                        <th>Επ. Μεταπωλητής</th>
-                        <th>Πωλητής</th>
+                        <th class='add_select'>Επ. Μεταπωλητής</th>
+                        <th class='add_select'>Πωλητής</th>
                         <th>Ημερομηνία</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
+                        <th></th>
                     </tr>
                 </thead>
-                {% comment %} <tfoot>
-                    <tr>
-                        <th>Κατάστημα</th>
-                        <th>Λ. Τιμή</th>
-                        <th>Target Price</th>
-                        <th>Diff</th>
-                        <th>Diff %</th>
-                        <th>Επ. Μεταπωλητής</th>
-                        <th>Πωλητής</th>
-                        <th>Ημερομηνία</th>
-                    </tr>
-                </tfoot> {% endcomment %}
                 <tbody>
                     {% for retailprice in retailprices %}
                     <tr>
@@ -214,8 +275,8 @@
         }],
         yAxes: [{
             ticks: {
-            min: {{min_retailprice.min_price__min|add:"-10"}},
-            max: {{max_retailprice.min_price__max|add:"10"}},
+            min: {{min_retailprice.min_price__min|per_sub:"10"}},
+            max: {{max_retailprice.min_price__max|per_add:"10"}},
             maxTicksLimit: 5
             },
             gridLines: {
@@ -236,17 +297,10 @@
     data: {
         labels: ["Κάτω", "Ακριβώς", "Πάνω"],
         datasets: [{
-        data: [{{products_below}}, {{products_equal}}, {{products_above}}],
+        data: [{{shops_below}}, {{shops_equal}}, {{shops_above}}],
         backgroundColor: ['#dc3545', '#28a745', '#007bff'],
         }],
     },
     });
-
-    // Call the dataTables jQuery plugin
-    $(document).ready(function() {
-    $('#ProductPricesTable').DataTable();
-    });
-
-
 </script>
 {% endblock %}

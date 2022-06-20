@@ -29,5 +29,31 @@ def ch_sub(value, arg):
         except Exception:
             return "-"
 
+@register.filter(name="per_sub")
+def per_sub(value, arg):
+    """Subctract arg% from value"""
+    if value == 0 or arg == 0:
+        return "-"
+    try:
+        return round(float(value) * (1 - (float(arg) / 100)), 2)
+    except (ValueError, TypeError, ZeroDivisionError):
+        try:
+            return round(value * (1 - (arg / 100)), 2)
+        except Exception:
+            return "-"
+
+@register.filter(name="per_add")
+def per_add(value, arg):
+    """Add arg% in value"""
+    if value == 0 or arg == 0:
+        return "-"
+    try:
+        return round(float(value) * (1 + (float(arg) / 100)), 2)
+    except (ValueError, TypeError, ZeroDivisionError):
+        try:
+            return round(value * (1 + (arg / 100)), 2)
+        except Exception:
+            return "-"
+
 
 # register.filter('sub', sub)
