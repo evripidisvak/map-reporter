@@ -31,20 +31,20 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-bar me-1"></i>
-                    Αριθμός Προϊόντων ανά κατηγορία
-                </div>
-                <div class="card-body"><canvas id="categoriesBarChart" width="100%" height="400"></canvas></div>
-            </div>
-        </div>
-        <div class="col col-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-chart-bar me-1"></i>
                     Ποσοστό σωστών Προϊόντων ανά κατηγορία
                 </div>
                 <div class="card-body"><canvas id="categoriesStackedBarChart" width="100%" height="400"></canvas></div>
             </div>
         </div>
+        <div class="col col-6">
+            {% comment %} <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Αριθμός Προϊόντων ανά κατηγορία
+                </div>
+                <div class="card-body"><canvas id="categoriesBarChart" width="100%" height="400"></canvas></div>
+            </div>
+        </div> {% endcomment %}
     </div>
     <div class="card mb-4">
         <div class="card-header mb-4">
@@ -64,7 +64,7 @@
                 {% for category in categories %}
                 <tr>
                     <td>
-                        {% for count in category.asc_count %}
+                        {% for count in category.ansc_count %}
                             -
                         {% endfor %}
                         <a href="{% url 'category_info' category.id %}">
@@ -88,7 +88,7 @@
     </div>
 
 <!--Bar chart script-->
-<script>
+{% comment %} <script>
 
 const chartElem = $('#categoriesBarChart');
 const barChart = new Chart(chartElem, {
@@ -129,7 +129,7 @@ options: {
 }
 });
 
-</script>
+</script> {% endcomment %}
 
 
 <script>
@@ -140,14 +140,14 @@ options: {
         data:  {
             labels: [
                     {% for category in categories %}
-                    '{{category.name}}',
+                    '{{category.name}} ({{category.product_count}})',
                     {% endfor %}        
             ],
                 datasets: [{
                     label: '# Προϊόντων Κάτω',
                     data: [
                         {% for category in categories %}
-                        {{category.prods_below}},
+                        {{category.products_below}},
                         {% endfor %}
                     ],
                     backgroundColor: [
@@ -159,10 +159,10 @@ options: {
                     borderWidth: 1
                 },
                 {
-                    label: '# Προϊόντων ίσα',
+                    label: '# Προϊόντων OK',
                     data: [
                         {% for category in categories %}
-                        {{category.prods_equal}},
+                        '{{category.products_ok}}',
                         {% endfor %}
                     ],
                     backgroundColor: [
@@ -173,21 +173,6 @@ options: {
                     ],
                     borderWidth: 1
                 },
-                {
-                    label: '# Προϊόντων πάνω',
-                    data: [
-                        {% for category in categories %}
-                        {{category.prods_above}},
-                        {% endfor %}
-                    ],
-                    backgroundColor: [
-                        '#007bff'
-                    ],
-                    borderColor: [
-                        '#007bff'
-                    ],
-                    borderWidth: 1
-                }
                 ]
         },
         options: {
@@ -198,7 +183,11 @@ options: {
                     stacked: true
                 },
                 y: {
-                    stacked: true
+                    stacked: true,
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                      }
                 }
             }
         }
