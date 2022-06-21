@@ -3,13 +3,14 @@ $(document).ready(function () {
     $('#product_prices_table thead tr:eq(1) th').each(function () {
         var title = $(this).text();
         if (! $(this).hasClass('no_filter')) {
-            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_product_prices_table" />');
+            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_product_prices_table table-filter-input" />');
         }
     });
 
     // DataTable
     var all_products_table = $('#product_prices_table').DataTable({
         orderCellsTop: true,
+        // scrollX: true,
         dom: 'Bfrtip',
         buttons: [
             'copy', 'csv', 'excel', 'pdf', 'print'

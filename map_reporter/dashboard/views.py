@@ -93,6 +93,61 @@ class ProductInfo(TemplateView):
         return context
 
 
+class ShopProductInfo(TemplateView):
+    template_name = 'dashboard/shop_product_info.html'
+
+    def get_context_data(self, **kwargs):
+        context = context = super(ShopProductInfo, self).get_context_data(**kwargs)
+
+        product = Product.objects.get(id=kwargs['pk_product'])
+        urls = Page.objects.filter(product_id=kwargs['pk_product'])
+        shop = Shop.objects.get(id=kwargs['pk_shop'])
+
+        retailprices = RetailPrice.objects.filter(product=kwargs['pk_product'], shop=kwargs['pk_shop'])
+        latest_timestamp = RetailPrice.objects.filter(product=kwargs['pk_product'], shop=kwargs['pk_shop']).latest('timestamp').timestamp
+
+        min_retailprice_list = (
+            retailprices.values('timestamp').annotate(min_price=Min('price')).order_by()
+        )
+
+        min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
+        max_retailprice = min_retailprice_list.aggregate(Max('min_price'))
+
+        mapprices = MapPrice.objects.filter(product=kwargs['pk_product'])
+        keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk_product'])
+
+        prices_below = 0
+        prices_equal = 0
+        prices_above = 0
+
+        for price in retailprices:
+            if price.price < price.curr_target_price:
+                prices_below += 1
+            elif price.price == price.curr_target_price:
+                prices_equal += 1
+            elif price.price > price.curr_target_price:
+                prices_above += 1
+
+        context.update(
+            {
+                'product': product,
+                'urls': urls,
+                'retailprices': retailprices,
+                'min_retailprice': min_retailprice,
+                'max_retailprice': max_retailprice,
+                'mapprices': mapprices,
+                'keyaccprices': keyaccprices,
+                'min_retailprice_list': min_retailprice_list,
+                'prices_below': prices_below,
+                'prices_equal': prices_equal,
+                'prices_above': prices_above,
+                'latest_timestamp': latest_timestamp,
+                'shop':shop,
+            }
+        )
+        return context
+
+
 class AllProducts(TemplateView):
     template_name = 'dashboard/all_products.html'
 
@@ -101,6 +156,7 @@ class AllProducts(TemplateView):
 
         table_image_size = '80x80'
         products = Product.objects.all()
+        latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
         # products = Product.objects.annotate(shop_count=Count('shop', distinct=True))
         retailprices = []
         products_below = 0
@@ -148,6 +204,7 @@ class AllProducts(TemplateView):
                 'products_equal': products_equal,
                 'products_above': products_above,
                 'table_image_size': table_image_size,
+                'latest_timestamp': latest_timestamp,
             }
         )
         return context
