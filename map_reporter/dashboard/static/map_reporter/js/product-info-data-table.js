@@ -1,15 +1,16 @@
-
 $(document).ready(function () {
     // Setup - add a text input to each footer cell
-    $('#shops-table thead tr:eq(1) th').each(function () {
+    $('#product_prices_table thead tr:eq(1) th').each(function () {
         var title = $(this).text();
-        $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search table-filter-input" />');
+        if (! $(this).hasClass('no_filter')) {
+            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_product_prices_table table-filter-input" />');
+        }
     });
 
     // DataTable
-    var table = $('#shops-table').DataTable({
+    var all_products_table = $('#product_prices_table').DataTable({
         orderCellsTop: true,
-        scrollX: true,
+        // scrollX: true,
         dom: 'Bfrtip',
         buttons: [
             'copy', 'csv', 'excel', 'pdf', 'print'
@@ -18,7 +19,7 @@ $(document).ready(function () {
             this.api().columns('.add_select').every(function () {
                 var column = this;
                 var select = $('<select><option value=""></option></select>')
-                    .appendTo($("#shops-table thead tr:eq(1) th").eq(column.index()).empty())
+                    .appendTo($("#product_prices_table thead tr:eq(1) th").eq(column.index()).empty())
                     .on('change', function () {
                         var val = $.fn.dataTable.util.escapeRegex(
                             $(this).val()
@@ -29,6 +30,8 @@ $(document).ready(function () {
                     });
 
                 column.data().unique().sort().each(function (d, j) {
+                    const regex = /(<([^>]+)>)/ig;
+                    d = d.replace(regex, "");
                     select.append('<option value="' + d + '">' + d + '</option>');
                 });
             });
@@ -36,11 +39,12 @@ $(document).ready(function () {
     });
 
     // Apply the search
-    $('#shops-table thead').on('keyup', ".column_search", function () {
-        table
+    $('#product_prices_table thead').on('keyup', ".column_search_product_prices_table", function () {
+        all_products_table
             .column($(this).parent().index())
             .search(this.value)
             .draw();
     });
-
 });
+
+

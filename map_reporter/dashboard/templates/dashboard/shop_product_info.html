@@ -4,22 +4,20 @@
 {% load thumbnail %}
 
 {% block title %}
-{{product.name}}
+{{product.name}} - {{shop.name}}
 {% endblock %}
 
 {% block headEnd %}
-
 <script src="{% static '/map_reporter/js/product-info-data-table.js' %}"></script>
 {% comment %} <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.css"/> {% endcomment %}
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script>
-
 {% endblock %}
 
 {% block main %}
 <div class="container-fluid px-4">
-    <h3 class="mt-4">{{ product.name }}</h3>
+    <h3 class="mt-4">{{ product.name }} - {{shop.name}}</h3>
 
     <div class="row pt-lg-5">
         <div class="col-xl-4">
@@ -117,7 +115,6 @@
                     </div>
                 </div>
             </div>
-            </div>
         </div>
     </div>
 
@@ -126,7 +123,7 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
-                    Ελάχιστες τιμές προϊόντος
+                    Τιμές προϊόντος στο χρόνο
                 </div>
                 <div class="card-body"><canvas id="MinPriceChart" width="100%" height="40"></canvas></div>
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
@@ -137,7 +134,7 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-pie me-1"></i>
-                    Κατάσταση τιμών καταστημάτων
+                    Ανάλυση τιμών καταστήματος
                 </div>
                 <div class="card-body"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
@@ -153,23 +150,23 @@
             <table id="product_prices_table">
                 <thead>
                     <tr>
-                        <th class='add_select'>Κατάστημα</th>
+                        <th class="add_select">Κατάστημα</th>
                         <th>Λ. Τιμή</th>
                         <th>Target Price</th>
                         <th>Diff</th>
                         <th>Diff %</th>
-                        <th class='add_select'>Επ. Μεταπωλητής</th>
-                        <th class='add_select'>Πωλητής</th>
+                        <th class="add_select">Επ. Μεταπωλητής</th>
+                        <th class="add_select">Πωλητής</th>
                         <th>Ημερομηνία</th>
                     </tr>
                     <tr>
+                        <th class="no_filter"></th>
                         <th></th>
                         <th></th>
                         <th></th>
                         <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
+                        <th class="no_filter"></th>
+                        <th class="no_filter"></th>
                         <th></th>
                     </tr>
                 </thead>
@@ -297,7 +294,7 @@
     data: {
         labels: ["Κάτω", "Ακριβώς", "Πάνω"],
         datasets: [{
-        data: [{{shops_below}}, {{shops_equal}}, {{shops_above}}],
+        data: [{{prices_below}}, {{prices_equal}}, {{prices_above}}],
         backgroundColor: ['#dc3545', '#28a745', '#007bff'],
         }],
     },

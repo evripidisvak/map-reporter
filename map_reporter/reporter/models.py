@@ -105,8 +105,11 @@ class Product(models.Model):
             self.image = InMemoryUploadedFile(output,'ImageField', "%s.jpg" %self.image.name.split('.')[0], 'image/jpeg', sys.getsizeof(output), None)
         super(Product, self).save()
 
-    def get_active(self):
-        return self.active
+    def is_active(self):
+        if  self.active:
+            return 'Ναι'
+        else:
+            return 'Οχι'
 
     def name(self):
         return str(self.manufacturer.name + " " + self.model)

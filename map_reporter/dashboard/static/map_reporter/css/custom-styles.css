@@ -4,12 +4,10 @@
 
 }
 
-.table-filter-input {
-    width: 100%;
-}
-
-
 .row>.card {
     padding-left: 0;
     padding-right: 0;
+
+.table-filter-input {
+    width: 100%;
 }
