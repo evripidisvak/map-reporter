@@ -3,13 +3,14 @@ $(document).ready(function () {
     $('#all-products-table thead tr:eq(1) th').each(function () {
         var title = $(this).text();
         if (! $(this).hasClass('no_filter')) {
-            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-table" />');
+            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-table table-filter-input" />');
         }
     });
 
     // DataTable
     var all_products_table = $('#all-products-table').DataTable({
         orderCellsTop: true,
+        scrollX: true,
         dom: 'Bfrtip',
         buttons: [
             'copy', 'csv', 'excel', 'pdf', 'print'
@@ -45,21 +46,18 @@ $(document).ready(function () {
             .draw();
     });
 
-    // });
-
-
-    // $(document).ready(function () {
     // Setup - add a text input to each footer cell
     $('#all-products-prices-table thead tr:eq(1) th').each(function () {
         var title = $(this).text();
         if (! $(this).hasClass('no_filter')) {
-            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-prices-table" />');
+            $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-prices-table table-filter-input" />');
         }
     });
 
     // DataTable
     var active_products_table = $('#all-products-prices-table').DataTable({
         orderCellsTop: true,
+        scrollX: true,
         dom: 'Bfrtip',
         buttons: [
             'copy', 'csv', 'excel', 'pdf', 'print'

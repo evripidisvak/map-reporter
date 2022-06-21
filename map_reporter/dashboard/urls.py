@@ -11,6 +11,7 @@ urlpatterns = [
     path('product_info/<int:pk>/', views.ProductInfo.as_view(), name='product_info'),
     path('shops/', views.ShopsPage.as_view(), name='shops_page'),
     path('shop/<int:pk>/', views.ShopInfo.as_view(), name='shop_info'),
+    path('shop/<int:pk_shop>/product/<int:pk_product>/', views.ShopProductInfo.as_view(), name='shop_product_info'),
     path('categories/', views.CategoriesPage.as_view(), name='categories_page'),
     path('category/<int:pk>/', views.CategoryInfo.as_view(), name='category_info'),
 ]
