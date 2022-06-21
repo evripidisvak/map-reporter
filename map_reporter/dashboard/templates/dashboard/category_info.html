@@ -1,8 +1,12 @@
 {% extends "dashboard_base.html" %}
 {% load static %}
+{% load thumbnail %}
 {% block title %}{{category.name}}{% endblock title %}
 {% block headEnd %}
     <script src="{% static '/map_reporter/js/category-info-data-table.js' %}"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script>
     <style>
 
     label {
@@ -16,7 +20,7 @@
     #active-products-table_wrapper{
         padding:5px;
     }
-
+   
     </style>
 {% endblock %}
 
@@ -26,11 +30,8 @@
 <h1 class="mb-4">
     {{ category.name }}
 </h1>
-
-
-
     <div class="row">
-        <div class="col col-6">
+        <div class="col-xl-6">
             <div class='card mb-4'>
                 <div class='card-header'>
                     <i class='fas fa-chart-pie me-1'></i>
@@ -40,13 +41,10 @@
                 <div class='card-footer small text-muted'>Updated yesterday at 11:59 PM</div>
             </div>
         </div>
-        <div class="col col-6">
+        <div class="col-xl-6 mb-3">
             Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quidem, quam libero obcaecati laboriosam ab explicabo neque quae, deserunt debitis quia provident. Placeat ad quaerat eum totam. Commodi vero sequi a!
         </div>
     </div>
-
-
-
 
     <div class="row">
         <div class="col col-12">
@@ -58,26 +56,73 @@
                 <table id='all-products-table' class=''>
                     <thead>
                         <tr>
-                            <th>Προϊόν</th>
+                            <th>Φωτογραφία</th>
+                            <th class="add_select">Ενεργό</th>
+                            <th class="add_select">Κατασκευαστής</th>
+                            <th>Μοντέλο</th>
                             <th>Τιμή MAP</th>
                             <th>Τιμή Key Account</th>
                             <th>Γονική Κατηγορία</th>
+                            <th># Καταστημάτων</th>
+                            <th>Κατ. below</th>
+                            <th>Κατ. equal</th>
+                            <th>Κατ. above</th>
+                        </tr>
+                        <tr>
+                            <th class="no_filter"></th>
+                            <th class="no_filter"></th>
+                            <th class="no_filter"></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for product in products %}
                         <tr>
                             <td>
-                            <a href="{% url 'product_info' product.id %}">{{product}}</a> 
+                            <a href="{% url 'product_info' product.id %}">
+                                {% thumbnail product.image table_image_size as im %}
+                                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}">
+                                {% endthumbnail %}
+                            </a> 
                             </td>                
                             <td>
-                            <p>{{product.map_price}} €</p> 
+                            {{product.active}}
                             </td>                
                             <td>
-                            <p>{{product.key_acc_price}} €</p> 
+                            {{product.manufacturer}}
                             </td>
                             <td>
-                            <p>{{product.main_category}}</p> 
+                            <a href="{% url 'product_info' product.id %}">
+                                {{product.model}}
+                            </a>
+                            </td>
+                            <td>
+                            {{product.map_price}}
+                            </td>
+                            <td>
+                            {{product.key_acc_price}}
+                            </td>
+                            <td>
+                            {{product.main_category}}
+                            </td>
+                            <td>
+                            {{product.shops_count}}
+                            </td>
+                            <td>
+                            {{product.shops_below}}
+                            </td>
+                            <td>
+                            {{product.shops_equal}}
+                            </td>
+                            <td>
+                            {{product.shops_above}}
                             </td>
                         </tr>
                         {% endfor %}
@@ -96,10 +141,17 @@
                 <table id="active-products-table">
                     <thead>
                         <tr>
-                            <th>Προϊόν</th>
-                            <th>Τιμή MAP</th>
-                            <th>Τιμή Key Account</th>
-                            <th>Γονική Κατηγορία</th>
+                            <th>Φωτογραφία</th>
+                            <th>Κατασκευαστής</th>
+                            <th>Μοντέλο</th>
+                            <th>Κατάστημα</th>
+                            <th>Τιμή</th>
+                            <th>Target Price</th>
+                            <th>Diff</th>
+                            <th>Diff %</th>
+                            <th>Επ. Μεταπολητής</th>
+                            <th>Πωλητής</th>
+                            <th>Date</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,15 +160,46 @@
                         <tr>
                             <td>
                             <a href="{% url 'product_info' product.id %}">{{product}}</a> 
-                            </td>                
-                            <td>
-                            <p>{{product.map_price}} €</p> 
-                            </td>                
-                            <td>
-                            <p>{{product.key_acc_price}} €</p> 
                             </td>
+
                             <td>
-                            <p>{{product.main_category}}</p> 
+                            {{product.map_price}} €
+                            </td>
+
+                            <td>
+                            {{product.key_acc_price}} €
+                            </td>
+
+                            <td>
+                            {{product.main_category}}
+                            </td>
+
+                            <td>
+                            {{product.main_category}}
+                            </td>
+
+                            <td>
+                            {{product.main_category}}
+                            </td>
+                            
+                            <td>
+                            {{product.main_category}}
+                            </td>
+
+                            <td>
+                            {{product.main_category}}
+                            </td>
+
+                            <td>
+                            {{product.main_category}}
+                            </td>
+
+                            <td>
+                            {{product.main_category}}
+                            </td>
+
+                            <td>
+                            {{product.main_category}}
                             </td>
                         </tr>
                         {% endif %}
@@ -135,10 +218,10 @@ const pie_elem = $('#okProductsPieChart');
 const cat_pie_chart = new Chart( pie_elem, {
     type: 'pie',
     data: {
-        labels: ['Κάτω', 'Ακριβώς', 'Πάνω'],
+        labels: ['Κάτω', 'Κομπλέ'],
         datasets: [{
-        data: [{{category.prods_below}}, {{category.prods_equal}}, {{category.prods_above}}],
-        backgroundColor: ['#dc3545', '#28a745', '#007bff'],
+        data: [{{category.products_below}}, {{category.products_ok}}],
+        backgroundColor: ['#dc3545', '#28a745'],
         }],
     },
 })

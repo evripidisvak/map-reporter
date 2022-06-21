@@ -46,10 +46,12 @@ $(document).ready(function () {
             .draw();
     });
 
+
     // Setup - add a text input to each footer cell
     $('#all-products-prices-table thead tr:eq(1) th').each(function () {
         var title = $(this).text();
         if (! $(this).hasClass('no_filter')) {
+
             $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search_all-products-prices-table table-filter-input" />');
         }
     });

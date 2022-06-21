@@ -292,7 +292,7 @@ class CategoriesPage(TemplateView):
             products_ok = 0
             products = Product.objects.filter(main_category__in=category.get_descendants(include_self=True), active=True)
             category.products_list = products
-            category.product_count = products.count
+            product_count = products.count()
             category.ansc_count = category.get_ancestors(ascending=False, include_self=False)
             for product in products:
                 try:
@@ -302,12 +302,11 @@ class CategoriesPage(TemplateView):
                         if retail_price.price < retail_price.curr_target_price:
                             products_below += 1
                             break
-                        else:
-                            products_ok += 1
                 except:
                     pass
             category.products_below = products_below
-            category.products_ok = products_ok
+            category.product_count = product_count
+            category.products_ok = product_count - products_below
 
         context.update({
             'categories': categories,
@@ -320,37 +319,61 @@ class CategoryInfo(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = context = super(CategoryInfo, self).get_context_data(**kwargs)
-        category_descendants = Category.objects.get(id=kwargs['pk']).get_descendants(
-            include_self=True
-        )
+        table_image_size = '80x80'
+        category_descendants = Category.objects.get(id=kwargs["pk"]).get_descendants(include_self=True)
         children_id_list = []
-        prods_below = 0
-        prods_equal = 0
-        prods_above = 0
+        products_below = 0
+        products_ok = 0
+        shops_below = 0
+        shops_equal = 0
+        shops_above = 0
+
         for child in category_descendants:
             children_id_list.append(child.id)
+
         category = Category.objects.get(id=kwargs['pk'])
         products = Product.objects.filter(main_category__in=children_id_list)
+        products_count = products.count()
+        for product in products:
+            try:
+                latest_timestamp = RetailPrice.objects.filter(product=product).latest('timestamp').timestamp
+                ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=latest_timestamp)
+                for retail_price in ltst_pr_rec:
+                    if retail_price.price < retail_price.curr_target_price:
+                        products_below += 1
+                        break
+            except:
+                pass
+            category.products_below = products_below
+            category.products_count = products_count
+            category.products_ok = products_count - products_below 
 
         for product in products:
-            if product.active:
-                try:
-                    ltst_pr_rec = RetailPrice.objects.filter(product=product).latest('timestamp')
-                    if ltst_pr_rec.price < ltst_pr_rec.curr_target_price:
-                        prods_below += 1
-                    elif ltst_pr_rec.price == ltst_pr_rec.curr_target_price:
-                        prods_equal += 1
-                    elif ltst_pr_rec.price > ltst_pr_rec.curr_target_price:
-                        prods_above += 1
-                except:
-                    pass
-            category.prods_below = prods_below
-            category.prods_equal = prods_equal
-            category.prods_above = prods_above
+            shops_below = 0
+            shops_equal = 0
+            shops_above = 0
+            try:
+                latest_timestamp = RetailPrice.objects.filter(product=product).latest('timestamp').timestamp
+                ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=latest_timestamp)
+                for retail_price in ltst_pr_rec:
+                    if retail_price.price < retail_price.curr_target_price:
+                        shops_below += 1
+                    elif retail_price.price == retail_price.curr_target_price:
+                        shops_equal += 1
+                    elif retail_price.price > retail_price.curr_target_price:
+                        shops_above += 1
+            except:
+                pass
+            product.shops_below = shops_below
+            product.shops_equal = shops_equal
+            product.shops_above = shops_above
+            product.shops_count = shops_below + shops_equal + shops_above
+            
 
         context.update({
             'category': category,
             'products': products,
+            "table_image_size": table_image_size,
         })
 
         return context

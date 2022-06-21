@@ -1,3 +1,13 @@
+.dataTables_wrapper {
+    /* overflow: auto; */
+    padding: 5px;
+
+}
+
+.row>.card {
+    padding-left: 0;
+    padding-right: 0;
+
 .table-filter-input {
     width: 100%;
 }
