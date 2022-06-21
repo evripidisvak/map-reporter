@@ -1,0 +1,15 @@
+.dataTables_wrapper {
+    /* overflow: auto; */
+    padding: 5px;
+
+}
+
+.table-filter-input {
+    width: 100%;
+}
+
+
+.row>.card {
+    padding-left: 0;
+    padding-right: 0;
+}

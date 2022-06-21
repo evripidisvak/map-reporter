@@ -3,7 +3,7 @@ $(document).ready(function () {
     // Setup - add a text input to each footer cell
     $('#shops-table thead tr:eq(1) th').each(function () {
         var title = $(this).text();
-        $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search" />');
+        $(this).html('<input type="text" placeholder="Search ' + title + '" class="column_search table-filter-input" />');
     });
 
     // DataTable

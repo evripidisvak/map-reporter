@@ -75,19 +75,19 @@
                     <tr>
                         <td>
                             {% thumbnail product.image table_image_size as im %}
-                                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="product.name">
+                                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}">
                             {% endthumbnail %}
                         </td>
                         <td>
                             {{product.active}}
                         </td>
                         <td>
-                            <a href='{% url 'product_info' product.id %}'>
+                            <a href="{% url 'product_info' product.id %}">
                                 {{product.manufacturer}}
                             </a>
                         </td>
                         <td>
-                            <a href='{% url 'product_info' product.id %}'>
+                            <a href="{% url 'product_info' product.id %}">
                                 {{product.model}}
                             </a>
                         </td>
@@ -157,7 +157,7 @@
                             <tr>
                                 <td>
                                     {% thumbnail retailprice.product.image table_image_size as im %}
-                                        <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="product.name">
+                                        <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retailprice.product.name}}">
                                     {% endthumbnail %}
                                     
                                 </td>

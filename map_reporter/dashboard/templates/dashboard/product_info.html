@@ -26,9 +26,9 @@
                     <i class="fas fa-chart-area me-1"></i>
                     Χαρακτηριστικά
                 </div>
-
-                <div class="row bg-secondary bg-opacity-25">
-                    <div class="col-2">
+                <div class="container">
+                <div class="row bg-secondary bg-opacity-25 gx-0">
+                    <div class="col-2 p-0 m-0">
                         <h5 class="p-sm-2 ">SKU</h5>
                     </div>
                     <div class="col-6">
@@ -42,7 +42,7 @@
                 <h5 class="p-sm-2 col-2">cat</h5>
                 <p class="p-sm-2 col-6">
                     {% for category in product.main_category.get_family %}
-                        <a href="{% url 'category_info' product.main_category.id %}">{{category}}</a>
+                        <a href="{% url 'category_info' category.id %}">{{category}}</a>
                         {% if not forloop.last %}
                             >
                         {% endif %}
@@ -51,9 +51,10 @@
                 <h5 class="p-sm-2 col-12 bg-secondary bg-opacity-25">urls</h5>
                 <div class="row ps-4 bg-secondary bg-opacity-25">
                     {% for url in urls %}
-                        <a href={{ url }} target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
+                        <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
                     {% endfor %}
                 </div>
+            </div>
             </div>
         </div>
     </div>
