@@ -1084,6 +1084,9 @@
 
           docDefinition.content.push({
             table: {
+              dontBreakRows: true, // Proper page break
+              headerRows: 1,
+              keepWithHeaderRows: 1,
               headerRows: $head_rows.length ? $head_rows.length : null,
               widths: widths,
               body: body
@@ -1108,7 +1111,8 @@
                   null;
               }
             },
-            pageBreak: docDefinition.content.length ? "before" : undefined
+            // The following line causes lines to break in two pages
+            // pageBreak: docDefinition.content.length ? "before" : undefined
           });
         }); // ...for each table
 
