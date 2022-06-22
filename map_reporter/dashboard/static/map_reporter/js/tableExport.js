@@ -13,6 +13,8 @@
 
 'use strict';
 
+// const { unstable_act } = require("react/cjs/react.production.min");
+
 (function ($) {
   $.fn.tableExport = function (options) {
     let docData;
@@ -1162,12 +1164,12 @@
           $.extend(true, pdfMake.fonts, defaults.pdfmake.fonts);
 
           // pdfmake <= 0.1.71
-          // pdfMake.createPdf(docDefinition).getBuffer(function (buffer) {
-          //   saveToFile(buffer, defaults.fileName + '.pdf', 'application/pdf', '', '', false);
-          // });
+          pdfMake.createPdf(docDefinition).getBuffer(function (buffer) {
+            saveToFile(buffer, defaults.fileName + '.pdf', 'application/pdf', '', '', false);
+          });
 
           // pdfmake >= 0.2.0 - replace above code with:
-          pdfMake.createPdf(docDefinition).download(defaults.fileName);
+          // pdfMake.createPdf(docDefinition).download(defaults.fileName);
         }
       } else if (defaults.jspdf.autotable === false) {
         // pdf output using jsPDF's core html support
@@ -1596,6 +1598,7 @@
       return result;
     }
 
+
     function isVisible($element) {
       let isRow = typeof $element[0].rowIndex !== 'undefined';
       const isCell = isRow === false && typeof $element[0].cellIndex !== 'undefined';
@@ -1612,11 +1615,10 @@
       }
 
       return tableexportDisplay !== 'none' && (isElementVisible === true || tableexportDisplay === 'always');
-    }
 
+    }
     function isTableElementVisible($element) {
       let hiddenEls = [];
-
       if (checkCellVisibility) {
         hiddenEls = $hiddenTableElements.filter(function () {
           let found = false;
@@ -2132,13 +2134,21 @@
                 htmlData += '<br>';
               }
               else {
-                if (typeof $(this).html() === 'undefined')
+                if (typeof $(this).html() === 'undefined') {
                   htmlData += $(this).text();
-                else if (jQuery().bootstrapTable === undefined ||
+                } else if (jQuery().bootstrapTable === undefined ||
                   ($(this).hasClass('fht-cell') === false &&  // BT 4
-                    $(this).hasClass('filterControl') === false &&
-                    $cell.parents('.detail-view').length === 0))
+                    $(this).hasClass('filter-control') === false &&
+                    $cell.parents('.detail-view').length === 0)) {
+                  for (let i = 0; i < $(this).length; i++) {
+                    for (let j = 0; j < $(this)[i].children.length; j++) {
+                      if ($(this)[i].children[j].classList.contains('fht-cell')) {
+                        $(this)[i].removeChild($(this)[i].children[j]);
+                      }
+                    }
+                  }
                   htmlData += $(this).html();
+                }
 
                 if ($(this).is('a')) {
                   const href = $cell.find('a').attr('href') || '';
