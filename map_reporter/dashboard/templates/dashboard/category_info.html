@@ -3,10 +3,10 @@
 {% load thumbnail %}
 {% block title %}{{category.name}}{% endblock title %}
 {% block headEnd %}
-    <script src="{% static '/map_reporter/js/category-info-data-table.js' %}"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
+    {% comment %} <script src="{% static '/map_reporter/js/category-info-data-table.js' %}"></script> {% endcomment %}
+    {% comment %} <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script> {% endcomment %}
     <style>
 
     label {
@@ -53,7 +53,13 @@
                         <i class="fas fa-table me-1 MB-4"></i>
                        Όλα τα προϊόντα στην κατηγορία&nbsp;<b>{{ category.name }}</b>
                     </div>
-                <table id='all-products-table' class=''>
+                <table id='all-products-table' class='' 
+                data-show-columns="true"
+                data-toggle="table"
+                data-toggle="table"
+                data-pagination="true"
+                data-search="true"
+                >
                     <thead>
                         <tr>
                             <th>Φωτογραφία</th>
@@ -138,7 +144,11 @@
                         <i class="fas fa-table me-1 MB-4"></i>
                        Όλα τα <b>ενεργά</b> προϊόντα στην κατηγορία&nbsp;<b>{{ category.name }}</b>
                 </div>
-                <table id="active-products-table">
+                <table id="active-products-table" 
+                data-toggle="table"
+                data-pagination="true"
+                data-search="true"
+                >
                     <thead>
                         <tr>
                             <th>Φωτογραφία</th>

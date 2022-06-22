@@ -1,13 +1,8 @@
-.dataTables_wrapper {
-    /* overflow: auto; */
-    padding: 5px;
-
-}
-
 .row>.card {
     padding-left: 0;
     padding-right: 0;
+}
 
-.table-filter-input {
-    width: 100%;
+.sticky-header-container.fix-sticky.fixed-table-container {
+    margin-top: 56px;
 }
