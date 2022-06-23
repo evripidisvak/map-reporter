@@ -69,18 +69,19 @@
                             data-show-print="true"
                             data-sticky-header="true"
                     >
+                      
                         <thead>
                             <tr class="bg-light">
                                 <th data-field="product_image">Φωτογραφία</th>
-                                <th data-field="active" data-filter-control="select">Ενεργό</th>
-                                <th data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
-                                <th data-field="model" data-filter-control="select">Μοντέλο</th>
-                                <th data-field="map_price">MAP Price</th>
-                                <th data-field="key_acc_price">Key Acc Price</th>
-                                <th data-field="shop_count">Καταστήματα</th>
-                                <th data-field="shops_below">Κατ. below</th>
-                                <th data-field="shops_equal">Κατ. equal</th>
-                                <th data-field="shops_above">Κατ. above</th>
+                                <th data-field="active" data-filter-control="select" data-sortable="true">Active</th>
+                                <th data-field="manufacturer" data-filter-control="select" data-sortable="true">Κατασκευαστής</th>
+                                <th data-field="model" data-filter-control="select" data-sortable="true">Μοντέλο</th>
+                                <th data-field="map_price" data-sortable="true">MAP Price</th>
+                                <th data-field="key_acc_price" data-sortable="true">Key Acc Price</th>
+                                <th data-field="shop_count" data-sortable="true"># Καταστημάτων</th>
+                                <th data-field="shops_below" data-sortable="true">Κατ. below</th>
+                                <th data-field="shops_equal" data-sortable="true">Κατ. equal</th>
+                                <th data-field="shops_above" data-sortable="true">Κατ. above</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -146,7 +147,7 @@
                 </ul>
               </div>
 
-                <table id='all-products-prices-table' class=''
+                <table id='all-products-prices-table'
                     data-toggle="table"
                     data-show-columns="true"
                     data-show-columns-toggle-all="true"

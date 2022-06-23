@@ -5,7 +5,7 @@
 {% endblock %}
 
 {% block headEnd %}
-<script src="{% static '/map_reporter/js/categories-page-data-table.js' %}"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js" integrity="sha512-sW/w8s4RWTdFFSduOTGtk4isV1+190E/GghVffMA9XczdJ2MDzSzLEubKAs5h0wzgSJOQTRYyaz73L3d6RtJSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
     label {
@@ -37,99 +37,76 @@
             </div>
         </div>
         <div class="col col-6">
-            {% comment %} <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-chart-bar me-1"></i>
-                    Αριθμός Προϊόντων ανά κατηγορία
-                </div>
-                <div class="card-body"><canvas id="categoriesBarChart" width="100%" height="400"></canvas></div>
-            </div>
-        </div> {% endcomment %}
-    </div>
+        </div>
     <div class="card mb-4">
         <div class="card-header mb-4">
             <i class="fas fa-table me-1"></i>
             Κατηγορίες
         </div>
-        {% comment %} <div class="card-body"> {% endcomment %}
-            <table id='categories-table' class=''>
-                <thead>
-                <tr>
-                    <th>Όνομα κατηγορίας</th>
-                    <th>Γονική κατηγορία</th>
-                    <th>Αριθμός Προϊόντων</th>
-                </tr>
-                </thead>
-                <tbody>
-                {% for category in categories %}
-                <tr>
-                    <td>
-                        {% for count in category.ansc_count %}
-                            -
-                        {% endfor %}
-                        <a href="{% url 'category_info' category.id %}">
-                            {{category.name}}
-                        </a> 
-                    </td>                
-                    <td>
-                            {% if not category.parent %}
-                                Καμία
-                            {% else %}
-                                {{category.parent}}
-                            {% endif %}    
-                    </td>
-                    <td>
-                        {{category.get_recursive_product_count}}
-                    </td>
-                </tr>
-                {% endfor %}
-                </tbody>
-            </table>
-    </div>
-
-<!--Bar chart script-->
-{% comment %} <script>
-
-const chartElem = $('#categoriesBarChart');
-const barChart = new Chart(chartElem, {
-type:'bar',
-data: {
-    labels: [
-            {% for category in categories %}
-            '{{category.name}}',
-            {% endfor %}        
-    ],
-        datasets: [{
-            label: '# Προϊόντων ανά κατηγορία',
-            data: [
-                {% for category in categories %}
-                {{category.get_recursive_product_count}},
-                {% endfor %}
-            ],
-            backgroundColor: [
-                '#007bff'
-            ],
-            borderColor: [
-                '#007bff'
-            ],
-            borderWidth: 1
-        }]
-},
-options: {
-    responsive:true,
-    maintainAspectRatio:false,
-    scales: {
-            y: {
-                beginAtZero: true,
-                ticks: {
-                    precision: 0
-                  }
-            }
-    },
-}
-});
-
-</script> {% endcomment %}
+            <div class="card-body">
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
+                      Τύπος Εξαγωγής
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="print-selector" id="categories-table_print-dropdown">
+                      <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
+                      <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
+                      <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
+                    </ul>
+                </div>
+                <table id='categories-table' 
+                data-toggle="table" 
+                data-show-columns="true" 
+                data-show-columns-toggle-all="true" 
+                data-pagination="true" 
+                data-show-toggle="true" 
+                data-show-fullscreen="true" 
+                data-buttons="buttons" 
+                data-buttons-align="left" 
+                data-buttons-class="primary" 
+                data-pagination-v-align="both" 
+                data-remember-order="true" 
+                data-sort-reset="true" 
+                data-filter-control="true" 
+                data-show-search-clear-button="true" 
+                data-show-multi-sort="true" 
+                data-show-export="true" 
+                data-show-print="true" 
+                data-sticky-header="true">
+                    <thead>
+                    <tr class="bg-light">
+                        <th data-field="category_name" data-sortable="true" data-filter-control="input">Όνομα κατηγορίας</th>
+                        <th data-field="parent_category" data-sortable="true" data-filter-control="select">Γονική κατηγορία</th>
+                        <th data-field="product_count" data-sortable="true">Αριθμός Προϊόντων</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for category in categories %}
+                    <tr>
+                        <td>
+                            {% for count in category.ansc_count %}
+                                -
+                            {% endfor %}
+                            <a href="{% url 'category_info' category.id %}">
+                                {{category.name}}
+                            </a>
+                        </td>
+                        <td>
+                                {% if not category.parent %}
+                                    Καμία
+                                {% else %}
+                                    {{category.parent}}
+                                {% endif %}
+                        </td>
+                        <td>
+                            {{category.get_recursive_product_count}}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
 
 <script>
@@ -192,6 +169,41 @@ options: {
             }
         }
     });
+
+
+    var $categories_table = $('#categories-table');
+
+    $(function() {
+        $('#categories-table_print-dropdown').find('.dropdown-item').on('click', function (e) {
+            e.preventDefault();
+            selector_btn = document.getElementById('print-selector');
+            selector_btn.innerText = e.target.innerText; 
+            data = {};
+            if (e.target.attributes['area-value'].value == 'selected'){
+                data = {
+                    field: 'state',
+                    checkbox: true,
+                    visible: $(this).attr('area-value') === 'selected'
+                };
+            }
+            $categories_table.bootstrapTable('destroy').bootstrapTable({
+                exportDataType: $(this).attr('area-value'),
+                exportTypes: ['csv', 'txt', 'excel', 'pdf'],
+                columns: [
+                    data,
+                ],
+            })
+            }).trigger('change')
+           });
+   
+           $(window).on('load', ()=>{
+               export_btn_group = $('.export.btn-group');
+               exoport_dropdown = export_btn_group.find("[aria-label='Export']");
+               exoport_dropdown.parent().css("cursor", "not-allowed");
+               exoport_dropdown.each( (index, elements) => {
+                   $(elements).attr("disabled", "true");
+               });
+           });
 
 </script>
 
