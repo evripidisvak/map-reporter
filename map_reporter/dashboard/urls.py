@@ -14,6 +14,8 @@ urlpatterns = [
     path('shop/<int:pk_shop>/product/<int:pk_product>/', views.ShopProductInfo.as_view(), name='shop_product_info'),
     path('categories/', views.CategoriesPage.as_view(), name='categories_page'),
     path('category/<int:pk>/', views.CategoryInfo.as_view(), name='category_info'),
+    path('manufacturers/', views.ManufacturersPage.as_view(), name='manufacturer_page'),
+    path('manufacturer/<int:pk>/', views.ManufacturerInfo.as_view(), name='manufacturer_info'),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
