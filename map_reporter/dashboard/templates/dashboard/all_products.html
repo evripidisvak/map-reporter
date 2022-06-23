@@ -37,7 +37,7 @@
                 <i class='fas fa-table me-1'></i>
                 Όλα τα προϊόντα
             </div>
-                <div class="container-fluid">
+                <div class="card-body">
                         <div class="dropdown">
                           <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
                             Τύπος Εξαγωγής
@@ -48,19 +48,38 @@
                             <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
                           </ul>
                         </div>
-                    <table id='all-products-table' class=" " data-toggle="table" data-show-columns="true" data-show-columns-toggle-all="true" data-pagination="true" data-show-toggle="true" data-show-fullscreen="true" data-buttons="buttons" data-buttons-align="left" data-buttons-class="primary" data-pagination-v-align="both" data-remember-order="true" data-sort-reset="true" data-filter-control="true" data-show-search-clear-button="true" data-show-multi-sort="true" data-show-export="true" data-show-print="true" data-sticky-header="true">
+                    <table 
+                    id='all-products-table'
+                     data-toggle="table" 
+                     data-show-columns="true" 
+                     data-show-columns-toggle-all="true" 
+                     data-pagination="true" 
+                     data-show-toggle="true" 
+                     data-show-fullscreen="true" 
+                     data-buttons="buttons" 
+                     data-buttons-align="left" 
+                     data-buttons-class="primary" 
+                     data-pagination-v-align="both" 
+                     data-remember-order="true"
+                     data-sort-reset="true" 
+                     data-filter-control="true" 
+                     data-show-search-clear-button="true" 
+                     data-show-multi-sort="true" 
+                     data-show-export="true" 
+                     data-show-print="true" 
+                     data-sticky-header="true">
                         <thead>
                             <tr>
                                 <th data-field="product_image">Φωτογραφία</th>
-                                <th data-field="active" data-filter-control="select">Active</th>
-                                <th data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
-                                <th data-field="model" data-filter-control="select">Μοντέλο</th>
-                                <th data-field="map_price">MAP Price</th>
-                                <th data-field="key_acc_price">Key Acc Price</th>
-                                <th data-field="shop_count"># Καταστημάτων</th>
-                                <th data-field="shops_below">Κατ. below</th>
-                                <th data-field="shops_equal">Κατ. equal</th>
-                                <th data-field="shops_above">Κατ. above</th>
+                                <th data-field="active" data-filter-control="select" data-sortable="true">Active</th>
+                                <th data-field="manufacturer" data-filter-control="select" data-sortable="true">Κατασκευαστής</th>
+                                <th data-field="model" data-filter-control="select" data-sortable="true">Μοντέλο</th>
+                                <th data-field="map_price" data-sortable="true">MAP Price</th>
+                                <th data-field="key_acc_price" data-sortable="true">Key Acc Price</th>
+                                <th data-field="shop_count" data-sortable="true"># Καταστημάτων</th>
+                                <th data-field="shops_below" data-sortable="true">Κατ. below</th>
+                                <th data-field="shops_equal" data-sortable="true">Κατ. equal</th>
+                                <th data-field="shops_above" data-sortable="true">Κατ. above</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -116,7 +135,7 @@
                 <i class='fas fa-table me-1'></i>
                 Τελευταίες τιμές όλων των ενεργών προϊόντων
             </div>
-            <div class="container-fluid">
+            <div class="card-body">
               <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button" id="bottom-print-selector" data-bs-toggle="dropdown" aria-expanded="false" >Τυπος Εξαγωγής</button>
                 <ul class="dropdown-menu" aria-labelledby="bottom-print-selector" id="all-products-prices-table_print-dropdown">
@@ -126,7 +145,7 @@
                 </ul>
               </div>
 
-                <table id='all-products-prices-table' class=''
+                <table id='all-products-prices-table'
                     data-toggle="table"
                     data-show-columns="true"
                     data-show-columns-toggle-all="true"
