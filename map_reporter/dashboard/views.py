@@ -168,13 +168,13 @@ class AllProducts(TemplateView):
 
         for product in products:
             try:
-                latest_timestamp = RetailPrice.objects.filter(
+                product_latest_timestamp = RetailPrice.objects.filter(
                     product_id=product.id).latest('timestamp').timestamp
                 this_products_below = 0
                 this_products_equal = 0
                 this_products_above = 0
                 tmp = RetailPrice.objects.filter(
-                    timestamp=latest_timestamp, product=product)
+                    timestamp=product_latest_timestamp, product=product)
                 for tmp_pr in tmp:
                     retailprices.append(tmp_pr)
                     if tmp_pr.price < tmp_pr.curr_target_price:
@@ -334,29 +334,24 @@ class CategoryInfo(TemplateView):
         category = Category.objects.get(id=kwargs['pk'])
         products = Product.objects.filter(main_category__in=children_id_list)
         products_count = products.count()
-        for product in products:
-            try:
-                latest_timestamp = RetailPrice.objects.filter(product=product).latest('timestamp').timestamp
-                ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=latest_timestamp)
-                for retail_price in ltst_pr_rec:
-                    if retail_price.price < retail_price.curr_target_price:
-                        products_below += 1
-                        break
-            except:
-                pass
-            category.products_below = products_below
-            category.products_count = products_count
-            category.products_ok = products_count - products_below 
+        latest_timestamp = RetailPrice.objects.filter(product__main_category__in=children_id_list).latest('timestamp').timestamp
+        retailprices = []
 
         for product in products:
             shops_below = 0
             shops_equal = 0
             shops_above = 0
             try:
-                latest_timestamp = RetailPrice.objects.filter(product=product).latest('timestamp').timestamp
-                ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=latest_timestamp)
+                product_latest_timestamp = RetailPrice.objects.filter(product=product).latest('timestamp').timestamp
+                ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=product_latest_timestamp)
+                products_below_increased = False
                 for retail_price in ltst_pr_rec:
+                    if retail_price.product.active:
+                        retailprices.append(retail_price)
                     if retail_price.price < retail_price.curr_target_price:
+                        if  not products_below_increased:
+                            products_below += 1
+                            products_below_increased = True
                         shops_below += 1
                     elif retail_price.price == retail_price.curr_target_price:
                         shops_equal += 1
@@ -368,12 +363,17 @@ class CategoryInfo(TemplateView):
             product.shops_equal = shops_equal
             product.shops_above = shops_above
             product.shops_count = shops_below + shops_equal + shops_above
+            category.products_below = products_below
+            category.products_count = products_count
+            category.products_ok = products_count - products_below
             
 
         context.update({
             'category': category,
             'products': products,
-            "table_image_size": table_image_size,
+            'retailprices': retailprices,
+            'table_image_size': table_image_size,
+            'latest_timestamp': latest_timestamp,
         })
 
         return context
