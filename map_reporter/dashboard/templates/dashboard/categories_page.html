@@ -23,7 +23,6 @@
 
 
 {% block main %}
-
 <h1 class="mb-4">Κατηγορίες</h1>
 <div class="container-fluid">
     <div class="row">
@@ -78,6 +77,9 @@
                         <th data-field="category_name" data-sortable="true" data-filter-control="input">Όνομα κατηγορίας</th>
                         <th data-field="parent_category" data-sortable="true" data-filter-control="select">Γονική κατηγορία</th>
                         <th data-field="product_count" data-sortable="true">Αριθμός Προϊόντων</th>
+                        <th data-field="product_count" data-sortable="true">Προϊόντα ΟΚ
+                        </th>
+                        <th data-field="product_count" data-sortable="true">Προϊόντα κάτω</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -99,7 +101,13 @@
                                 {% endif %}
                         </td>
                         <td>
-                            {{category.get_recursive_product_count}}
+                            {{category.product_count}}
+                        </td>
+                        <td>
+                            {{category.products_ok}}
+                        </td>
+                        <td>
+                            {{category.products_below}}
                         </td>
                     </tr>
                     {% endfor %}
