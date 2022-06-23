@@ -41,6 +41,7 @@ class Login(View):
 
 
 class ProductInfo(TemplateView):
+    # TODO error handling in case no retail prices exist
     template_name = 'dashboard/product_info.html'
 
     def get_context_data(self, **kwargs):
@@ -49,30 +50,33 @@ class ProductInfo(TemplateView):
         product = Product.objects.get(id=kwargs['pk'])
         urls = Page.objects.filter(product_id=kwargs['pk'])
 
-        retailprices = RetailPrice.objects.filter(product=kwargs['pk'])
-        latest_timestamp = RetailPrice.objects.filter(product=kwargs['pk']).latest('timestamp').timestamp
+        try:
+            retailprices = RetailPrice.objects.filter(product=kwargs['pk'])
+            latest_timestamp = RetailPrice.objects.filter(product=kwargs['pk']).latest('timestamp').timestamp
 
-        min_retailprice_list = (
-            retailprices.values('timestamp').annotate(min_price=Min('price')).order_by()
-        )
+            min_retailprice_list = (
+                retailprices.values('timestamp').annotate(min_price=Min('price')).order_by()
+            )
 
-        min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
-        max_retailprice = min_retailprice_list.aggregate(Max('min_price'))
+            min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
+            max_retailprice = min_retailprice_list.aggregate(Max('min_price'))
 
-        mapprices = MapPrice.objects.filter(product=kwargs['pk'])
-        keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk'])
+            mapprices = MapPrice.objects.filter(product=kwargs['pk'])
+            keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk'])
 
-        shops_below = 0
-        shops_equal = 0
-        shops_above = 0
+            shops_below = 0
+            shops_equal = 0
+            shops_above = 0
 
-        for price in retailprices:
-            if price.price < price.curr_target_price:
-                shops_below += 1
-            elif price.price == price.curr_target_price:
-                shops_equal += 1
-            elif price.price > price.curr_target_price:
-                shops_above += 1
+            for price in retailprices:
+                if price.price < price.curr_target_price:
+                    shops_below += 1
+                elif price.price == price.curr_target_price:
+                    shops_equal += 1
+                elif price.price > price.curr_target_price:
+                    shops_above += 1
+        except:
+            pass
 
         context.update(
             {
@@ -174,7 +178,7 @@ class AllProducts(TemplateView):
                 this_products_equal = 0
                 this_products_above = 0
                 tmp = RetailPrice.objects.filter(
-                    timestamp=product_latest_timestamp, product=product).order_by('-timestamp')
+                    timestamp=product_latest_timestamp, product=product)
                 for tmp_pr in tmp:
                     retailprices.append(tmp_pr)
                     if tmp_pr.price < tmp_pr.curr_target_price:
@@ -211,7 +215,6 @@ class AllProducts(TemplateView):
         return context
 
 
-# add number of products for each shop
 class ShopsPage(TemplateView):
     template_name = 'dashboard/shops_page.html'
 
@@ -288,13 +291,13 @@ class CategoriesPage(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(CategoriesPage, self).get_context_data(**kwargs)
         categories = Category.objects.all()
+        latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
         products_below = 0
         products_ok = 0
         for category in categories:
             products_below = 0
             products_ok = 0
             products = Product.objects.filter(main_category__in=category.get_descendants(include_self=True), active=True)
-            # category.products_list = products
             product_count = products.count()
             category.ansc_count = category.get_ancestors(ascending=False, include_self=False)
             for product in products:
@@ -313,6 +316,7 @@ class CategoriesPage(TemplateView):
 
         context.update({
             'categories': categories,
+            'latest_timestamp': latest_timestamp,
         })
         return context
 
@@ -373,6 +377,103 @@ class CategoryInfo(TemplateView):
 
         context.update({
             'category': category,
+            'products': products,
+            'retailprices': retailprices,
+            'table_image_size': table_image_size,
+            'latest_timestamp': latest_timestamp,
+        })
+
+        return context
+
+
+class ManufacturersPage(TemplateView):
+    template_name = 'dashboard/manufacturers_page.html'
+
+    def get_context_data(self, **kwargs):
+        context = super(ManufacturersPage, self).get_context_data(**kwargs)
+
+        manufacturers = Manufacturer.objects.all()
+        latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
+
+        products_below = 0
+        products_ok = 0
+        for manufacturer in manufacturers:
+            products_below = 0
+            products_ok = 0
+            manufacturer_products = Product.objects.filter(manufacturer=manufacturer, active=True)
+            product_count = manufacturer_products.count()
+            for product in manufacturer_products:
+                try:
+                    product_latest_timestamp = RetailPrice.objects.filter(product_id=product.id).latest('timestamp').timestamp
+                    retail_prices = RetailPrice.objects.filter(product=product, timestamp=product_latest_timestamp)
+                    for price in retail_prices:
+                        print(price.price)
+                        if price.price < price.curr_target_price:
+                            products_below += 1
+                            break
+                except:
+                    pass
+            manufacturer.products_below = products_below
+            manufacturer.product_count = product_count
+            manufacturer.products_ok = product_count - products_below
+
+        context.update({
+            'manufacturers': manufacturers,
+            'latest_timestamp': latest_timestamp,
+        })
+        return context
+
+class ManufacturerInfo(TemplateView):
+    template_name = 'dashboard/manufacturer_info.html'
+
+    def get_context_data(self, **kwargs):
+        context = context = super(ManufacturerInfo, self).get_context_data(**kwargs)
+        table_image_size = '80x80'
+        products_below = 0
+        products_ok = 0
+        shops_below = 0
+        shops_equal = 0
+        shops_above = 0
+
+        manufacturer = Manufacturer.objects.get(id=kwargs['pk'])
+        products = Product.objects.filter(manufacturer=kwargs['pk'])
+        products_count = products.count()
+        latest_timestamp = RetailPrice.objects.filter(product__manufacturer=kwargs['pk']).latest('timestamp').timestamp
+        retailprices = []
+
+        for product in products:
+            shops_below = 0
+            shops_equal = 0
+            shops_above = 0
+            try:
+                product_latest_timestamp = RetailPrice.objects.filter(product=product).latest('timestamp').timestamp
+                ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=product_latest_timestamp)
+                products_below_increased = False
+                for retail_price in ltst_pr_rec:
+                    if retail_price.product.active:
+                        retailprices.append(retail_price)
+                    if retail_price.price < retail_price.curr_target_price:
+                        if  not products_below_increased:
+                            products_below += 1
+                            products_below_increased = True
+                        shops_below += 1
+                    elif retail_price.price == retail_price.curr_target_price:
+                        shops_equal += 1
+                    elif retail_price.price > retail_price.curr_target_price:
+                        shops_above += 1
+            except:
+                pass
+            product.shops_below = shops_below
+            product.shops_equal = shops_equal
+            product.shops_above = shops_above
+            product.shops_count = shops_below + shops_equal + shops_above
+            manufacturer.products_below = products_below
+            manufacturer.products_count = products_count
+            manufacturer.products_ok = products_count - products_below
+            
+
+        context.update({
+            'manufacturer': manufacturer,
             'products': products,
             'retailprices': retailprices,
             'table_image_size': table_image_size,

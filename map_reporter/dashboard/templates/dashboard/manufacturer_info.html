@@ -3,7 +3,7 @@
 {% load static %}
 {% load thumbnail %}
 {% block title %}
-    {{category.name}}
+    {{manufacturer.name}}
 {% endblock title %}
 
 {% block headEnd %}
@@ -13,14 +13,14 @@
 
 {% block main %}
 <h1 class="mb-4">
-    {{ category.name }}
+    {{ manufacturer.name }}
 </h1>
     <div class="row">
         <div class="col-xl-6">
             <div class='card mb-4'>
                 <div class='card-header'>
                     <i class='fas fa-chart-pie me-1'></i>
-                    Κατάσταση τιμών καταστημάτων
+                    Κατάσταση τιμών κατασκευαστή
                 </div>
                 <div class='card-body'><canvas id='okProductsPieChart' width='100%' height='50'></canvas></div>
                 <div class='card-footer small text-muted'>Τελευταία ενημέρωση {{ latest_timestamp }}</div>
@@ -36,7 +36,7 @@
             <div class="card mb-4">
                 <div class="card-header mb-4">
                     <i class="fas fa-table me-1 MB-4"></i>
-                    Όλα τα προϊόντα στην κατηγορία <b>{{ category.name }}</b>
+                    Όλα τα προϊόντα <b>{{ manufacturer.name }}</b>
                 </div>
                 <div class="card-body">
                     <div class="dropdown">
@@ -74,7 +74,6 @@
                             <tr class="bg-light">
                                 <th data-field="product_image">Φωτογραφία</th>
                                 <th data-field="active" data-filter-control="select">Ενεργό</th>
-                                <th data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
                                 <th data-field="model" data-filter-control="select">Μοντέλο</th>
                                 <th data-field="map_price">MAP Price</th>
                                 <th data-field="key_acc_price">Key Acc Price</th>
@@ -97,11 +96,6 @@
                                   <td>
                                   {{product.active}}
                                   </td>                
-                                  <td>
-                                    <a href="{% url 'manufacturer_info' product.manufacturer.id %}">
-                                        {{product.manufacturer}}
-                                    </a>
-                                  </td>
                                   <td>
                                   <a href="{% url 'product_info' product.id %}">
                                       {{product.model}}
@@ -138,7 +132,7 @@
             <div class="card mb-4">
                 <div class="card-header mb-4">
                         <i class="fas fa-table me-1 MB-4"></i>
-                       Όλα τα <b>ενεργά</b> προϊόντα στην κατηγορία <b>{{ category.name }}</b>
+                       Όλα τα <b>ενεργά</b> προϊόντα <b>{{ manufacturer.name }}</b>
                 </div>
                 <div class="card-body">
                     <div class="dropdown">
@@ -173,7 +167,6 @@
                         <thead>
                             <tr class="bg-light">
                                 <th data-field="product_image">Φωτογραφία</th>
-                                <th data-sortable="true" data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
                                 <th data-sortable="true" data-field="model" data-filter-control="input">Μοντέλο</th>
                                 <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
                                 <th data-sortable="true" data-field="price">Τιμή</th>
@@ -197,11 +190,6 @@
                                                 <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retailprice.product.name}}" class="prod-img">
                                             {% endthumbnail %}
                                             
-                                        </td>
-                                        <td>
-                                            <a href="{% url 'manufacturer_info' retailprice.product.manufacturer.id %}">
-                                                {{retailprice.product.manufacturer}}
-                                            </a>
                                         </td>
                                         <td>
                                             <a href="{% url 'product_info' retailprice.product.id %}">
@@ -259,7 +247,7 @@ const cat_pie_chart = new Chart( pie_elem, {
     data: {
         labels: ['Κάτω', 'Εντάξει'],
         datasets: [{
-        data: [{{category.products_below}}, {{category.products_ok}}],
+        data: [{{manufacturer.products_below}}, {{manufacturer.products_ok}}],
         backgroundColor: ['#dc3545', '#28a745'],
         }],
     },

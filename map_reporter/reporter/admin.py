@@ -3,7 +3,7 @@ from django.db import models
 from mptt.admin import MPTTModelAdmin, DraggableMPTTAdmin, TreeRelatedFieldListFilter
 from django.contrib.admin.widgets import AdminFileWidget
 from django.utils.safestring import mark_safe
-from .models import Manufacturer, Category, Product, Source, Page, Shop, RetailPrice, MapPrice
+from .models import Manufacturer, Category, Product, Manufacturer, Source, Page, Shop, RetailPrice, MapPrice
 
 
 # Replace the default ImageField with one that shows a preview of the uploaded image
@@ -83,6 +83,7 @@ class RetailPriceView(admin.ModelAdmin):
 
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Product, ProductAdmin)
+admin.site.register(Manufacturer)
 admin.site.register(Source)
 admin.site.register(Page)
 admin.site.register(Shop)
