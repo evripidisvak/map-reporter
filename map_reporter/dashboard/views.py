@@ -158,7 +158,7 @@ class AllProducts(TemplateView):
         products = Product.objects.all()
         latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
         # products = Product.objects.annotate(shop_count=Count('shop', distinct=True))
-        retailprices = []
+        retail_prices = []
         products_below = 0
         this_products_below = 0
         products_equal = 0
@@ -176,7 +176,7 @@ class AllProducts(TemplateView):
                 tmp = RetailPrice.objects.filter(
                     timestamp=product_latest_timestamp, product=product).order_by('-timestamp')
                 for tmp_pr in tmp:
-                    retailprices.append(tmp_pr)
+                    retail_prices.append(tmp_pr)
                     if tmp_pr.price < tmp_pr.curr_target_price:
                         products_below += 1
                         this_products_below += 1
@@ -200,7 +200,7 @@ class AllProducts(TemplateView):
         context.update(
             {
                 'products': products,
-                'retailprices': retailprices,
+                'retail_prices': retail_prices,
                 'products_below': products_below,
                 'products_equal': products_equal,
                 'products_above': products_above,
@@ -269,14 +269,40 @@ class ShopInfo(TemplateView):
     template_name = 'dashboard/shop_info.html'
 
     def get_context_data(self, **kwargs):
-        table_image_size = '80x80'
         context = context = super(ShopInfo, self).get_context_data(**kwargs)
+        products_below = 0
+        products_equal = 0
+        products_above = 0
+        table_image_size = '80x80'
+        shop = Shop.objects.get(id=kwargs['pk'])
+        products = RetailPrice.get_shop_products(shop_id=kwargs['pk'])
+        retail_prices = []
+        for product in products:
+            try:
+                latest_timestamp = RetailPrice.objects.filter(shop=shop, product=product).latest('timestamp').timestamp
+                found_retail_price = RetailPrice.objects.filter(shop=shop, product=product, timestamp=latest_timestamp)
+                for tmp in found_retail_price:
+                    retail_prices.append(tmp)
+            except:
+                pass
+        
+        for retail_price in retail_prices:
+            if retail_price.price < retail_price.curr_target_price:
+                products_below += 1
+            elif retail_price.price == retail_price.curr_target_price:
+                products_equal += 1
+            elif retail_price.price == retail_price.curr_target_price:
+                products_above += 1
+
         context.update(
             {
-                'shop': Shop.objects.get(id=kwargs['pk']),
-                'prices': RetailPrice.objects.filter(shop=kwargs['pk']),
-                'products': RetailPrice.get_shop_products(shop_id=kwargs['pk']),
+                'shop': shop,
+                'retail_prices': retail_prices,
+                'products': products,
                 'table_image_size': table_image_size,
+                'products_below' : products_below,
+                'products_equal' : products_equal,
+                'products_above' : products_above,
             }
         )
         return context

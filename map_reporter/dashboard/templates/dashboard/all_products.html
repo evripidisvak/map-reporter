@@ -185,61 +185,61 @@
                         </tr>
                     </thead>
                     <tbody>
-                    {% for retailprice in retailprices %}
-                        {% if retailprice.product.active %}
-                        {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
+                    {% for retail_price in retail_prices %}
+                        {% if retail_price.product.active %}
+                        {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
                             <tr class="bg-danger" style="--bs-bg-opacity: .1;">
                         {% else %}
                             <tr>
                         {% endif %}
                                 <td>
-                                    {% thumbnail retailprice.product.image table_image_size as im %}
-                                        <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retailprice.product.name}}" class="prod-img">
+                                    {% thumbnail retail_price.product.image table_image_size as im %}
+                                        <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
                                     {% endthumbnail %}
                                     
                                 </td>
                                 <td>
-                                    <a href="{% url 'product_info' retailprice.product.id %}">
-                                        {{retailprice.product.manufacturer}}
+                                    <a href="{% url 'product_info' retail_price.product.id %}">
+                                        {{retail_price.product.manufacturer}}
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'product_info' retailprice.product.id %}">
-                                        {{retailprice.product.model}}
+                                    <a href="{% url 'product_info' retail_price.product.id %}">
+                                        {{retail_price.product.model}}
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'shop_info' retailprice.shop.id %}">{{retailprice.shop}}</a>
+                                    <a href="{% url 'shop_info' retail_price.shop.id %}">{{retail_price.shop}}</a>
                                 </td>
                                 <td>
-                                    {{retailprice.price}}
+                                    {{retail_price.price}}
                                 </td>
                                 <td>
-                                    {{retailprice.curr_target_price}}
+                                    {{retail_price.curr_target_price}}
                                 </td>
                                 <td>
-                                    {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
-                                        <p class='text-danger'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
-                                    {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
-                                        <p class='text-success'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                    {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
+                                        <p class='text-danger'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
+                                    {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
+                                        <p class='text-success'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
                                     {% else %}
-                                        <p class='text-black'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                        <p class='text-black'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if retailprice.price|ch_sub:retailprice.curr_target_price < 0 %}
-                                        <p class='text-danger'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
-                                    {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
-                                        <p class='text-success'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                    {% if retail_price.price|ch_sub:retail_price.curr_target_price < 0 %}
+                                        <p class='text-danger'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
+                                    {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
+                                        <p class='text-success'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
                                     {% else %}
-                                        <p class='text-black'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                        <p class='text-black'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {{ retailprice.is_shop_official_reseller }}
+                                    {{ retail_price.is_shop_official_reseller }}
                                 </td>
                                 <td>Seller</td>
-                                <td>{{retailprice.timestamp}}</td>
+                                <td>{{retail_price.timestamp}}</td>
                             </tr>
                         {% endif %}
                     {% endfor %}
