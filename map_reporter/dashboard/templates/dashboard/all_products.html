@@ -37,27 +37,47 @@
                 <i class='fas fa-table me-1'></i>
                 Όλα τα προϊόντα
             </div>
-                <div class="container-fluid">
-                        <div class="dropdown">
-                          <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
-                            Τύπος Εξαγωγής
-                          </button>
-                          <ul class="dropdown-menu" aria-labelledby="print-selector" id="all-products-table_print-dropdown">
-                            <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
-                            <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
-                            <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
-                          </ul>
-                        </div>
-                    <table id='all-products-table' class=" " data-toggle="table" data-show-columns="true" data-show-columns-toggle-all="true" data-pagination="true" data-show-toggle="true" data-show-fullscreen="true" data-buttons="buttons" data-buttons-align="left" data-buttons-class="primary" data-pagination-v-align="both" data-remember-order="true" data-sort-reset="true" data-filter-control="true" data-show-search-clear-button="true" data-show-multi-sort="true" data-show-export="true" data-show-print="true" data-sticky-header="true">
+                <div class="card-body">
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
+                        Τύπος Εξαγωγής
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="print-selector" id="all-products-table_print-dropdown">
+                        <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
+                        <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
+                        <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
+                        </ul>
+                    </div>
+
+                    <table id='all-products-table'
+                            data-toggle="table"
+                            data-show-columns="true"
+                            data-show-columns-toggle-all="true"
+                            data-pagination="true"
+                            data-show-toggle="true"
+                            data-show-fullscreen="true"
+                            data-buttons="buttons"
+                            data-buttons-align="left"
+                            data-buttons-class="primary"
+                            data-pagination-v-align="both"
+                            data-remember-order="true"
+                            data-sort-reset="true"
+                            data-filter-control="true"
+                            data-show-search-clear-button="true"
+                            data-show-multi-sort="true"
+                            data-show-export="true"
+                            data-show-print="true"
+                            data-sticky-header="true"
+                    >
                         <thead>
-                            <tr>
+                            <tr class="bg-light">
                                 <th data-field="product_image">Φωτογραφία</th>
-                                <th data-field="active" data-filter-control="select">Active</th>
+                                <th data-field="active" data-filter-control="select">Ενεργό</th>
                                 <th data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
                                 <th data-field="model" data-filter-control="select">Μοντέλο</th>
                                 <th data-field="map_price">MAP Price</th>
                                 <th data-field="key_acc_price">Key Acc Price</th>
-                                <th data-field="shop_count"># Καταστημάτων</th>
+                                <th data-field="shop_count">Καταστήματα</th>
                                 <th data-field="shops_below">Κατ. below</th>
                                 <th data-field="shops_equal">Κατ. equal</th>
                                 <th data-field="shops_above">Κατ. above</th>
@@ -116,7 +136,7 @@
                 <i class='fas fa-table me-1'></i>
                 Τελευταίες τιμές όλων των ενεργών προϊόντων
             </div>
-            <div class="container-fluid">
+            <div class="card-body">
               <div class="dropdown">
                 <button class="btn btn-primary dropdown-toggle" type="button" id="bottom-print-selector" data-bs-toggle="dropdown" aria-expanded="false" >Τυπος Εξαγωγής</button>
                 <ul class="dropdown-menu" aria-labelledby="bottom-print-selector" id="all-products-prices-table_print-dropdown">
@@ -165,9 +185,12 @@
                     <tbody>
                     {% for retailprice in retailprices %}
                         {% if retailprice.product.active %}
+                        {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
+                            <tr class="bg-danger" style="--bs-bg-opacity: .1;">
+                        {% else %}
                             <tr>
+                        {% endif %}
                                 <td>
-                                    {% comment %} {{ retailprice.product.image.url|datalize }} {% endcomment %}
                                     {% thumbnail retailprice.product.image table_image_size as im %}
                                         <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retailprice.product.name}}" class="prod-img">
                                     {% endthumbnail %}
@@ -210,11 +233,8 @@
                                         <p class='text-black'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
                                     {% endif %}
                                 </td>
-                                <td>{% if retailprice.official_reseller == False %}
-                                        <p class='text-danger'>Όχι</p>
-                                    {% else %}
-                                        <p class='text-success'>Ναι</p>
-                                    {% endif %}
+                                <td>
+                                    {{ retailprice.is_shop_official_reseller }}
                                 </td>
                                 <td>Seller</td>
                                 <td>{{retailprice.timestamp}}</td>
@@ -305,8 +325,6 @@
                 $(elements).attr("disabled", "true");
             });
         });
-
-      
         
     </script>
 

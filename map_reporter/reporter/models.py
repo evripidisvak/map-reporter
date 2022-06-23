@@ -207,6 +207,12 @@ class RetailPrice(models.Model):
             if not price.product in productList:
                 productList.append(price.product)
         return productList
+    
+    def is_shop_official_reseller(self):
+        if self.official_reseller == True:
+            return "Ναι"
+        else:
+            return "Όχι"
 
 
 class KeyAccPrice(models.Model):
