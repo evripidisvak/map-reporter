@@ -1,32 +1,17 @@
-{% extends "dashboard_base.html" %}
+{% extends 'dashboard_base.html' %}
+{% load dashboard_tags %}
 {% load static %}
 {% load thumbnail %}
-{% block title %}{{category.name}}{% endblock title %}
+{% block title %}
+    {{category.name}}
+{% endblock title %}
+
 {% block headEnd %}
-    {% comment %} <script src="{% static '/map_reporter/js/category-info-data-table.js' %}"></script> {% endcomment %}
-    {% comment %} <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
-    <script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script> {% endcomment %}
-    <style>
 
-    label {
-        padding: 5px;
-    }
-
-    #all-products-table_wrapper{
-        padding:5px;
-    }
-
-    #active-products-table_wrapper{
-        padding:5px;
-    }
-   
-    </style>
 {% endblock %}
 
 
 {% block main %}
-
 <h1 class="mb-4">
     {{ category.name }}
 </h1>
@@ -35,10 +20,10 @@
             <div class='card mb-4'>
                 <div class='card-header'>
                     <i class='fas fa-chart-pie me-1'></i>
-                    OK Products Pie Chart
+                    Κατάσταση τιμών καταστημάτων
                 </div>
                 <div class='card-body'><canvas id='okProductsPieChart' width='100%' height='50'></canvas></div>
-                <div class='card-footer small text-muted'>Updated yesterday at 11:59 PM</div>
+                <div class='card-footer small text-muted'>Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
         <div class="col-xl-6 mb-3">
@@ -50,90 +35,99 @@
         <div class="col col-12">
             <div class="card mb-4">
                 <div class="card-header mb-4">
-                        <i class="fas fa-table me-1 MB-4"></i>
-                       Όλα τα προϊόντα στην κατηγορία&nbsp;<b>{{ category.name }}</b>
-                    </div>
-                <table id='all-products-table' class='' 
-                data-show-columns="true"
-                data-toggle="table"
-                data-toggle="table"
-                data-pagination="true"
-                data-search="true"
-                >
-                    <thead>
-                        <tr>
-                            <th>Φωτογραφία</th>
-                            <th class="add_select">Ενεργό</th>
-                            <th class="add_select">Κατασκευαστής</th>
-                            <th>Μοντέλο</th>
-                            <th>Τιμή MAP</th>
-                            <th>Τιμή Key Account</th>
-                            <th>Γονική Κατηγορία</th>
-                            <th># Καταστημάτων</th>
-                            <th>Κατ. below</th>
-                            <th>Κατ. equal</th>
-                            <th>Κατ. above</th>
-                        </tr>
-                        <tr>
-                            <th class="no_filter"></th>
-                            <th class="no_filter"></th>
-                            <th class="no_filter"></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for product in products %}
-                        <tr>
-                            <td>
-                            <a href="{% url 'product_info' product.id %}">
-                                {% thumbnail product.image table_image_size as im %}
-                                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}">
-                                {% endthumbnail %}
-                            </a> 
-                            </td>                
-                            <td>
-                            {{product.active}}
-                            </td>                
-                            <td>
-                            {{product.manufacturer}}
-                            </td>
-                            <td>
-                            <a href="{% url 'product_info' product.id %}">
-                                {{product.model}}
-                            </a>
-                            </td>
-                            <td>
-                            {{product.map_price}}
-                            </td>
-                            <td>
-                            {{product.key_acc_price}}
-                            </td>
-                            <td>
-                            {{product.main_category}}
-                            </td>
-                            <td>
-                            {{product.shops_count}}
-                            </td>
-                            <td>
-                            {{product.shops_below}}
-                            </td>
-                            <td>
-                            {{product.shops_equal}}
-                            </td>
-                            <td>
-                            {{product.shops_above}}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    <i class="fas fa-table me-1 MB-4"></i>
+                    Όλα τα προϊόντα στην κατηγορία <b>{{ category.name }}</b>
+                </div>
+                <div class="card-body">
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
+                          Τύπος Εξαγωγής
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="print-selector" id="all-products-table_print-dropdown">
+                          <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
+                          <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
+                          <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
+                        </ul>
+                      </div>
+
+                      <table id='all-products-table'
+                              data-toggle="table"
+                              data-show-columns="true"
+                              data-show-columns-toggle-all="true"
+                              data-pagination="true"
+                              data-show-toggle="true"
+                              data-show-fullscreen="true"
+                              data-buttons="buttons"
+                              data-buttons-align="left"
+                              data-buttons-class="primary"
+                              data-pagination-v-align="both"
+                              data-remember-order="true"
+                              data-sort-reset="true"
+                              data-filter-control="true"
+                              data-show-search-clear-button="true"
+                              data-show-multi-sort="true"
+                              data-show-export="true"
+                              data-show-print="true"
+                              data-sticky-header="true"
+                      >
+                          <thead>
+                            <tr class="bg-light">
+                                <th data-field="product_image">Φωτογραφία</th>
+                                <th data-field="active" data-filter-control="select">Ενεργό</th>
+                                <th data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
+                                <th data-field="model" data-filter-control="select">Μοντέλο</th>
+                                <th data-field="map_price">MAP Price</th>
+                                <th data-field="key_acc_price">Key Acc Price</th>
+                                <th data-field="shop_count">Καταστήματα</th>
+                                <th data-field="shops_below">Κατ. below</th>
+                                <th data-field="shops_equal">Κατ. equal</th>
+                                <th data-field="shops_above">Κατ. above</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                              {% for product in products %}
+                              <tr>
+                                  <td>
+                                  <a href="{% url 'product_info' product.id %}">
+                                      {% thumbnail product.image table_image_size as im %}
+                                      <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}">
+                                      {% endthumbnail %}
+                                  </a> 
+                                  </td>                
+                                  <td>
+                                  {{product.active}}
+                                  </td>                
+                                  <td>
+                                  {{product.manufacturer}}
+                                  </td>
+                                  <td>
+                                  <a href="{% url 'product_info' product.id %}">
+                                      {{product.model}}
+                                  </a>
+                                  </td>
+                                  <td>
+                                  {{product.map_price}}
+                                  </td>
+                                  <td>
+                                  {{product.key_acc_price}}
+                                  </td>
+                                  <td>
+                                  {{product.main_category}}
+                                  </td>
+                                  <td>
+                                  {{product.shops_count}}
+                                  </td>
+                                  <td>
+                                  {{product.shops_below}}
+                                  </td>
+                                  <td>
+                                  {{product.shops_equal}}
+                                  </td>
+                              </tr>
+                              {% endfor %}
+                          </tbody>
+                      </table>
+                </div>
             </div>
         </div>
     </div>
@@ -142,80 +136,113 @@
             <div class="card mb-4">
                 <div class="card-header mb-4">
                         <i class="fas fa-table me-1 MB-4"></i>
-                       Όλα τα <b>ενεργά</b> προϊόντα στην κατηγορία&nbsp;<b>{{ category.name }}</b>
+                       Όλα τα <b>ενεργά</b> προϊόντα στην κατηγορία <b>{{ category.name }}</b>
                 </div>
-                <table id="active-products-table" 
-                data-toggle="table"
-                data-pagination="true"
-                data-search="true"
-                >
-                    <thead>
-                        <tr>
-                            <th>Φωτογραφία</th>
-                            <th>Κατασκευαστής</th>
-                            <th>Μοντέλο</th>
-                            <th>Κατάστημα</th>
-                            <th>Τιμή</th>
-                            <th>Target Price</th>
-                            <th>Diff</th>
-                            <th>Diff %</th>
-                            <th>Επ. Μεταπολητής</th>
-                            <th>Πωλητής</th>
-                            <th>Date</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for product in products %}
-                        {% if product.active %}                                        
-                        <tr>
-                            <td>
-                            <a href="{% url 'product_info' product.id %}">{{product}}</a> 
-                            </td>
+                <div class="card-body">
+                    <div class="dropdown">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="bottom-print-selector" data-bs-toggle="dropdown" aria-expanded="false" >Τυπος Εξαγωγής</button>
+                        <ul class="dropdown-menu" aria-labelledby="bottom-print-selector" id="active-products-table_print-dropdown">
+                          <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
+                          <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
+                          <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
+                        </ul>
+                      </div>
 
-                            <td>
-                            {{product.map_price}} €
-                            </td>
-
-                            <td>
-                            {{product.key_acc_price}} €
-                            </td>
-
-                            <td>
-                            {{product.main_category}}
-                            </td>
-
-                            <td>
-                            {{product.main_category}}
-                            </td>
-
-                            <td>
-                            {{product.main_category}}
-                            </td>
-                            
-                            <td>
-                            {{product.main_category}}
-                            </td>
-
-                            <td>
-                            {{product.main_category}}
-                            </td>
-
-                            <td>
-                            {{product.main_category}}
-                            </td>
-
-                            <td>
-                            {{product.main_category}}
-                            </td>
-
-                            <td>
-                            {{product.main_category}}
-                            </td>
-                        </tr>
-                        {% endif %}
-                        {% endfor %}
-                    </tbody>
-                </table>
+                    <table id="active-products-table" 
+                            data-toggle="table"
+                            data-show-columns="true"
+                            data-show-columns-toggle-all="true"
+                            data-pagination="true"
+                            data-show-toggle="true"
+                            data-show-fullscreen="true"
+                            data-buttons="buttons"
+                            data-buttons-align="left"
+                            data-buttons-class="primary"
+                            data-pagination-v-align="both"
+                            data-remember-order="true"
+                            data-sort-reset="true"
+                            data-filter-control="true"
+                            data-show-search-clear-button="true"
+                            data-show-multi-sort="true"
+                            data-show-export="true"
+                            data-show-print="true"
+                            data-sticky-header="true"
+                    >
+                        <thead>
+                            <tr class="bg-light">
+                                <th data-field="product_image">Φωτογραφία</th>
+                                <th data-sortable="true" data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
+                                <th data-sortable="true" data-field="model" data-filter-control="input">Μοντέλο</th>
+                                <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
+                                <th data-sortable="true" data-field="price">Τιμή</th>
+                                <th data-sortable="true" data-field="target_price">Target Price</th>
+                                <th data-sortable="true" data-field="diff">Diff</th>
+                                <th data-sortable="true" data-field="per_diff">Diff %</th>
+                                <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                                <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                                <th data-sortable="true" data-field="date">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for retailprice in retailprices %}
+                                {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
+                                    <tr class="bg-danger" style="--bs-bg-opacity: .1;">
+                                {% else %}
+                                    <tr>
+                                {% endif %}
+                                        <td>
+                                            {% thumbnail retailprice.product.image table_image_size as im %}
+                                                <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retailprice.product.name}}" class="prod-img">
+                                            {% endthumbnail %}
+                                            
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'product_info' retailprice.product.id %}">
+                                                {{retailprice.product.manufacturer}}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'product_info' retailprice.product.id %}">
+                                                {{retailprice.product.model}}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'shop_info' retailprice.shop.id %}">{{retailprice.shop}}</a>
+                                        </td>
+                                        <td>
+                                            {{retailprice.price}}
+                                        </td>
+                                        <td>
+                                            {{retailprice.curr_target_price}}
+                                        </td>
+                                        <td>
+                                            {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
+                                                <p class='text-danger'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                            {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
+                                                <p class='text-success'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                            {% else %}
+                                                <p class='text-black'>{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if retailprice.price|ch_sub:retailprice.curr_target_price < 0 %}
+                                                <p class='text-danger'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                            {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
+                                                <p class='text-success'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                            {% else %}
+                                                <p class='text-black'>{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {{ retailprice.is_shop_official_reseller }}
+                                        </td>
+                                        <td>Seller</td>
+                                        <td>{{retailprice.timestamp}}</td>
+                                    </tr>
+                            {% endfor %}
+                            </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -228,13 +255,75 @@ const pie_elem = $('#okProductsPieChart');
 const cat_pie_chart = new Chart( pie_elem, {
     type: 'pie',
     data: {
-        labels: ['Κάτω', 'Κομπλέ'],
+        labels: ['Κάτω', 'Εντάξει'],
         datasets: [{
         data: [{{category.products_below}}, {{category.products_ok}}],
         backgroundColor: ['#dc3545', '#28a745'],
         }],
     },
-})
+});
+
+//top table
+var $all_products_table = $('#all-products-table');
+
+$(function() {
+    $('#all-products-table_print-dropdown').find('.dropdown-item').on('click', function (e) {
+        e.preventDefault();
+        selector_btn = document.getElementById('print-selector');
+        selector_btn.innerText = e.target.innerText; 
+        data = {};
+        if (e.target.attributes['area-value'].value == 'selected'){
+            data = {
+                field: 'state',
+                checkbox: true,
+                visible: $(this).attr('area-value') === 'selected'
+            };
+        }
+        $all_products_table.bootstrapTable('destroy').bootstrapTable({
+            exportDataType: $(this).attr('area-value'),
+            exportTypes: ['csv', 'txt', 'excel', 'pdf'],
+            columns: [
+                data,
+            ]
+        })
+        }).trigger('change')
+});
+
+// bottom Table export
+var $all_products_prices_table = $('#active-products-table');
+
+$(function() {
+    $('#active-products-table_print-dropdown').find('.dropdown-item').on('click', function (e) {
+        e.preventDefault();
+        selector_btn = document.getElementById('bottom-print-selector');
+        selector_btn.innerText = e.target.innerText; 
+        data = {};
+        if (e.target.attributes['area-value'].value == 'selected'){
+            data = {
+                field: 'state',
+                checkbox: true,
+                visible: $(this).attr('area-value') === 'selected'
+            };
+        }
+        $all_products_prices_table.bootstrapTable('destroy').bootstrapTable({
+            exportDataType: $(this).attr('area-value'),
+            exportTypes: ['csv', 'txt', 'excel', 'pdf'],
+            columns: [
+                data,
+            ]
+        })
+        }).trigger('change')
+});
+
+
+$(window).on('load', ()=>{
+    export_btn_group = $('.export.btn-group');
+    exoport_dropdown = export_btn_group.find("[aria-label='Export']");
+    exoport_dropdown.parent().css("cursor", "not-allowed");
+    exoport_dropdown.each( (index, elements) => {
+        $(elements).attr("disabled", "true");
+    });
+});
 
 </script>
 
