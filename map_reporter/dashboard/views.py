@@ -269,12 +269,14 @@ class ShopInfo(TemplateView):
     template_name = 'dashboard/shop_info.html'
 
     def get_context_data(self, **kwargs):
+        table_image_size = '80x80'
         context = context = super(ShopInfo, self).get_context_data(**kwargs)
         context.update(
             {
                 'shop': Shop.objects.get(id=kwargs['pk']),
                 'prices': RetailPrice.objects.filter(shop=kwargs['pk']),
                 'products': RetailPrice.get_shop_products(shop_id=kwargs['pk']),
+                'table_image_size': table_image_size,
             }
         )
         return context

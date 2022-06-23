@@ -1,6 +1,10 @@
 {% extends "dashboard_base.html" %}
 {% load static %}
-
+{% load dashboard_tags %}
+{% load thumbnail %}
+{% block title %}
+{{shop.name}}
+{% endblock title %}
 {% block headEnd %}
     <style>
 
@@ -21,72 +25,186 @@
 <h1 class="mb-4">
     {{ shop.name }}
 </h1>
-
-<div class="card mb-4">
-    <div class="card-header mb-4">
-        <i class="fas fa-table"></i>
-        Προϊόντα του {{ shop.name }}
-    </div>
-    <div class="card-body">
-        <div class="dropdown">
-            <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
-              Τύπος Εξαγωγής
-            </button>
-            <ul class="dropdown-menu" aria-labelledby="print-selector" id="shops-table_print-dropdown">
-              <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
-              <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
-              <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
-            </ul>
+<div class="row">
+    <div class="col-xl-6">
+        <div class='card mb-4'>
+            <div class='card-header'>
+                <i class='fas fa-chart-pie me-1'></i>
+                Κατάσταση τιμών καταστημάτων
+            </div>
+            <div class='card-body'><canvas id='myPieChart' width='100%' height='50'></canvas></div>
+            <div class='card-footer small text-muted'>Τελευταία ενημέρωση {{ latest_timestamp }}</div>
         </div>
-        <table id='shops-table'
-        data-toggle="table" 
-        data-show-columns="true" 
-        data-show-columns-toggle-all="true" 
-        data-pagination="true" 
-        data-show-toggle="true" 
-        data-show-fullscreen="true" 
-        data-buttons="buttons" 
-        data-buttons-align="left" 
-        data-buttons-class="primary" 
-        data-pagination-v-align="both" 
-        data-remember-order="true" 
-        data-sort-reset="true" 
-        data-filter-control="true" 
-        data-show-search-clear-button="true" 
-        data-show-multi-sort="true" 
-        data-show-export="true" 
-        data-show-print="true" 
-        data-sticky-header="true">
-            <thead>
-                <tr class="bg-light">
-                    <th data-field="product_name" data-sortable="true" data-filter-control="input">Προϊόν</th>
-                    <th data-field="map_price" data-sortable="true">Τιμή MAP</th>
-                    <th data-field="key_acc_price" data-sortable="true">Τιμή Key Account</th>
-                    <th data-field="main_category" data-sortable="true" data-filter-control="select">Κατηγορία</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for product in products %}
-                <tr>
-                    <td>
-                    <a href="{% url 'product_info' product.id %}">{{product}}</a>
-                    </td>
-                    <td>
-                    <p>{{product.map_price}} €</p>
-                    </td>
-                    <td>
-                    <p>{{product.key_acc_price}} €</p>
-                    </td>
-                    <td>
-                    <p>{{product.main_category}}</p>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    </div>
+    <div class="col-xl-6">
+        <div class="card mb-4">
+            <div class='card-header'>
+                <i class="fa-solid fa-address-card"></i>
+                Στοιχεία επικοινωνίας καταστήματος
+            </div>
+            <div class="card-body bg-light">
+                <div class="container-fluid">
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Τηλέφωνο: </h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2"><a href="tel:{{shop.phone_number}}">{{shop.phone_number}}</a></h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Διεύθυνση: </h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2"><a href="https://www.google.com/maps/place/{{shop.address}}" target="blanc">{{shop.address}}</a></h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row pt-lg-5">
+    <div class="card mb-4">
+        <div class="card-header mb-4">
+            <i class="fas fa-table"></i>
+            Προϊόντα του {{ shop.name }}
+        </div>
+        <div class="card-body">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
+                  Τύπος Εξαγωγής
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="print-selector" id="shops-table_print-dropdown">
+                  <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
+                  <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
+                  <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
+                </ul>
+            </div>
+            <table id='shops-table'
+            data-toggle="table"
+            data-show-columns="true"
+            data-show-columns-toggle-all="true"
+            data-pagination="true"
+            data-show-toggle="true"
+            data-show-fullscreen="true"
+            data-buttons="buttons"
+            data-buttons-align="left"
+            data-buttons-class="primary"
+            data-pagination-v-align="both"
+            data-remember-order="true"
+            data-sort-reset="true"
+            data-filter-control="true"
+            data-show-search-clear-button="true"
+            data-show-multi-sort="true"
+            data-show-export="true"
+            data-show-print="true"
+            data-sticky-header="true">
+                <thead>
+                    <tr class="bg-light">
+                        <th data-field="product_image">Φωτογραφία</th>
+                        <th data-field="active" data-sortable="true" data-filter-control="select">Ενεργό</th>
+                        <th data-field="manufacturer" data-sortable="true" data-filter-control="select">Κατασκευαστής</th>
+                        <th data-field="model" data-sortable="true" data-filter-control="select">Μοντέλο</th>
+                        <th data-field="map_price" data-sortable="true">Τιμή MAP</th>
+                        <th data-field="key_acc_price" data-sortable="true">Τιμή Key Account</th>
+                        <th data-field="main_category" data-sortable="true" data-filter-control="select">Κατηγορία</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td >
+                            {% thumbnail product.image table_image_size as im %}
+                                <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}" class="prod-img">
+                            {% endthumbnail %}
+                        </td>
+                        <td>
+                            {{product.active}}
+                        </td>
+                        <td>
+                            {{product.manufacturer}}
+                        </td>
+                        <td>
+                            {{product.model}}
+                        </td>
+                        <td>
+                        {{product.map_price}} €
+                        </td>
+                        <td>
+                        {{product.key_acc_price}} €
+                        </td>
+                        <td>
+                        {{product.main_category}}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
+
+<div class="row pt-lg-5">
+    <div class="card mb-4">
+        <div class="card-header mb-4">
+            <i class="fas fa-table"></i>
+            Όλα τα ενεργά προϊόντα του {{ shop.name }}
+        </div>
+        <div class="card-body">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
+                Τύπος Εξαγωγής
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="print-selector" id="active-products-shops-table_print-dropdown">
+                <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
+                <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
+                <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
+                </ul>
+            </div>
+            <table id="active-products-shops-table"
+                data-toggle="table"
+                data-show-columns="true"
+                data-show-columns-toggle-all="true"
+                data-pagination="true"
+                data-show-toggle="true"
+                data-show-fullscreen="true"
+                data-buttons="buttons"
+                data-buttons-align="left"
+                data-buttons-class="primary"
+                data-pagination-v-align="both"
+                data-remember-order="true"
+                data-sort-reset="true"
+                data-filter-control="true"
+                data-show-search-clear-button="true"
+                data-show-multi-sort="true"
+                data-show-export="true"
+                data-show-print="true"
+                data-sticky-header="true">
+                <thead>
+                    <tr class="bg-light">
+                        <th data-field="product_image">Φωτογραφία</th>
+                        <th data-field="manufacturer" data-filter-control="select" data-sortable="true">Κατασκευαστής</th>
+                        <th data-field="model" data-filter-control="select" data-sortable="true">Μοντέλο</th>
+                        <th data-sortable="true" data-field="price">Τιμή</th>
+                        <th data-sortable="true" data-field="target_price">Target Price</th>
+                        <th data-sortable="true" data-field="diff">Diff</th>
+                        <th data-sortable="true" data-field="per_diff">Diff %</th>
+                        <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                        <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                        <th data-sortable="true" data-field="date">Date</th>
+                        <th data-sortable="true" data-field="category" data-filter-control="select">Κατηγορία</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <script>
 
