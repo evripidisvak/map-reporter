@@ -37,70 +37,76 @@
                 <i class='fas fa-table me-1'></i>
                 Όλα τα προϊόντα
             </div>
-                <table id='all-products-table' class=''
-                data-show-columns="true"
-                data-toggle="table"
-                data-toggle="table"
-                data-pagination="true"
-                data-search="true"
-                >
-                    <thead>
+                <div class="container-fluid">
+                        <div class="dropdown">
+                          <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
+                            Τύπος Εξαγωγής
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="print-selector" id="all-products-table_print-dropdown">
+                            <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
+                            <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
+                            <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
+                          </ul>
+                        </div>
+                    <table id='all-products-table' class=" " data-toggle="table" data-show-columns="true" data-show-columns-toggle-all="true" data-pagination="true" data-show-toggle="true" data-show-fullscreen="true" data-buttons="buttons" data-buttons-align="left" data-buttons-class="primary" data-pagination-v-align="both" data-remember-order="true" data-sort-reset="true" data-filter-control="true" data-show-search-clear-button="true" data-show-multi-sort="true" data-show-export="true" data-show-print="true" data-sticky-header="true">
+                        <thead>
+                            <tr>
+                                <th data-field="product_image">Φωτογραφία</th>
+                                <th data-field="active" data-filter-control="select">Active</th>
+                                <th data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
+                                <th data-field="model" data-filter-control="select">Μοντέλο</th>
+                                <th data-field="map_price">MAP Price</th>
+                                <th data-field="key_acc_price">Key Acc Price</th>
+                                <th data-field="shop_count"># Καταστημάτων</th>
+                                <th data-field="shops_below">Κατ. below</th>
+                                <th data-field="shops_equal">Κατ. equal</th>
+                                <th data-field="shops_above">Κατ. above</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for product in products %}
                         <tr>
-                            <th>Φωτογραφία</th>
-                            <th class='add_select'>Active</th>
-                            <th class='add_select'>Κατασκευαστής</th>
-                            <th>Μοντέλο</th>
-                            <th>MAP Price</th>
-                            <th>Key Acc Price</th>
-                            <th># Καταστημάτων</th>
-                            <th>Κατ. below</th>
-                            <th>Κατ. equal</th>
-                            <th>Κατ. above</th>
+                            <td >
+                                {% thumbnail product.image table_image_size as im %}
+                                    <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}" class="prod-img">
+                                {% endthumbnail %}
+                            </td>
+                            <td>
+                                {{product.active}}
+                            </td>
+                            <td>
+                                <a href="{% url 'product_info' product.id %}">
+                                    {{product.manufacturer}}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'product_info' product.id %}">
+                                    {{product.model}}
+                                </a>
+                            </td>
+                            <td>
+                                {{product.map_price}}
+                            </td>
+                            <td>
+                                {{product.key_acc_price}}
+                            </td>
+                            <td>
+                                {{product.shop_count}}
+                            </td>
+                            <td>
+                                {{product.shops_below}}
+                            </td>
+                            <td>
+                                {{product.shops_equal}}
+                            </td>
+                            <td>
+                                {{product.shops_above}}
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>
-                    {% for product in products %}
-                    <tr>
-                        <td>
-                            {% thumbnail product.image table_image_size as im %}
-                                <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}">
-                            {% endthumbnail %}
-                        </td>
-                        <td>
-                            {{product.active}}
-                        </td>
-                        <td>
-                            <a href="{% url 'product_info' product.id %}">
-                                {{product.manufacturer}}
-                            </a>
-                        </td>
-                        <td>
-                            <a href="{% url 'product_info' product.id %}">
-                                {{product.model}}
-                            </a>
-                        </td>
-                        <td>
-                            {{product.map_price}}
-                        </td>
-                        <td>
-                            {{product.key_acc_price}}
-                        </td>
-                        <td>
-                            {{product.shop_count}}
-                        </td>
-                        <td>
-                            {{product.shops_below}}
-                        </td>
-                        <td>
-                            {{product.shops_equal}}
-                        </td>
-                        <td>
-                            {{product.shops_above}}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
         </div>
     </div>
 
@@ -110,11 +116,10 @@
                 <i class='fas fa-table me-1'></i>
                 Τελευταίες τιμές όλων των ενεργών προϊόντων
             </div>
+            <div class="container-fluid">
               <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
-                  Τύπος εξαγωγής
-                </button>
-                <ul class="dropdown-menu" aria-labelledby="print-selector" id="print-dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="bottom-print-selector" data-bs-toggle="dropdown" aria-expanded="false" >Τυπος Εξαγωγής</button>
+                <ul class="dropdown-menu" aria-labelledby="bottom-print-selector" id="all-products-prices-table_print-dropdown">
                   <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
                   <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
                   <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
@@ -144,17 +149,17 @@
                     <!--data-search-highlight use for highlight individual column search-->
                     <thead>
                     <tr class="bg-light">
-                        <th data-field="product-image">Φωτογραφία </th>
+                        <th data-field="product_image">Φωτογραφία</th>
                         <th data-sortable="true" data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
                         <th data-sortable="true" data-field="model" data-filter-control="input">Μοντέλο</th>
                         <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
-                        <th data-sortable="true">Τιμή</th>
-                        <th data-sortable="true">Target Price</th>
-                        <th data-sortable="true">Diff</th>
-                        <th data-sortable="true">Diff %</th>
+                        <th data-sortable="true" data-field="price">Τιμή</th>
+                        <th data-sortable="true" data-field="target_price">Target Price</th>
+                        <th data-sortable="true" data-field="diff">Diff</th>
+                        <th data-sortable="true" data-field="per_diff">Diff %</th>
                         <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
                         <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
-                        <th data-sortable="true">Date</th>
+                        <th data-sortable="true" data-field="date">Date</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -220,6 +225,7 @@
                 </table>
         </div>
     </div>
+    </div>
 
     <script>
         // Pie Chart Example
@@ -235,12 +241,14 @@
         },
         });
 
-        // Table export
-        var $table = $('#all-products-prices-table');
+        //top table
+        var $all_products_table = $('#all-products-table');
 
         $(function() {
-            $('#print-dropdown').find('.dropdown-item').on('click', function (e) {
+            $('#all-products-table_print-dropdown').find('.dropdown-item').on('click', function (e) {
                 e.preventDefault();
+                selector_btn = document.getElementById('print-selector');
+                selector_btn.innerText = e.target.innerText; 
                 data = {};
                 if (e.target.attributes['area-value'].value == 'selected'){
                     data = {
@@ -249,7 +257,7 @@
                         visible: $(this).attr('area-value') === 'selected'
                     };
                 }
-                $table.bootstrapTable('destroy').bootstrapTable({
+                $all_products_table.bootstrapTable('destroy').bootstrapTable({
                     exportDataType: $(this).attr('area-value'),
                     exportTypes: ['csv', 'txt', 'excel', 'pdf'],
                     columns: [
@@ -261,6 +269,45 @@
 
     
     
+        // bottom Table export
+        var $all_products_prices_table = $('#all-products-prices-table');
+
+        $(function() {
+            $('#all-products-prices-table_print-dropdown').find('.dropdown-item').on('click', function (e) {
+                e.preventDefault();
+                selector_btn = document.getElementById('bottom-print-selector');
+                selector_btn.innerText = e.target.innerText; 
+                data = {};
+                if (e.target.attributes['area-value'].value == 'selected'){
+                    data = {
+                        field: 'state',
+                        checkbox: true,
+                        visible: $(this).attr('area-value') === 'selected'
+                    };
+                }
+                $all_products_prices_table.bootstrapTable('destroy').bootstrapTable({
+                    exportDataType: $(this).attr('area-value'),
+                    exportTypes: ['csv', 'txt', 'excel', 'pdf'],
+                    columns: [
+                        data,
+                    ]
+                })
+                }).trigger('change')
+        });
+
+
+      
+        $(window).on('load', ()=>{
+            export_btn_group = $('.export.btn-group');
+            exoport_dropdown = export_btn_group.find("[aria-label='Export']");
+            exoport_dropdown.parent().css("cursor", "not-allowed");
+            exoport_dropdown.each( (index, elements) => {
+                $(elements).attr("disabled", "true");
+            });
+        });
+
+      
+        
     </script>
 
     {% endblock %}
