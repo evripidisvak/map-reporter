@@ -174,7 +174,7 @@ class AllProducts(TemplateView):
                 this_products_equal = 0
                 this_products_above = 0
                 tmp = RetailPrice.objects.filter(
-                    timestamp=product_latest_timestamp, product=product)
+                    timestamp=product_latest_timestamp, product=product).order_by('-timestamp')
                 for tmp_pr in tmp:
                     retailprices.append(tmp_pr)
                     if tmp_pr.price < tmp_pr.curr_target_price:
@@ -195,6 +195,7 @@ class AllProducts(TemplateView):
 
             except:
                 pass
+    
 
         context.update(
             {
@@ -293,7 +294,7 @@ class CategoriesPage(TemplateView):
             products_below = 0
             products_ok = 0
             products = Product.objects.filter(main_category__in=category.get_descendants(include_self=True), active=True)
-            category.products_list = products
+            # category.products_list = products
             product_count = products.count()
             category.ansc_count = category.get_ancestors(ascending=False, include_self=False)
             for product in products:

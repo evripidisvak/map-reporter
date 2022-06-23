@@ -161,26 +161,28 @@
                     data-sort-reset="true"
                     data-filter-control="true"
                     data-show-search-clear-button="true"
-                    data-show-multi-sort="true"
                     data-show-export="true"
                     data-show-print="true"
                     data-sticky-header="true"
+                    data-show-multi-sort="true"
+                    {% comment %} We need to sort the table like below, but it does not work. No idea why.
+                    data-sort-priority='[{"sortName": "model","sortOrder":"desc"},{"sortName": "date","sortOrder":"desc"},{"sortName":"retail_price","sortOrder":"asc"}]' {% endcomment %}
                     >
                     <!--data-search-highlight use for highlight individual column search-->
                     <thead>
-                    <tr class="bg-light">
-                        <th data-field="product_image">Φωτογραφία</th>
-                        <th data-sortable="true" data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
-                        <th data-sortable="true" data-field="model" data-filter-control="input">Μοντέλο</th>
-                        <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
-                        <th data-sortable="true" data-field="price">Τιμή</th>
-                        <th data-sortable="true" data-field="target_price">Target Price</th>
-                        <th data-sortable="true" data-field="diff">Diff</th>
-                        <th data-sortable="true" data-field="per_diff">Diff %</th>
-                        <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
-                        <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
-                        <th data-sortable="true" data-field="date">Date</th>
-                    </tr>
+                        <tr class="bg-light">
+                            <th data-sortable="true" data-field="product_image">Φωτογραφία</th>
+                            <th data-sortable="true" data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
+                            <th data-sortable="true" data-field="model" data-filter-control="input">Μοντέλο</th>
+                            <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
+                            <th data-sortable="true" data-field="retail_price">Τιμή</th>
+                            <th data-sortable="true" data-field="target_price">Target Price</th>
+                            <th data-sortable="true" data-field="diff">Diff</th>
+                            <th data-sortable="true" data-field="per_diff">Diff %</th>
+                            <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                            <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                            <th data-sortable="true" data-field="date">Date</th>
+                        </tr>
                     </thead>
                     <tbody>
                     {% for retailprice in retailprices %}
