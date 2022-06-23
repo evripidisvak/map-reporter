@@ -8,11 +8,8 @@
 {% endblock %}
 
 {% block headEnd %}
-<script src="{% static '/map_reporter/js/product-info-data-table.js' %}"></script>
-{% comment %} <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.css"/> {% endcomment %}
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script>
+
+
 {% endblock %}
 
 {% block main %}
@@ -144,36 +141,53 @@
         <div class="card mb-4">
         <div class="card-header">
             <i class="fas fa-table me-1"></i>
-            Πίνακας τιμών προϊόντος
+            Πίνακας τιμών προϊόντος για το κατάστημα <b>{{shop.name}}</b>
         </div>
         <div class="card-body">
-            <table id="product_prices_table">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
+                    Τύπος Εξαγωγής
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="print-selector" id="product_prices_table-dropdown">
+                    <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
+                    <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
+                    <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
+                </ul>
+            </div>
+            <table id="product_prices_table"
+            data-toggle="table"
+            data-show-columns="true"
+            data-show-columns-toggle-all="true"
+            data-pagination="true"
+            data-show-toggle="true"
+            data-show-fullscreen="true"
+            data-buttons="buttons" 
+            data-buttons-align="left"
+            data-buttons-class="primary"
+            data-pagination-v-align="both"
+            data-remember-order="true"
+            data-sort-reset="true"
+            data-filter-control="true"
+            data-show-search-clear-button="true"
+            data-show-export="true"
+            data-show-print="true"
+            data-sticky-header="true"
+            data-show-multi-sort="true"
+            >
                 <thead>
                     <tr>
-                        <th class="add_select">Κατάστημα</th>
-                        <th>Λ. Τιμή</th>
-                        <th>Target Price</th>
-                        <th>Diff</th>
-                        <th>Diff %</th>
-                        <th class="add_select">Επ. Μεταπωλητής</th>
-                        <th class="add_select">Πωλητής</th>
-                        <th>Ημερομηνία</th>
-                    </tr>
-                    <tr>
-                        <th class="no_filter"></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th></th>
-                        <th class="no_filter"></th>
-                        <th class="no_filter"></th>
-                        <th></th>
+                        <th data-sortable="true" data-field="retail_price">Λ. Τιμή</th>
+                        <th data-sortable="true" data-field="curr_target_price">Target Price</th>
+                        <th data-sortable="true" data-field="diff">Diff</th>
+                        <th data-sortable="true" data-field="diff_per">Diff %</th>
+                        <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                        <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                        <th data-sortable="true" data-field="date">Ημερομηνία</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for retailprice in retailprices %}
                     <tr>
-                        <td><a href="{% url 'shop_info' retailprice.shop.id %}">{{retailprice.shop}}</a></td>
                         <td>
                             {{retailprice.price}}
                         </td>
@@ -299,5 +313,41 @@
         }],
     },
     });
+
+        //top table
+        var $all_products_table = $('#product_prices_table');
+
+        $(function() {
+            $('#product_prices_table-dropdown').find('.dropdown-item').on('click', function (e) {
+                e.preventDefault();
+                selector_btn = document.getElementById('print-selector');
+                selector_btn.innerText = e.target.innerText; 
+                data = {};
+                if (e.target.attributes['area-value'].value == 'selected'){
+                    data = {
+                        field: 'state',
+                        checkbox: true,
+                        visible: $(this).attr('area-value') === 'selected'
+                    };
+                }
+                $all_products_table.bootstrapTable('destroy').bootstrapTable({
+                    exportDataType: $(this).attr('area-value'),
+                    exportTypes: ['csv', 'txt', 'excel', 'pdf'],
+                    columns: [
+                        data,
+                    ]
+                })
+                }).trigger('change')
+        });
+    
+        $(window).on('load', ()=>{
+            export_btn_group = $('.export.btn-group');
+            exoport_dropdown = export_btn_group.find("[aria-label='Export']");
+            exoport_dropdown.parent().css("cursor", "not-allowed");
+            exoport_dropdown.each( (index, elements) => {
+                $(elements).attr("disabled", "true");
+            });
+        });
+    
 </script>
 {% endblock %}

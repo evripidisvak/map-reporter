@@ -69,7 +69,7 @@
     <div class="card mb-4">
         <div class="card-header mb-4">
             <i class="fas fa-table"></i>
-            Προϊόντα του {{ shop.name }}
+            Όλα τα προϊόντα του {{ shop.name }}
         </div>
         <div class="card-body">
             <div class="dropdown">
@@ -124,10 +124,14 @@
                             {{product.active}}
                         </td>
                         <td>
+                            <a href="{% url 'shop_product_info' shop.id product.id %}">
                             {{product.manufacturer}}
+                            </a>
                         </td>
                         <td>
+                            <a href="{% url 'shop_product_info' shop.id product.id %}">
                             {{product.model}}
+                            </a>
                         </td>
                         <td>
                         {{product.map_price}} €
@@ -151,7 +155,7 @@
     <div class="card mb-4">
         <div class="card-header mb-4">
             <i class="fas fa-table"></i>
-            Όλα τα ενεργά προϊόντα του {{ shop.name }}
+            Τελευταίες τιμές όλων των ενεργών προϊόντων του {{ shop.name }}
         </div>
         <div class="card-body">
             <div class="dropdown">
@@ -192,28 +196,121 @@
                         <th data-sortable="true" data-field="target_price">Target Price</th>
                         <th data-sortable="true" data-field="diff">Diff</th>
                         <th data-sortable="true" data-field="per_diff">Diff %</th>
-                        <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
                         <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
                         <th data-sortable="true" data-field="date">Date</th>
                         <th data-sortable="true" data-field="category" data-filter-control="select">Κατηγορία</th>
                     </tr>
                 </thead>
                 <tbody>
-                    
+                    {% for retail_price in retail_prices %}
+                        {% if retail_price.product.active %}
+                        {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
+                            <tr class="bg-danger" style="--bs-bg-opacity: .1;">
+                        {% else %}
+                            <tr>
+                        {% endif %}
+                            <td>
+                                {% thumbnail retail_price.product.image table_image_size as im %}
+                                    <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
+                                {% endthumbnail %}
+                                
+                            </td>
+                            <td>
+                                <a href="{% url 'shop_product_info' shop.id retail_price.product.id %}">
+                                    {{retail_price.product.manufacturer}}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'shop_product_info' shop.id retail_price.product.id %}">
+                                    {{retail_price.product.model}}
+                                </a>
+                            </td>
+                            <td>
+                                {{retail_price.price}}
+                            </td>
+                            <td>
+                                {{retail_price.curr_target_price}}
+                            </td>
+                            <td>
+                                {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
+                                <p class='text-danger'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
+                            {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
+                                <p class='text-success'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
+                            {% else %}
+                                <p class='text-black'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
+                            {% endif %}
+                            </td>
+                            <td>
+                                {% if retail_price.price|ch_sub:retail_price.curr_target_price < 0 %}
+                                    <p class='text-danger'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
+                                {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
+                                    <p class='text-success'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
+                                {% else %}
+                                    <p class='text-black'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
+                                {% endif %}
+                            </td>
+                            <td>
+                                Seller
+                            </td>
+                            <td>
+                                {{retail_price.timestamp}}
+                            </td>
+                            <td>
+                                {{retail_price.product.main_category}}
+                            </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </div>
-
 <script>
-
+   // Pie Chart Example
+   var ctx = document.getElementById('myPieChart');
+   var myPieChart = new Chart(ctx, {
+   type: 'pie',
+   data: {
+       labels: ['Κάτω', 'Ακριβώς', 'Πάνω'],
+       datasets: [{
+       data: [{{products_below}}, {{products_equal}}, {{products_above}}],
+       backgroundColor: ['#dc3545', '#28a745', '#007bff'],
+       }],
+   },
+   });
     
  //top table
  var $shops_table = $('#shops-table');
 
  $(function() {
      $('#shops-table_print-dropdown').find('.dropdown-item').on('click', function (e) {
+         e.preventDefault();
+         selector_btn = document.getElementById('print-selector');
+         selector_btn.innerText = e.target.innerText; 
+         data = {};
+         if (e.target.attributes['area-value'].value == 'selected'){
+             data = {
+                 field: 'state',
+                 checkbox: true,
+                 visible: $(this).attr('area-value') === 'selected'
+             };
+         }
+         $shops_table.bootstrapTable('destroy').bootstrapTable({
+             exportDataType: $(this).attr('area-value'),
+             exportTypes: ['csv', 'txt', 'excel', 'pdf'],
+             columns: [
+                 data,
+             ],
+         })
+         }).trigger('change')
+        });
+
+
+ var $shops_table = $('#active-products-shops-table');
+
+ $(function() {
+     $('#active-products-shops-table_print-dropdown').find('.dropdown-item').on('click', function (e) {
          e.preventDefault();
          selector_btn = document.getElementById('print-selector');
          selector_btn.innerText = e.target.innerText; 
