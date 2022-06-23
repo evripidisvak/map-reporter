@@ -73,7 +73,7 @@
         }
       },
       mso: {                            // MS Excel and MS Word related options
-        fileFormat: 'xlshtml',          // 'xlshtml' = Excel 2000 html format
+        fileFormat: 'xlsx',          // 'xlshtml' = Excel 2000 html format
         // 'xmlss' = XML Spreadsheet 2003 file format (XMLSS)
         // 'xlsx' = Excel 2007 Office Open XML format
         onMsoNumberFormat: null,        // Excel 2000 html format only. See readme.md for more information about msonumberformat
@@ -92,7 +92,7 @@
             currency: '$#,##0.00;[Red]-$#,##0.00' // The format string to be used for the export for the currency format 
             // Euro format: '#,##0.00 €;[Red](#,##0.00) €'
           },
-          onHyperlink: null             // function($cell, row, col, href, content, hyperlink): Return what to export for hyperlinks
+          onHyperlink: returnContent             // function($cell, row, col, href, content, hyperlink): Return what to export for hyperlinks Default: null
         }
       },
       numbers: {
@@ -814,7 +814,7 @@
               if (cell !== null) {
                 let thStyle = '';
 
-                trData += '<th';
+                trData += '<th"';
                 if (defaults.mso.styles.length) {
                   const cellStyles = document.defaultView.getComputedStyle(cell, null);
                   const rowStyles = document.defaultView.getComputedStyle($row[0], null);
@@ -3398,4 +3398,7 @@
     return jsPdfColumnClass;
   }());
 
+  function returnContent($cell, row, col, href, content, hyperlink) {
+      return content;
+  }
 })(jQuery);
