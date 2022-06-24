@@ -55,7 +55,7 @@ class ProductInfo(TemplateView):
             latest_timestamp = RetailPrice.objects.filter(product=kwargs['pk']).latest('timestamp').timestamp
 
             min_retailprice_list = (
-                retailprices.values('timestamp').annotate(min_price=Min('price')).order_by()
+                retailprices.values('timestamp', 'curr_target_price').annotate(min_price=Min('price')).order_by()
             )
 
             min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
@@ -111,7 +111,7 @@ class ShopProductInfo(TemplateView):
         latest_timestamp = RetailPrice.objects.filter(product=kwargs['pk_product'], shop=kwargs['pk_shop']).latest('timestamp').timestamp
 
         min_retailprice_list = (
-            retailprices.values('timestamp').annotate(min_price=Min('price')).order_by()
+            retailprices.values('timestamp', 'curr_target_price').annotate(min_price=Min('price')).order_by()
         )
 
         min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
