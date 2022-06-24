@@ -49,7 +49,7 @@
                             <h5 class="p-sm-2">Τηλέφωνο: </h5>
                         </div>
                         <div class="col-8 g-0">
-                            <h5 class="p-sm-2"><a href="tel:{{shop.phone_number}}">{{shop.phone_number}}</a></h5>
+                            <h5 class="p-sm-2"><a href="tel:{{shop.phone_number}}" class="link-dark">{{shop.phone_number}}</a></h5>
                         </div>
                     </div>
                     <div class="row gx-5">
@@ -57,7 +57,7 @@
                             <h5 class="p-sm-2">Διεύθυνση: </h5>
                         </div>
                         <div class="col-8 g-0">
-                            <h5 class="p-sm-2"><a href="https://www.google.com/maps/place/{{shop.address}}" target="blanc">{{shop.address}}</a></h5>
+                            <h5 class="p-sm-2"><a href="https://www.google.com/maps/place/{{shop.address}}" target="blank" class="link-dark">{{shop.address}}</a></h5>
                         </div>
                     </div>
                 </div>
@@ -115,21 +115,23 @@
                 <tbody>
                     {% for product in products %}
                     <tr>
-                        <td >
+                        <td>
+                            <a href="{% url 'shop_product_info' shop.id product.id %}" class="link-dark">
                             {% thumbnail product.image table_image_size as im %}
                                 <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}" class="prod-img">
                             {% endthumbnail %}
+                            </a>
                         </td>
                         <td>
                             {{product.active}}
                         </td>
                         <td>
-                            <a href="{% url 'shop_product_info' shop.id product.id %}">
+                            <a href="{% url 'manufacturer_info' product.id %}" class="link-dark">
                             {{product.manufacturer}}
                             </a>
                         </td>
                         <td>
-                            <a href="{% url 'shop_product_info' shop.id product.id %}">
+                            <a href="{% url 'shop_product_info' shop.id product.id %}" class="link-dark">
                             {{product.model}}
                             </a>
                         </td>
@@ -210,18 +212,19 @@
                             <tr>
                         {% endif %}
                             <td>
+                                <a href="{% url 'shop_product_info' shop.id retail_price.product.id %}" class="link-dark">
                                 {% thumbnail retail_price.product.image table_image_size as im %}
                                     <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
                                 {% endthumbnail %}
-                                
+                                </a>
                             </td>
                             <td>
-                                <a href="{% url 'shop_product_info' shop.id retail_price.product.id %}">
+                                <a href="{% url 'manufacturer_info' retail_price.product.manufacturer.id %}" class="link-dark">
                                     {{retail_price.product.manufacturer}}
                                 </a>
                             </td>
                             <td>
-                                <a href="{% url 'shop_product_info' shop.id retail_price.product.id %}">
+                                <a href="{% url 'shop_product_info' shop.id retail_price.product.id %}" class="link-dark">
                                     {{retail_price.product.model}}
                                 </a>
                             </td>
