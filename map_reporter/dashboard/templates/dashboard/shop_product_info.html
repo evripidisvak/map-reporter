@@ -18,95 +18,99 @@
 
     <div class="row pt-lg-5">
         <div class="col-xl-4">
-            <div class="card mb-4">
+            <div class="card mb-4 h-100">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
                     Φωτογραφία
                 </div>
-                <img class="p-3" src="{{product.image.url}}" alt="product.name" width=100%>
+                <div class="card-body align-items-center d-flex">
+                    <img class="p-3" src="{{product.image.url}}" alt="product.name" width=100%>
+                </div>
             </div>
         </div>
 
         <div class="col-xl-8">
-            <div class="card mb-4">
+            <div class="card mb-4 h-100">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
                     Χαρακτηριστικά
                 </div>
-                <div class="container">
-                    <div class="row gx-5 bg-secondary bg-opacity-25">
-                        <div class="col-4 g-0">
-                            <h5 class="p-sm-2">Ενεργό</h5>
+                <div class="card-body align-items-center d-flex">
+                    <div class="container">
+                        <div class="row gx-5 bg-secondary bg-opacity-25">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Ενεργό</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <h5 class="p-sm-2">{{ product.is_active }}</h5>
+                            </div>
                         </div>
-                        <div class="col-8 g-0">
-                            <h5 class="p-sm-2">{{ product.is_active }}</h5>
+                        <div class="row gx-5">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Κατασκευαστής</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                {% comment %} TODO add manufacturer url {% endcomment %}
+                                <h5 class="p-sm-2">{{ product.manufacturer }}</h5>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row gx-5">
-                        <div class="col-4 g-0">
-                            <h5 class="p-sm-2">Κατασκευαστής</h5>
+                        <div class="row gx-5 bg-secondary bg-opacity-25">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Μοντέλο</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <h5 class="p-sm-2">{{ product.model }}</h5>
+                            </div>
                         </div>
-                        <div class="col-8 g-0">
-                            {% comment %} TODO add manufacturer url {% endcomment %}
-                            <h5 class="p-sm-2">{{ product.manufacturer }}</h5>
+                        <div class="row gx-5">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">SKU</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <h5 class="p-sm-2">{{ product.sku }}</h5>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row gx-5 bg-secondary bg-opacity-25">
-                        <div class="col-4 g-0">
-                            <h5 class="p-sm-2">Μοντέλο</h5>
+                        <div class="row gx-5 bg-secondary bg-opacity-25">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Τιμή MAP</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <h5 class="p-sm-2">{{ product.map_price }}</h5>
+                            </div>
                         </div>
-                        <div class="col-8 g-0">
-                            <h5 class="p-sm-2">{{ product.model }}</h5>
+                        <div class="row gx-5">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Τιμή Key Account</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <h5 class="p-sm-2">{{ product.key_acc_price }}</h5>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row gx-5">
-                        <div class="col-4 g-0">
-                            <h5 class="p-sm-2">SKU</h5>
+                        <div class="row gx-5 bg-secondary bg-opacity-25">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Κατηγορία</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <p class="p-sm-2">
+                                    {% for category in product.main_category.get_family %}
+                                        <a class="link-dark fs-5" href="{% url 'category_info' category.id %}">{{category}}</a>
+                                        {% if not forloop.last %}
+                                            >
+                                        {% endif %}
+                                    {% endfor %}
+                                </p>
+                            </div>
                         </div>
-                        <div class="col-8 g-0">
-                            <h5 class="p-sm-2">{{ product.sku }}</h5>
-                        </div>
-                    </div>
-                    <div class="row gx-5 bg-secondary bg-opacity-25">
-                        <div class="col-4 g-0">
-                            <h5 class="p-sm-2">Τιμή MAP</h5>
-                        </div>
-                        <div class="col-8 g-0">
-                            <h5 class="p-sm-2">{{ product.map_price }}</h5>
-                        </div>
-                    </div>
-                    <div class="row gx-5">
-                        <div class="col-4 g-0">
-                            <h5 class="p-sm-2">Τιμή Key Account</h5>
-                        </div>
-                        <div class="col-8 g-0">
-                            <h5 class="p-sm-2">{{ product.key_acc_price }}</h5>
-                        </div>
-                    </div>
-                    <div class="row gx-5 bg-secondary bg-opacity-25">
-                        <div class="col-4 g-0">
-                            <h5 class="p-sm-2">Κατηγορία</h5>
-                        </div>
-                        <div class="col-8 g-0">
-                            <p class="p-sm-2">
-                                {% for category in product.main_category.get_family %}
-                                    <a class="link-dark fs-5" href="{% url 'category_info' category.id %}">{{category}}</a>
-                                    {% if not forloop.last %}
-                                        >
-                                    {% endif %}
-                                {% endfor %}
-                            </p>
-                        </div>
-                    </div>
-                    <div class="row gx-5">
-                        <div class="col-4 g-0">
-                            <h5 class="p-sm-2">Σελίδες</h5>
-                        </div>
-                        <div class="col-8 g-0">
-                            <div class="row g-0">
-                                {% for url in urls %}
-                                    <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
-                                {% endfor %}
+                        <div class="row gx-5">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Σελίδες</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <div class="row g-0">
+                                    {% for url in urls %}
+                                        <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -117,28 +121,28 @@
 
     <div class="row pt-lg-5">
         <div class="col-xl-6">
-            <div class="card mb-4">
+            <div class="card mb-4 h-100">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
                     Τιμές προϊόντος στο χρόνο
                 </div>
-                <div class="card-body"><canvas id="MinPriceChart" width="100%" height="40"></canvas></div>
+                <div class="card-body align-items-center d-flex"><canvas id="MinPriceChart" width="100%" height="40"></canvas></div>
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
 
         <div class="col-xl-6">
-            <div class="card mb-4">
+            <div class="card mb-4 h-100">
                 <div class="card-header">
                     <i class="fas fa-chart-pie me-1"></i>
                     Ανάλυση τιμών καταστήματος
                 </div>
-                <div class="card-body"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
+                <div class="card-body align-items-center d-flex"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
         
-        <div class="card mb-4">
+        <div class="card mb-4 mt-4">
         <div class="card-header">
             <i class="fas fa-table me-1"></i>
             Πίνακας τιμών προϊόντος για το κατάστημα <b>{{shop.name}}</b>
@@ -230,10 +234,6 @@
     </div>
 </div>
 <script>
-    // Set new default font family and font color to mimic Bootstrap's default styling
-    Chart.defaults.global.defaultFontFamily = '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
-    Chart.defaults.global.defaultFontColor = '#292b2c';
-
     // Area Chart Data
     timestamps = [];
     prices = [];
@@ -253,22 +253,40 @@
             {% endfor %}
         ],
         datasets: [{
-        label: "Τιμή",
-        lineTension: 0.3,
-        backgroundColor: "rgba(2,117,216,0.2)",
-        borderColor: "rgba(2,117,216,1)",
-        pointRadius: 5,
-        pointBackgroundColor: "rgba(2,117,216,1)",
-        pointBorderColor: "rgba(255,255,255,0.8)",
-        pointHoverRadius: 5,
-        pointHoverBackgroundColor: "rgba(2,117,216,1)",
-        pointHitRadius: 50,
-        pointBorderWidth: 2,
-        data: [
-            {% for min_retailprice in min_retailprice_list %}
-                '{{min_retailprice.min_price}}',
-            {% endfor %}
-        ],
+            label: "Τιμή",
+            lineTension: 0.3,
+            backgroundColor: "rgba(2,117,216,0.2)",
+            borderColor: "rgba(2,117,216,1)",
+            pointRadius: 5,
+            pointBackgroundColor: "rgba(2,117,216,1)",
+            pointBorderColor: "rgba(255,255,255,0.8)",
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "rgba(2,117,216,1)",
+            pointHitRadius: 50,
+            pointBorderWidth: 2,
+            data: [
+                {% for min_retailprice in min_retailprice_list %}
+                    '{{min_retailprice.min_price}}',
+                {% endfor %}
+            ],
+        },
+        {
+            label: "Target Price",
+            lineTension: 0.3,
+            backgroundColor: "rgba(220,53,69,0.2)",
+            borderColor: "rgba(220,53,69,1)",
+            pointRadius: 5,
+            pointBackgroundColor: "rgba(220,53,69,1)",
+            pointBorderColor: "rgba(255,255,255,0.8)",
+            pointHoverRadius: 5,
+            pointHoverBackgroundColor: "rgba(220,53,69,1)",
+            pointHitRadius: 50,
+            pointBorderWidth: 2,
+            data: [
+                {% for min_retailprice in min_retailprice_list %}
+                    '{{min_retailprice.curr_target_price}}',
+                {% endfor %}
+            ],
         }],
     },
     options: {
