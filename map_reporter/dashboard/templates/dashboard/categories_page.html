@@ -84,7 +84,7 @@
                             {% for count in category.ansc_count %}
                                 -
                             {% endfor %}
-                            <a href="{% url 'category_info' category.id %}">
+                            <a href="{% url 'category_info' category.id %}" class="link-dark">
                                 {{category.name}}
                             </a>
                         </td>

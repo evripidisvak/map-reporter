@@ -92,7 +92,7 @@
                               {% for product in products %}
                               <tr>
                                   <td>
-                                  <a href="{% url 'product_info' product.id %}">
+                                  <a href="{% url 'product_info' product.id %}" class="link-dark">
                                       {% thumbnail product.image table_image_size as im %}
                                       <img src="{{ im.url }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}">
                                       {% endthumbnail %}
@@ -102,12 +102,12 @@
                                   {{product.active}}
                                   </td>                
                                   <td>
-                                    <a href="{% url 'manufacturer_info' product.manufacturer.id %}">
+                                    <a href="{% url 'manufacturer_info' product.manufacturer.id %}" class="link-dark">
                                         {{product.manufacturer}}
                                     </a>
                                   </td>
                                   <td>
-                                  <a href="{% url 'product_info' product.id %}">
+                                  <a href="{% url 'product_info' product.id %}" class="link-dark">
                                       {{product.model}}
                                   </a>
                                   </td>
@@ -197,23 +197,24 @@
                                     <tr>
                                 {% endif %}
                                         <td>
-                                            {% thumbnail retailprice.product.image table_image_size as im %}
-                                                <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retailprice.product.name}}" class="prod-img">
-                                            {% endthumbnail %}
-                                            
+                                            <a href="{% url 'product_info' retailprice.product.id %}">
+                                                {% thumbnail retailprice.product.image table_image_size as im %}
+                                                    <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retailprice.product.name}}" class="prod-img">
+                                                {% endthumbnail %}
+                                            </a>
                                         </td>
                                         <td>
-                                            <a href="{% url 'manufacturer_info' retailprice.product.manufacturer.id %}">
+                                            <a href="{% url 'manufacturer_info' retailprice.product.manufacturer.id %}" class="link-dark">
                                                 {{retailprice.product.manufacturer}}
                                             </a>
                                         </td>
                                         <td>
-                                            <a href="{% url 'product_info' retailprice.product.id %}">
+                                            <a href="{% url 'product_info' retailprice.product.id %}" class="link-dark">
                                                 {{retailprice.product.model}}
                                             </a>
                                         </td>
                                         <td>
-                                            <a href="{% url 'shop_info' retailprice.shop.id %}">{{retailprice.shop}}</a>
+                                            <a href="{% url 'shop_info' retailprice.shop.id %}" class="link-dark">{{retailprice.shop}}</a>
                                         </td>
                                         <td>
                                             {{retailprice.price}}

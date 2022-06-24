@@ -221,7 +221,7 @@ class ShopsPage(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(ShopsPage, self).get_context_data(**kwargs)
         # shops = Shop.objects.annotate(prod_count=Count('products', distinct=True))
-
+        latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
         products = Product.objects.filter(active=True)
 
         shops = Shop.objects.all()
@@ -264,6 +264,7 @@ class ShopsPage(TemplateView):
             'shops_below': shops_below,
             'shops_equal': shops_equal,
             'shops_above': shops_above,
+            'latest_timestamp' : latest_timestamp,
         })
         return context
 
@@ -273,6 +274,7 @@ class ShopInfo(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = context = super(ShopInfo, self).get_context_data(**kwargs)
+        latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
         products_below = 0
         products_equal = 0
         products_above = 0
@@ -306,6 +308,7 @@ class ShopInfo(TemplateView):
                 'products_below' : products_below,
                 'products_equal' : products_equal,
                 'products_above' : products_above,
+                'latest_timestamp' : latest_timestamp,
             }
         )
         return context
@@ -422,10 +425,8 @@ class ManufacturersPage(TemplateView):
         latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
 
         products_below = 0
-        products_ok = 0
         for manufacturer in manufacturers:
             products_below = 0
-            products_ok = 0
             manufacturer_products = Product.objects.filter(manufacturer=manufacturer, active=True)
             product_count = manufacturer_products.count()
             for product in manufacturer_products:
@@ -433,7 +434,6 @@ class ManufacturersPage(TemplateView):
                     product_latest_timestamp = RetailPrice.objects.filter(product_id=product.id).latest('timestamp').timestamp
                     retail_prices = RetailPrice.objects.filter(product=product, timestamp=product_latest_timestamp)
                     for price in retail_prices:
-                        print(price.price)
                         if price.price < price.curr_target_price:
                             products_below += 1
                             break

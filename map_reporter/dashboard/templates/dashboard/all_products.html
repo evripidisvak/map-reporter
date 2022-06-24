@@ -11,9 +11,9 @@
 
 {% endblock %}
 {% block main %}
-    <h1 class='mb-4'>Ολα τα προϊόντα</h1>
+    <h1 class='mb-4'>Όλα τα προϊόντα</h1>
 
-    <div class="row pt-lg-5">
+    <div class="row">
         <div class="col-6">
             <div class='card mb-4 h-100'>
                 <div class='card-header'>
@@ -88,21 +88,23 @@
                         <tbody>
                         {% for product in products %}
                         <tr>
-                            <td >
+                            <td>
+                                <a href="{% url 'product_info' product.id %}">
                                 {% thumbnail product.image table_image_size as im %}
                                     <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}" class="prod-img">
+                                </a>
                                 {% endthumbnail %}
                             </td>
                             <td>
                                 {{product.active}}
                             </td>
                             <td>
-                                <a href="{% url 'product_info' product.id %}">
+                                <a href="{% url 'manufacturer_info' product.manufacturer.id %}" class="link-dark">
                                     {{product.manufacturer}}
                                 </a>
                             </td>
                             <td>
-                                <a href="{% url 'product_info' product.id %}">
+                                <a href="{% url 'product_info' product.id %}" class="link-dark">
                                     {{product.model}}
                                 </a>
                             </td>
@@ -195,23 +197,25 @@
                             <tr>
                         {% endif %}
                                 <td>
+                                    <a href="{% url 'product_info' retail_price.product.id %}">
                                     {% thumbnail retail_price.product.image table_image_size as im %}
                                         <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
                                     {% endthumbnail %}
+                                    </a>
                                     
                                 </td>
                                 <td>
-                                    <a href="{% url 'product_info' retail_price.product.id %}">
+                                    <a href="{% url 'manufacturer_info' retail_price.product.manufacturer.id %}" class="link-dark">
                                         {{retail_price.product.manufacturer}}
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'product_info' retail_price.product.id %}">
+                                    <a href="{% url 'product_info' retail_price.product.id %}" class="link-dark">
                                         {{retail_price.product.model}}
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'shop_info' retail_price.shop.id %}">{{retail_price.shop}}</a>
+                                    <a href="{% url 'shop_info' retail_price.shop.id %}" class="link-dark">{{retail_price.shop}}</a>
                                 </td>
                                 <td>
                                     {{retail_price.price}}

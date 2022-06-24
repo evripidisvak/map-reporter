@@ -12,8 +12,7 @@
 
 {% block main %}
     <h3 class="mt-4">{{ product.name }}</h3>
-
-    <div class="row pt-lg-5">
+    <div class="row pt-lg-3">
         <div class="col-xl-4">
             <div class="card mb-4 h-100">
                 <div class="card-header">
@@ -177,13 +176,13 @@
                     >
                 <thead>
                     <tr>
-                        <th data-sortable="true" data-field="shop" >Κατάστημα</th>
+                        <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
                         <th data-sortable="true" data-field="retail_price">Λ. Τιμή</th>
                         <th data-sortable="true" data-field="target_price">Target Price</th>
                         <th data-sortable="true" data-field="diff">Diff</th>
                         <th data-sortable="true" data-field="per_diff">Diff %</th>
-                        <th data-sortable="true" data-field="official_reseller">Επ. Μεταπωλητής</th>
-                        <th data-sortable="true" data-field="seller">Πωλητής</th>
+                        <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                        <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
                         <th data-sortable="true" data-field="date">Ημερομηνία</th>
                     </tr>
                 </thead>
@@ -194,7 +193,7 @@
                     {% else %}
                         <tr>
                     {% endif %}
-                        <td><a href="{% url 'shop_info' retailprice.shop.id %}">{{retailprice.shop}}</a></td>
+                        <td><a href="{% url 'shop_info' retailprice.shop.id %}" class="link-dark">{{retailprice.shop}}</a></td>
                         <td>
                             {{retailprice.price}}
                         </td>
