@@ -7,10 +7,36 @@
 {% endblock %}
 
 {% block headEnd %}
-
-{% endblock %}
+<script src="https://unpkg.com/htmx.org@1.7.0" integrity="sha384-EzBXYPt0/T6gxNp0nuPtLkmRpmDBbjg6WmCUZRLXBBwYYmwAUxzlSGej0ARHX0Bo" crossorigin="anonymous"></script>
+{% endblock headEnd %}
 
 {% block main %}
+{% comment %} <input type="text" id="demo" class="form-control"> {% endcomment %}
+<h3 class="mt-4">Ανάλυση για το {{ product.name }}</h3>
+
+<div class="form-group mb-3">
+    <label >label</label>
+    <input name="txtfld" type="text" hx-post="/check_text/" hx-trigger="keyup" hx-target="#txtresponse">
+    <div id="txtresponse"></div>
+</div>
+
+<form name="date_range" id="date-picker-form" hx-post="/update_date/" trigger="submit" hx-target="#results">
+    {% comment %} {% csrf_token %} {% endcomment %}
+    {{date_picker}}
+    <button class="btn btn-primary" type="submit" value="Submit">Υποβολή</button>
+    <div id="results"></div> <!-- errors go here -->
+</form>
+
+{% comment %} <form id="date-picker-form" action="/update_dates/" method="post">
+    {% csrf_token %}
+    {{date_picker}}
+    <button class="btn btn-primary" type="submit" value="Submit">Υποβολή</button>
+    <div id="results"></div> <!-- errors go here -->
+</form> {% endcomment %}
+
+<ul id="response">
+</ul>
+
     <h3 class="mt-4">{{ product.name }}</h3>
     <div class="row pt-lg-3">
         <div class="col-xl-4">
@@ -231,7 +257,7 @@
         </div>
     </div>
 </div>
-
+{{common_dates}}
 <script>
     // Area Chart
     var ctx = document.getElementById("MinPriceChart");
@@ -364,6 +390,102 @@
         });
     });
 
+   /* $('#date-picker-form').on('submit', function(event){
+        event.preventDefault();
+        update_dates();
+    });*/
+    
+   /* function update_dates() {
+        console.log( $('#id_date_range_with_predefined_ranges'));
+        $.ajax({
+            url : "{% url 'update_date' %}",
+            type : "POST",
+            data : {
+                date_range : $('#id_date_range_with_predefined_ranges').val(),
+                csrfmiddlewaretoken: '{{ csrf_token }}'
+            },
+            success : function(json) {
+                {% comment %} $('#id_date_range_with_predefined_ranges').val('');{% endcomment %}
+                {% comment %} $("#response").prepend("<li><strong>"+json.date+"</strong> - <em> "+json.result+"</em> - <span> "+json.created+"</span></li>"); {% endcomment %}
+                console.log(json);
+            },
+            error : function(xhr,errmsg,err) {
+                $('#results').html("<div class='alert-box alert radius' data-alert>Oops! We have encountered an error: "+errmsg+
+                    " <a href='#' class='close'>&times;</a></div>");
+            }
+        });
+    };*/
+
+    {% comment %} {% for label,date in common_dates.items %}
+    {{label}} : {{date}}
+{% endfor %} {% endcomment %}
+
+    {% comment %} $('#demo').daterangepicker({
+        /*ranges: {
+            'Today': [moment(), moment()],
+            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+            'This Month': [moment().startOf('month'), moment().endOf('month')],
+            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+        },*/
+        ranges: {
+            {% for label,datee in common_dates.items %}
+                '{{label}}' : {{datee|date:'d-m-Y'}},
+            {% endfor %}
+        },
+        "locale": {
+            "format": "MM/DD/YYYY",
+            "separator": " - ",
+            "applyLabel": "Apply",
+            "cancelLabel": "Cancel",
+            "fromLabel": "From",
+            "toLabel": "To",
+            "customRangeLabel": "Custom",
+            "weekLabel": "W",
+            "daysOfWeek": [
+                "Su",
+                "Mo",
+                "Tu",
+                "We",
+                "Th",
+                "Fr",
+                "Sa"
+            ],
+            "monthNames": [
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December"
+            ],
+            "firstDay": 1
+        },
+        "alwaysShowCalendars": true,
+        "startDate": "06/18/2022",
+        "endDate": "06/24/2022"
+    }, function(start, end, label) {
+      console.log('New date range selected: ' + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD') + ' (predefined range: ' + label + ')');
+    });
+
+    ranges = {
+        'Today': [moment(), moment()],
+        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+        'This Month': [moment().startOf('month'), moment().endOf('month')],
+        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+    };
+
+    console.log(ranges); {% endcomment %}
+
 </script>
 
-{% endblock %}
+{% endblock main %}
