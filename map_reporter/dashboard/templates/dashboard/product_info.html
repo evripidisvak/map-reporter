@@ -19,7 +19,7 @@
                     <i class="fas fa-chart-area me-1"></i>
                     Φωτογραφία
                 </div>
-                <div class="card-body align-items-center d-flex">
+                <div class="card-body align-items-center d-flex" >
                     <img src="{{product.image.url}}" alt="product.name" width=100%>
                 </div>
             </div>
@@ -116,13 +116,13 @@
         </div>
 
     <div class="row pt-lg-5">
-        <div class="col-xl-6">
+        <div class="col-xl-6 ">
             <div class="card h-100">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
                     Ελάχιστες τιμές προϊόντος
                 </div>
-                <div class="card-body align-items-center d-flex"><canvas id="MinPriceChart" width="100%" height="40"></canvas></div>
+                <div class="card-body align-items-center d-flex" style="height:500px;"><canvas id="MinPriceChart" width="100%" height="40"></canvas></div>
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
@@ -133,7 +133,7 @@
                     <i class="fas fa-chart-pie me-1"></i>
                     Κατάσταση τιμών καταστημάτων
                 </div>
-                <div class="card-body align-items-center d-flex"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
+                <div class="card-body align-items-center d-flex" style="height:500px; position: relative;"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
@@ -281,19 +281,21 @@
         }],
     },
     options: {
+        responsive:true,
+        maintainAspectRatio:false,
         scales: {
-        xAxes: [{
+        xAxes: {
             time: {
             unit: 'date'
             },
             gridLines: {
-            display: false
+            display: false, 
             },
             ticks: {
             maxTicksLimit: 10
             }
-        }],
-        yAxes: [{
+        },
+        yAxes: {
             ticks: {
             min: {{min_retailprice.min_price__min|per_sub:"10"}},
             max: {{max_retailprice.min_price__max|per_add:"10"}},
@@ -302,7 +304,7 @@
             gridLines: {
             color: "rgba(0, 0, 0, .125)",
             }
-        }],
+        },
         },
         legend: {
         display: false
@@ -311,8 +313,9 @@
     });
         
     // Pie Chart Example
-    var ctx = document.getElementById("myPieChart");
-    var myPieChart = new Chart(ctx, {
+    var pieChart = document.getElementById("myPieChart");
+    
+    var myPieChart = new Chart(pieChart, {
     type: 'pie',
     data: {
         labels: ["Κάτω", "Ακριβώς", "Πάνω"],
@@ -321,7 +324,13 @@
         backgroundColor: ['#dc3545', '#28a745', '#007bff'],
         }],
     },
+    options: {
+        maintainAspectRatio:false,
+    }
     });
+
+
+
 
     //top table
     var $all_products_table = $('#product_prices_table');
