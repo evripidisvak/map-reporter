@@ -1,18 +1,26 @@
 from array import array
 from ast import And
 from itertools import product
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.views.generic.base import TemplateView
+from django.views.generic.edit import FormView
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate
 from django.views import generic
 from django.urls import reverse
 from django.db.models import *
 from reporter.models import *
+from .forms import DatePicker
+from django.http import JsonResponse
+import json
+from datetime import date, datetime, timedelta
+from collections import OrderedDict
+from dateutil import relativedelta
 
-
+def add_month(start_date, months):
+    return start_date + relativedelta.relativedelta(months=months)
 
 class Index(View):
     template = 'dashboard/index.html'
@@ -507,3 +515,103 @@ class ManufacturerInfo(TemplateView):
         })
 
         return context
+
+
+class ProductAnalysis(TemplateView):
+    # TODO error handling in case no retail prices exist
+    template_name = 'dashboard/product_analysis.html'
+
+    def get_context_data(self, **kwargs):
+        date_picker = DatePicker
+        context = context = super(ProductAnalysis, self).get_context_data(**kwargs)
+
+        product = Product.objects.get(id=kwargs['pk'])
+        urls = Page.objects.filter(product_id=kwargs['pk'])
+
+        try:
+            retailprices = RetailPrice.objects.filter(product=kwargs['pk'])
+            latest_timestamp = RetailPrice.objects.filter(product=kwargs['pk']).latest('timestamp').timestamp
+
+            min_retailprice_list = (
+                retailprices.values('timestamp', 'curr_target_price').annotate(min_price=Min('price')).order_by()
+            )
+
+            min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
+            max_retailprice = min_retailprice_list.aggregate(Max('min_price'))
+
+            mapprices = MapPrice.objects.filter(product=kwargs['pk'])
+            keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk'])
+
+            shops_below = 0
+            shops_equal = 0
+            shops_above = 0
+
+            for price in retailprices:
+                if price.price < price.curr_target_price:
+                    shops_below += 1
+                elif price.price == price.curr_target_price:
+                    shops_equal += 1
+                elif price.price > price.curr_target_price:
+                    shops_above += 1
+        except:
+            pass
+
+        context.update(
+            {
+                'product': product,
+                'urls': urls,
+                'retailprices': retailprices,
+                'min_retailprice': min_retailprice,
+                'max_retailprice': max_retailprice,
+                'mapprices': mapprices,
+                'keyaccprices': keyaccprices,
+                'min_retailprice_list': min_retailprice_list,
+                'shops_below': shops_below,
+                'shops_equal': shops_equal,
+                'shops_above': shops_above,
+                'latest_timestamp': latest_timestamp,
+                'date_picker': date_picker,
+            }
+        )
+        return context
+
+
+def update_date(request):
+    # print(request.POST.get('date_range_with_predefined_ranges'))
+    if request.method == 'POST':
+        date_range = request.POST.get('date_range_with_predefined_ranges')
+        print(type(request.POST.get('date_range_with_predefined_ranges')))
+        date_range_lst = [data.strip() for data in date_range.split(' - ')]
+        date_from = date_range_lst[0]
+        date_to = date_range_lst[1]
+        response_data = {}
+
+        response_data['result'] = 'Create post successful!'
+        response_data['date_range'] = date_range
+        response_data['date_from'] = date_from
+        response_data['date_to'] = date_to
+
+        # response_data['postpk'] = post.pk
+        # response_data['text'] = post.text
+        # response_data['created'] = post.created.strftime('%B %d, %Y %I:%M %p')
+        # response_data['author'] = post.author.username
+
+        return HttpResponse(
+            date_range,
+            # json.dumps(response_data),
+            # content_type="application/json"
+        )
+    else:
+        return HttpResponse(
+            'You suck...'
+            # json.dumps({"nothing to see": "this isn't happening"}),
+            # content_type="application/json"
+        )
+
+def check_text(request):
+    text = request.POST.get('txtfld')
+    if text == 'mpourdes':
+        return HttpResponse('You got it babe!')
+    else:
+        print(text)
+        return HttpResponse('You suck...')
