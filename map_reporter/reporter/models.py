@@ -55,6 +55,7 @@ class Product(models.Model):
     image = models.ImageField(upload_to='product_images', default='product_images/placeholder_img.png')
     image_url = models.URLField(null=True, blank=True)
 
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__original_map_price = self.map_price
@@ -205,6 +206,15 @@ class RetailPrice(models.Model):
                 productList.append(price.product)
         return productList
     
+    def get_product_shops(product_id):
+        retailprices = RetailPrice.objects.filter(product=product_id)
+        shopList = []
+
+        for price in retailprices:
+            if not price.shop in shopList:
+                shopList.append(price.shop)
+        return shopList
+
     def is_shop_official_reseller(self):
         if self.official_reseller == True:
             return "Ναι"

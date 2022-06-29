@@ -8,24 +8,14 @@
 
 {% block headEnd %}
 <script src="https://unpkg.com/htmx.org@1.7.0" integrity="sha384-EzBXYPt0/T6gxNp0nuPtLkmRpmDBbjg6WmCUZRLXBBwYYmwAUxzlSGej0ARHX0Bo" crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 {% endblock headEnd %}
 
 {% block main %}
 {% comment %} <input type="text" id="demo" class="form-control"> {% endcomment %}
 <h3 class="mt-4">Ανάλυση για το {{ product.name }}</h3>
 
-<div class="form-group mb-3">
-    <label >label</label>
-    <input name="txtfld" type="text" hx-post="/check_text/" hx-trigger="keyup" hx-target="#txtresponse">
-    <div id="txtresponse"></div>
-</div>
-
-<form name="date_range" id="date-picker-form" hx-post="/update_date/" trigger="submit" hx-target="#results">
-    {% comment %} {% csrf_token %} {% endcomment %}
-    {{date_picker}}
-    <button class="btn btn-primary" type="submit" value="Submit">Υποβολή</button>
-    <div id="results"></div> <!-- errors go here -->
-</form>
 
 {% comment %} <form id="date-picker-form" action="/update_dates/" method="post">
     {% csrf_token %}
@@ -34,10 +24,10 @@
     <div id="results"></div> <!-- errors go here -->
 </form> {% endcomment %}
 
-<ul id="response">
-</ul>
 
-    <h3 class="mt-4">{{ product.name }}</h3>
+
+
+    
     <div class="row pt-lg-3">
         <div class="col-xl-4">
             <div class="card mb-4 h-100">
@@ -140,7 +130,61 @@
             </div>
             </div>
         </div>
-
+    
+        <div class="container-fluid mt-5">
+            <div class="row">
+                <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            {{date_picker}}
+                    {% comment %} <form name="date_range" id="date-picker-form" hx-post="/update_date/" trigger="submit" hx-target="#results"> {% endcomment %}
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="dropdown mt-4">
+                                <button class="btn btn-secondary dropdown-toggle" type="button" id="ShopSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                  Επιλέξτε Καταστήματα
+                                </button>
+                                <ul class="dropdown-menu overflow-auto p-0" style="max-height:300px;" aria-labelledby="ShopSelectDropdown">
+                                        <div class="search sticky-top p-1 w-100 bg-white">
+                                            <input type="text" class="form-control" placeholder="Αναζήτηση" id="shop_search">
+                                          </div>
+                                        {% for shop in shops %}
+                                        <li class="p-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="{{shop}}" id="ShopSelectCheckbox{{ forloop.counter0 }}">
+                                                <label class="form-check-label" for="ShopSelectCheckbox{{ forloop.counter0 }}">
+                                                  {{shop}}
+                                                </label>
+                                              </div>
+                                        </li>
+                                        {% endfor %}
+                                    
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                        <button class="btn btn-primary mt-2" type="submit" value="Submit">Υποβολή</button>
+                        <div class="mt-2 text-success" id="results"></div> <!-- errors go here -->
+                    </form>
+            </div>
+        </div>
+        <script>
+            document.body.addEventListener('click', function(e){
+                dropdown_elem = $('#ShopSelectDropdown');
+                if (e.target.classList.contains('form-check-label') || e.target.classList.contains('form-check')){
+                    event.stopPropagation();
+                }
+            });
+           
+            $(document).ready(function(){
+                $("#shop_search").on("keyup", function() {
+                  var value = $(this).val().toLowerCase();
+                  $(".dropdown-menu li").filter(function() {
+                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                  });
+                });
+              });
+        </script>
     <div class="row pt-lg-5">
         <div class="col-xl-6">
             <div class="card h-100">
@@ -337,6 +381,24 @@
         }
     }
     });
+
+    document.body.addEventListener("htmx:afterRequest", function(evt){
+        my_response = JSON.parse(evt.detail.xhr.response);
+        //console.log(my_response);
+        retail_prices = JSON.parse(my_response.retail_prices);
+        if(retail_prices.length === 0){
+            alert("Δεν βρέθηκαν τιμές για τις ημερομηνίες που εισάγατε");
+        } else {
+            console.log(retail_prices);
+            label_array = [];
+            for (var i = 0; i < retail_prices.length; i++){
+                label_array[i] = retail_prices[0].fields.timestamp;
+            }
+            myLineChart.data.labels = label_array;
+            //myLineChart.data.labels = [my_response.date_from, my_response.date_to];
+            myLineChart.update();
+        }
+    });
         
     // Pie Chart Example
     var ctx = document.getElementById("myPieChart");
@@ -390,31 +452,10 @@
         });
     });
 
-   /* $('#date-picker-form').on('submit', function(event){
-        event.preventDefault();
-        update_dates();
-    });*/
     
-   /* function update_dates() {
-        console.log( $('#id_date_range_with_predefined_ranges'));
-        $.ajax({
-            url : "{% url 'update_date' %}",
-            type : "POST",
-            data : {
-                date_range : $('#id_date_range_with_predefined_ranges').val(),
-                csrfmiddlewaretoken: '{{ csrf_token }}'
-            },
-            success : function(json) {
-                {% comment %} $('#id_date_range_with_predefined_ranges').val('');{% endcomment %}
-                {% comment %} $("#response").prepend("<li><strong>"+json.date+"</strong> - <em> "+json.result+"</em> - <span> "+json.created+"</span></li>"); {% endcomment %}
-                console.log(json);
-            },
-            error : function(xhr,errmsg,err) {
-                $('#results').html("<div class='alert-box alert radius' data-alert>Oops! We have encountered an error: "+errmsg+
-                    " <a href='#' class='close'>&times;</a></div>");
-            }
-        });
-    };*/
+      
+    
+
 
     {% comment %} {% for label,date in common_dates.items %}
     {{label}} : {{date}}
