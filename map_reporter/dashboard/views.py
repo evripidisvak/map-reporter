@@ -1,7 +1,7 @@
 from array import array
 from ast import And
 from itertools import product
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.views.generic.base import TemplateView
@@ -10,17 +10,19 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate
 from django.views import generic
 from django.urls import reverse
+from django.utils.timezone import make_aware
 from django.db.models import *
 from reporter.models import *
 from .forms import DatePicker
-from django.http import JsonResponse
+# from django.http import JsonResponse
 import json
-from datetime import date, datetime, timedelta
-from collections import OrderedDict
-from dateutil import relativedelta
+import datetime
+from django.core import serializers
+# from datetime import date, datetime, timedelta
 
-def add_month(start_date, months):
-    return start_date + relativedelta.relativedelta(months=months)
+
+
+
 
 class Index(View):
     template = 'dashboard/index.html'
@@ -527,6 +529,10 @@ class ProductAnalysis(TemplateView):
 
         product = Product.objects.get(id=kwargs['pk'])
         urls = Page.objects.filter(product_id=kwargs['pk'])
+        
+        shops_for_product = RetailPrice.get_product_shops(product.id)
+
+            
 
         try:
             retailprices = RetailPrice.objects.filter(product=kwargs['pk'])
@@ -559,6 +565,7 @@ class ProductAnalysis(TemplateView):
         context.update(
             {
                 'product': product,
+                'shops' : shops_for_product,
                 'urls': urls,
                 'retailprices': retailprices,
                 'min_retailprice': min_retailprice,
@@ -576,29 +583,51 @@ class ProductAnalysis(TemplateView):
         return context
 
 
-def update_date(request):
-    # print(request.POST.get('date_range_with_predefined_ranges'))
+def update_date(request, product_id):
     if request.method == 'POST':
+        try:
+            product = Product.objects.get(pk=product_id)
+        except:
+            raise Http404("Δεν υπάρχει το προϊόν")
+        print(product)
+        
         date_range = request.POST.get('date_range_with_predefined_ranges')
-        print(type(request.POST.get('date_range_with_predefined_ranges')))
         date_range_lst = [data.strip() for data in date_range.split(' - ')]
         date_from = date_range_lst[0]
         date_to = date_range_lst[1]
         response_data = {}
 
-        response_data['result'] = 'Create post successful!'
-        response_data['date_range'] = date_range
+
+        naive_query_date_from = datetime.datetime.strptime(date_from, "%d/%m/%Y")
+        naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y")
+
+        query_date_from = make_aware(naive_query_date_from)
+        query_date_to = make_aware(naive_query_date_to)
+        
+        filtered_retail_prices = RetailPrice.objects.filter(timestamp__range=(query_date_from, query_date_to), product=product)
+
+        # print(filtered_retail_prices)
+        prices = []
+
+        for retail_price in filtered_retail_prices:
+            prices.append(retail_price.price)
+        print(prices)
+        # retail_prices = serializers.serialize('json', filtered_retail_prices)
+        
+        
+        
+
+
+        # response_data['date_range'] = date_range
         response_data['date_from'] = date_from
         response_data['date_to'] = date_to
-
-        # response_data['postpk'] = post.pk
-        # response_data['text'] = post.text
-        # response_data['created'] = post.created.strftime('%B %d, %Y %I:%M %p')
-        # response_data['author'] = post.author.username
+        # response_data['retail_prices'] = retail_prices
+        
 
         return HttpResponse(
-            date_range,
-            # json.dumps(response_data),
+            json.dumps(response_data),
+
+            # response_data,
             # content_type="application/json"
         )
     else:
@@ -608,10 +637,3 @@ def update_date(request):
             # content_type="application/json"
         )
 
-def check_text(request):
-    text = request.POST.get('txtfld')
-    if text == 'mpourdes':
-        return HttpResponse('You got it babe!')
-    else:
-        print(text)
-        return HttpResponse('You suck...')

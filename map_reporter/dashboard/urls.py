@@ -24,8 +24,7 @@ urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 htmx_urlpatterns = [
-    path('check_text/', views.check_text, name='check_text'),
-    path('update_date/', views.update_date, name='update_date'),
+    path('update_date/<int:product_id>', views.update_date, name='update_date'),
 ]
 
 urlpatterns += htmx_urlpatterns
