@@ -135,30 +135,37 @@
             <div class="row">
                 <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none">
                     <div class="row">
-                        <div class="col-lg-6">
+                        <div class="col-lg-3">
                             {{date_picker}}
                     {% comment %} <form name="date_range" id="date-picker-form" hx-post="/update_date/" trigger="submit" hx-target="#results"> {% endcomment %}
                         </div>
-                        <div class="col-lg-6">
+                        <div class="col-lg-9">
                             <div class="dropdown mt-4">
                                 <button class="btn btn-secondary dropdown-toggle" type="button" id="ShopSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                   Επιλέξτε Καταστήματα
                                 </button>
                                 <ul class="dropdown-menu overflow-auto p-0" style="max-height:300px;" aria-labelledby="ShopSelectDropdown">
-                                        <div class="search sticky-top p-1 w-100 bg-white">
-                                            <input type="text" class="form-control" placeholder="Αναζήτηση" id="shop_search">
-                                          </div>
-                                        {% for shop in shops %}
-                                        <li class="p-2">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" value="{{shop}}" id="ShopSelectCheckbox{{ forloop.counter0 }}">
-                                                <label class="form-check-label" for="ShopSelectCheckbox{{ forloop.counter0 }}">
-                                                  {{shop}}
-                                                </label>
-                                              </div>
-                                        </li>
-                                        {% endfor %}
-                                    
+                                    <div class="search sticky-top p-1 w-100 bg-white">
+                                        <input type="text" class="form-control" placeholder="Αναζήτηση" id="shop_search">
+                                    </div>
+                                    <li class="p-2">
+                                        <div class="form-check">
+                                            <input class="select-all" name="select_all" type="checkbox" value="Επιλογή Όλων" id="ShopSelectAllCheckbox">
+                                            <label class="form-check-label" for="select_all">
+                                                Επιλογή Όλων
+                                            </label>
+                                        </div>
+                                    </li>
+                                    {% for shop in shops %}
+                                    <li class="p-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" name="{{shop}}" type="checkbox" value="{{shop.id}}" id="ShopSelectCheckbox{{ forloop.counter0 }}">
+                                            <label class="form-check-label" for="{{shop}}">
+                                                {{shop}}
+                                            </label>
+                                        </div>
+                                    </li>
+                                    {% endfor %}
                                 </ul>
                             </div>
                         </div>
@@ -169,13 +176,31 @@
             </div>
         </div>
         <script>
-            document.body.addEventListener('click', function(e){
+                    //stop dropdown from closing on click, so we can select multiple shops
+            $('body').on('click', function(e){
                 dropdown_elem = $('#ShopSelectDropdown');
-                if (e.target.classList.contains('form-check-label') || e.target.classList.contains('form-check')){
-                    event.stopPropagation();
+                target_element = $(e.target);
+                if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check')){
+                    e.stopPropagation();
                 }
-            });
-           
+                if (target_element.attr('id') == 'ShopSelectAllCheckbox'){
+                    checkboxes = $('.form-check-input');
+                    if (target_element.prop('checked') == true ){
+                        checkboxes.each(function(i, element){
+                            $(this).prop('checked', true);
+                        });
+                    } 
+                    else if (target_element.prop('checked') == false ){
+                        checkboxes.each(function(i, element){
+                            $(this).prop('checked', false);
+                        });
+                    } 
+            }
+        });
+
+
+          
+           //function to enable search on the shops dropdown
             $(document).ready(function(){
                 $("#shop_search").on("keyup", function() {
                   var value = $(this).val().toLowerCase();

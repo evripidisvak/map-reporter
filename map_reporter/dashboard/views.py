@@ -532,8 +532,6 @@ class ProductAnalysis(TemplateView):
         
         shops_for_product = RetailPrice.get_product_shops(product.id)
 
-            
-
         try:
             retailprices = RetailPrice.objects.filter(product=kwargs['pk'])
             latest_timestamp = RetailPrice.objects.filter(product=kwargs['pk']).latest('timestamp').timestamp
@@ -589,7 +587,8 @@ def update_date(request, product_id):
             product = Product.objects.get(pk=product_id)
         except:
             raise Http404("Δεν υπάρχει το προϊόν")
-        print(product)
+        print(request.POST)
+        
         
         date_range = request.POST.get('date_range_with_predefined_ranges')
         date_range_lst = [data.strip() for data in date_range.split(' - ')]
@@ -611,17 +610,14 @@ def update_date(request, product_id):
 
         for retail_price in filtered_retail_prices:
             prices.append(retail_price.price)
-        print(prices)
-        # retail_prices = serializers.serialize('json', filtered_retail_prices)
+        
+        retail_prices = serializers.serialize('json', filtered_retail_prices)
         
         
-        
-
-
         # response_data['date_range'] = date_range
         response_data['date_from'] = date_from
         response_data['date_to'] = date_to
-        # response_data['retail_prices'] = retail_prices
+        response_data['retail_prices'] = retail_prices
         
 
         return HttpResponse(

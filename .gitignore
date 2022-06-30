@@ -41,3 +41,4 @@ sftp-config.json
 !.vscode/extensions.json
 .history
 
+map_reporter/src/django-bootstrap-daterangepicker
