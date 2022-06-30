@@ -47,9 +47,9 @@ class Product(models.Model):
     map_price = models.DecimalField(
         max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     )
-    key_acc_price = models.DecimalField(
-        max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
-    )
+    # key_acc_price = models.DecimalField(
+    #     max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
+    # )
     main_category = models.ForeignKey(Category, models.SET_NULL, blank=True, null=True)
     upload_path = 'product_images'
     image = models.ImageField(upload_to='product_images', default='product_images/placeholder_img.png')
@@ -59,15 +59,15 @@ class Product(models.Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__original_map_price = self.map_price
-        self.__original_key_acc_price = self.key_acc_price
+        # self.__original_key_acc_price = self.key_acc_price
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         # Create new MapPrice and KeyAccPrice objects when these prices change
         old_map_price = self.__original_map_price
         new_map_price = self.map_price
 
-        old_key_acc_price = self.__original_key_acc_price
-        new_key_acc_price = self.key_acc_price
+        # old_key_acc_price = self.__original_key_acc_price
+        # new_key_acc_price = self.key_acc_price
         super().save(force_insert, force_update, *args, **kwargs)
 
         if new_map_price != old_map_price:
@@ -75,10 +75,10 @@ class Product(models.Model):
                 price=new_map_price, timestamp=timezone.now(), product=self
             )
 
-        if new_key_acc_price != old_key_acc_price:
-            KeyAccPrice.objects.create(
-                price=new_key_acc_price, timestamp=timezone.now(), product=self
-            )
+        # if new_key_acc_price != old_key_acc_price:
+        #     KeyAccPrice.objects.create(
+        #         price=new_key_acc_price, timestamp=timezone.now(), product=self
+        #     )
         
         # Save the image from the image_url field
         if self.image_url:
