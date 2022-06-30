@@ -362,7 +362,7 @@ def save_prices(price_list, product_id, shop, official_reseller, source_id):
             product=product_obj,
             shop=thisShop,
             official_reseller=official_reseller[index],
-            curr_target_price=product_obj.map_price if thisShop.key_account == False else product_obj.key_acc_price
+            curr_target_price=product_obj.map_price
             )
         rp.save()
 
@@ -490,22 +490,22 @@ def create_files_and_send_emails(records):
     recordsDf = pd.DataFrame.from_records(records)
     recordsDf.columns = ['URL', 'SKR_Title','SKR_Shop', 'SKR_Price', 'Official_Seller']
 
-    writer = pd.ExcelWriter("Reports\\recordsDf.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/recordsDf.xlsx", engine='xlsxwriter')
     autofit_and_save(writer, recordsDf)
 
-    webSkrList = pd.read_csv("Reports\\map-products.csv")
+    webSkrList = pd.read_csv("Reports/map-products.csv")
     webSkrList['MAP'] = webSkrList['MAP'].astype(float)
 
     mergedData = xplode(recordsDf, ['SKR_Shop', 'SKR_Price', 'Official_Seller'])
     mergedData = pd.merge(mergedData, webSkrList, on='URL', how='inner')
 
     # Update sellers file
-    sellers = pd.read_excel('Reports\\stores-sellers.xlsx')
+    sellers = pd.read_excel('Reports/stores-sellers.xlsx')
     sellers_upd = pd.DataFrame(mergedData['SKR_Shop'].drop_duplicates())
     sellers_upd.rename(columns={'SKR_Shop': 'Κατάστημα'}, inplace=True)
     sellers_upd = pd.merge(sellers_upd, sellers,on='Κατάστημα', how='outer')
     writer = pd.ExcelWriter(
-        "Reports\\stores-sellers.xlsx", engine='xlsxwriter')
+        "Reports/stores-sellers.xlsx", engine='xlsxwriter')
     autofit_and_save(writer, sellers_upd)
     sellers = sellers[['Κατάστημα', 'Επωνυμία', 'Πωλητής']]
     sellers.rename(columns={'Κατάστημα': 'SKR_Shop'}, inplace=True)
@@ -524,50 +524,50 @@ def create_files_and_send_emails(records):
     mergedDataChris = mergedData[
         ['Κατηγορία', 'SKU', 'Προϊόν', 'Κατάστημα', 'Επωνυμία', 'Τιμή', 'MAP', 'Diff', 'Diff%', 'Επίσημος Μεταπωλητής','Πωλητής']]
     mergedDataChris.sort_values(by=['Κατηγορία', 'Προϊόν', 'Τιμή'], inplace=True)
-    writer = pd.ExcelWriter("Reports\\MAP-Report-SKU.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP-Report-SKU.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, mergedDataChris)
 
     mergedData = mergedData[
         ['Κατηγορία', 'Προϊόν', 'Κατάστημα', 'Επωνυμία', 'Τιμή', 'MAP', 'Diff', 'Diff%', 'Επίσημος Μεταπωλητής','Πωλητής']]
     mergedData.sort_values(by=['Κατηγορία', 'Προϊόν', 'Τιμή'], inplace=True)
-    writer = pd.ExcelWriter("Reports\\MAP-Report.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP-Report.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, mergedData)
 
     only_below = mergedData.loc[mergedData['Diff'] < 0]
     only_below.sort_values(by=['Κατάστημα', 'Κατηγορία', 'Προϊόν'], inplace=True)
-    writer = pd.ExcelWriter("Reports\\MAP_only_below.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_only_below.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, only_below)
 
     foutsitzis = only_below.loc[only_below['Πωλητής'] == 'Φουτσιτζής']
-    writer = pd.ExcelWriter("Reports\\MAP_Foutsitzis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_Foutsitzis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, foutsitzis)
 
     a_Chatz = only_below.loc[only_below['Πωλητής'] == 'Α. Χατζηκυριακίδης']
-    writer = pd.ExcelWriter("Reports\\MAP_A_Chatz.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_A_Chatz.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, a_Chatz)
 
     xorianopoulos = only_below.loc[only_below['Πωλητής'] == 'Χωριανόπουλος']
-    writer = pd.ExcelWriter("Reports\\MAP_Xorianopoulos.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_Xorianopoulos.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, xorianopoulos)
 
     kolomvos = only_below.loc[only_below['Πωλητής'] == 'Κολόμβος']
-    writer = pd.ExcelWriter("Reports\\MAP_Kolomvos.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_Kolomvos.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, kolomvos)
 
     vasiliadis = only_below.loc[only_below['Πωλητής'] == 'Βασιλειάδης']
-    writer = pd.ExcelWriter("Reports\\MAP_Vasiliadis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_Vasiliadis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, vasiliadis)
 
     sttoulis = only_below.loc[only_below['Πωλητής'] == 'Σ. Τουλής']
-    writer = pd.ExcelWriter("Reports\\MAP_St_Toulis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_St_Toulis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, sttoulis)
 
     ctoulis = only_below.loc[only_below['Πωλητής'] == 'Χ. Τουλής']
-    writer = pd.ExcelWriter("Reports\\MAP_C_Toulis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_C_Toulis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, ctoulis)
 
     hatzikiriakidis = only_below.loc[only_below['Πωλητής'] == 'Χατζηκυριακίδης']
-    writer = pd.ExcelWriter("Reports\\MAP_Hatzikiriakidis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter("Reports/MAP_Hatzikiriakidis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, hatzikiriakidis)
 
     fileNames_Admin = ['MAP-Report.xlsx', 'MAP_only_below.xlsx']

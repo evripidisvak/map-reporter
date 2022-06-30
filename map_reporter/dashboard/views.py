@@ -580,6 +580,12 @@ class ProductAnalysis(TemplateView):
         )
         return context
 
+def unique(list1):
+    # insert the list to the set
+    list_set = set(list1)
+    # convert the set to the list
+    unique_list = (list(list_set))
+    return unique_list
 
 def update_date(request, product_id):
     if request.method == 'POST':
@@ -587,13 +593,13 @@ def update_date(request, product_id):
             product = Product.objects.get(pk=product_id)
         except:
             raise Http404("Δεν υπάρχει το προϊόν")
-        print(request.POST)
-        
-        
+
         date_range = request.POST.get('date_range_with_predefined_ranges')
-        date_range_lst = [data.strip() for data in date_range.split(' - ')]
-        date_from = date_range_lst[0]
-        date_to = date_range_lst[1]
+        shops = request.POST.get('shops_list').strip()
+        date_range_list = [data.strip() for data in date_range.split(' - ')]
+        shops_list = [data.strip() for data in shops.split(' ')]
+        date_from = date_range_list[0]
+        date_to = date_range_list[1]
         response_data = {}
 
 
@@ -601,23 +607,51 @@ def update_date(request, product_id):
         naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y")
 
         query_date_from = make_aware(naive_query_date_from)
-        query_date_to = make_aware(naive_query_date_to)
+        query_date_to = make_aware(naive_query_date_to).replace(hour=23, minute=59, second=59, microsecond=999999)
         
-        filtered_retail_prices = RetailPrice.objects.filter(timestamp__range=(query_date_from, query_date_to), product=product)
+        filtered_retail_prices = RetailPrice.objects.filter(timestamp__range=(query_date_from, query_date_to), product=product, shop__in=shops_list)
 
-        # print(filtered_retail_prices)
-        prices = []
+        timestamps = []
+        for price in filtered_retail_prices:
+            print(price.timestamp)
+            timestamps.append(price.timestamp)
 
-        for retail_price in filtered_retail_prices:
-            prices.append(retail_price.price)
-        
+        timestamps = unique(timestamps)
+        timestamps.sort(reverse=False)
+
+        target_prices = []
+        timestamp_list = []
+        for timestamp in timestamps:
+            time_tmp = datetime.datetime.strftime(timestamp, "%d/%m/%Y")
+            timestamp_list.append(time_tmp)
+            try:
+                target_prices.append(float(filtered_retail_prices.filter(timestamp=timestamp)[0].curr_target_price))
+            except:
+                target_prices.append('')
+
+        shops_objs = Shop.objects.filter(id__in=shops_list)
+
+        shops_json_objs = []
+        for shop in shops_objs:
+            tmp_price_list = []
+            for timestamp in timestamps:
+                try:
+                    for price in filtered_retail_prices.filter(timestamp=timestamp, shop=shop):
+                        tmp_price_list.append(float(price.price))
+                    
+                except:
+                    tmp_price_list.append(0)
+            shops_json_objs.append({'name':shop.name, 'prices':tmp_price_list})
+
         retail_prices = serializers.serialize('json', filtered_retail_prices)
-        
-        
+
         # response_data['date_range'] = date_range
         response_data['date_from'] = date_from
         response_data['date_to'] = date_to
-        response_data['retail_prices'] = retail_prices
+        response_data['shops_list'] = shops_json_objs
+        response_data['target_prices'] = target_prices
+        response_data['timestamp_list'] = timestamp_list
+
         
 
         return HttpResponse(

@@ -27,8 +27,7 @@ class PageInline(admin.TabularInline):
 
 class ProductAdmin(admin.ModelAdmin):
     inlines = [PageInline]
-    list_display = ('name', 'sku', 'map_price',
-                    'key_acc_price', 'main_category', 'active')
+    list_display = ('name', 'sku', 'map_price', 'main_category', 'active')
     search_fields = ['name', 'sku']
     list_filter = (('main_category', TreeRelatedFieldListFilter), 'active',)
     list_select_related = ('main_category',)

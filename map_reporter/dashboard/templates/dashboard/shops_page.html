@@ -74,7 +74,6 @@
                                 <thead>
                                 <tr class="bg-light">
                                     <th data-field="shop_name" data-filter-control="input" data-sortable="true">Όνομα καταστήματος</th>
-                                    <th data-field="key_account" data-filter-control="select" data-sortable="true">Key Account</th>
                                     <th data-field="prod_count" data-sortable="true"># Προϊόντων</th>
                                     <th data-field="prods_below" data-sortable="true"># Προϊόντων κάτω</th>
                                     <th data-field="prods_equal" data-sortable="true"># Προϊόντων ίσα</th>
@@ -88,9 +87,6 @@
                                             <a href="{% url 'shop_info' shop.id %}" class="link-dark">
                                                 {{shop.name}}
                                             </a>
-                                        </td>
-                                        <td>
-                                            {{shop.is_key_account}}
                                         </td>
                                         <td>
                                             {{shop.prod_count}}

@@ -90,14 +90,6 @@
                                 <h5 class="p-sm-2">{{ product.map_price }}</h5>
                             </div>
                         </div>
-                        <div class="row gx-5">
-                            <div class="col-4 g-0">
-                                <h5 class="p-sm-2">Τιμή Key Account</h5>
-                            </div>
-                            <div class="col-8 g-0">
-                                <h5 class="p-sm-2">{{ product.key_acc_price }}</h5>
-                            </div>
-                        </div>
                         <div class="row gx-5 bg-secondary bg-opacity-25">
                             <div class="col-4 g-0">
                                 <h5 class="p-sm-2">Κατηγορία</h5>
@@ -135,16 +127,22 @@
             <div class="row">
                 <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none">
                     <div class="row">
+
                         <div class="col-lg-3">
                             {{date_picker}}
                     {% comment %} <form name="date_range" id="date-picker-form" hx-post="/update_date/" trigger="submit" hx-target="#results"> {% endcomment %}
                         </div>
                         <div class="col-lg-9">
+
                             <div class="dropdown mt-4">
-                                <button class="btn btn-secondary dropdown-toggle" type="button" id="ShopSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <button class="btn btn-primary dropdown-toggle" type="button" id="ShopSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                   Επιλέξτε Καταστήματα
                                 </button>
+
+                                <input hidden id="shops_list" name="shops_list" value="" type="text">
+
                                 <ul class="dropdown-menu overflow-auto p-0" style="max-height:300px;" aria-labelledby="ShopSelectDropdown">
+
                                     <div class="search sticky-top p-1 w-100 bg-white">
                                         <input type="text" class="form-control" placeholder="Αναζήτηση" id="shop_search">
                                     </div>
@@ -166,9 +164,12 @@
                                         </div>
                                     </li>
                                     {% endfor %}
+
                                 </ul>
+
                             </div>
                         </div>
+
                     </div>
                         <button class="btn btn-primary mt-2" type="submit" value="Submit">Υποβολή</button>
                         <div class="mt-2 text-success" id="results"></div> <!-- errors go here -->
@@ -409,20 +410,53 @@
 
     document.body.addEventListener("htmx:afterRequest", function(evt){
         my_response = JSON.parse(evt.detail.xhr.response);
-        //console.log(my_response);
-        retail_prices = JSON.parse(my_response.retail_prices);
-        if(retail_prices.length === 0){
-            alert("Δεν βρέθηκαν τιμές για τις ημερομηνίες που εισάγατε");
-        } else {
-            console.log(retail_prices);
-            label_array = [];
-            for (var i = 0; i < retail_prices.length; i++){
-                label_array[i] = retail_prices[0].fields.timestamp;
+        console.log(my_response);
+        new_datasets = [];
+        dataset_data = [];
+        for (var i = 0; i < my_response.shops_list.length; i++){
+            this_colour = dynamicColors();
+            for (var j = 0; j < my_response.shops_list[i].prices.length; j++){
+                dataset_data.push(my_response.shops_list[i].prices[j]);
             }
-            myLineChart.data.labels = label_array;
-            //myLineChart.data.labels = [my_response.date_from, my_response.date_to];
-            myLineChart.update();
+
+            new_datasets.push(
+                {
+                    label: my_response.shops_list[i].name,
+                    lineTension: 0.3,
+                    backgroundColor: this_colour + ", 0.2)",
+                    borderColor: this_colour + ", 1)",
+                    pointRadius: 5,
+                    pointBackgroundColor: this_colour + ", 1)",
+                    pointBorderColor: "rgba(255,255,255,0.8)",
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: this_colour + ", 1)",
+                    pointHitRadius: 50,
+                    pointBorderWidth: 2,
+                    data:dataset_data,
+                }
+            );
         }
+
+        new_datasets.push(
+            {
+                label: "MAP Τιμή",
+                lineTension: 0.3,
+                backgroundColor: "rgba(220,53,69,0.2)",
+                borderColor: "rgba(220,53,69,1)",
+                pointRadius: 5,
+                pointBackgroundColor: "rgba(220,53,69,1)",
+                pointBorderColor: "rgba(255,255,255,0.8)",
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: "rgba(220,53,69,1)",
+                pointHitRadius: 50,
+                pointBorderWidth: 2,
+                data:my_response.target_prices,
+            }
+        );
+       
+        myLineChart.data.labels = my_response.timestamp_list;
+        myLineChart.data.datasets = new_datasets;
+        myLineChart.update();
     });
         
     // Pie Chart Example
@@ -477,9 +511,22 @@
         });
     });
 
-    
-      
-    
+    document.body.addEventListener('click', function (e) {
+        shop_list = document.getElementById('shops_list');
+        if (e.target.classList.contains('form-check-input')){
+            shop_list.value += e.target.value + ' ';
+        }
+    });
+
+    var dynamicColors = function() {
+        var r = Math.floor(Math.random() * 255);
+        var g = Math.floor(Math.random() * 255);
+        var b = Math.floor(Math.random() * 255);
+        if (r < 240 && g < 240 && b < 240 || (r == 220 && b == 53 && g == 69)){
+            dynamicColors();
+        }
+        return "rgb(" + r + "," + g + "," + b ;
+     };
 
 
     {% comment %} {% for label,date in common_dates.items %}
