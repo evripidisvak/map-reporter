@@ -24,10 +24,6 @@
     <div id="results"></div> <!-- errors go here -->
 </form> {% endcomment %}
 
-
-
-
-    
     <div class="row pt-lg-3">
         <div class="col-xl-4">
             <div class="card mb-4 h-100">
@@ -125,7 +121,7 @@
     
         <div class="container-fluid mt-5">
             <div class="row">
-                <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none">
+                <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
                     <div class="row">
 
                         <div class="col-lg-3">
@@ -139,8 +135,6 @@
                                   Επιλέξτε Καταστήματα
                                 </button>
 
-                                <input hidden id="shops_list" name="shops_list" value="" type="text">
-
                                 <ul class="dropdown-menu overflow-auto p-0" style="max-height:300px;" aria-labelledby="ShopSelectDropdown">
 
                                     <div class="search sticky-top p-1 w-100 bg-white">
@@ -148,8 +142,8 @@
                                     </div>
                                     <li class="p-2">
                                         <div class="form-check">
-                                            <input class="select-all" name="select_all" type="checkbox" value="Επιλογή Όλων" id="ShopSelectAllCheckbox">
-                                            <label class="form-check-label" for="select_all">
+                                            <label class="form-check-label">
+                                                <input class="select-all" name="select_all" type="checkbox" value="Επιλογή Όλων" id="ShopSelectAllCheckbox">
                                                 Επιλογή Όλων
                                             </label>
                                         </div>
@@ -157,8 +151,8 @@
                                     {% for shop in shops %}
                                     <li class="p-2">
                                         <div class="form-check">
-                                            <input class="form-check-input" name="{{shop}}" type="checkbox" value="{{shop.id}}" id="ShopSelectCheckbox{{ forloop.counter0 }}">
-                                            <label class="form-check-label" for="{{shop}}">
+                                            <label class="form-check-label">
+                                                <input class="form-check-input" name="{{shop}}" type="checkbox" value="{{shop.id}}" id="ShopSelectCheckbox{{ forloop.counter0 }}">
                                                 {{shop}}
                                             </label>
                                         </div>
@@ -172,45 +166,10 @@
 
                     </div>
                         <button class="btn btn-primary mt-2" type="submit" value="Submit">Υποβολή</button>
-                        <div class="mt-2 text-success" id="results"></div> <!-- errors go here -->
+                        <div style="display:none;" class="mt-2 text-danger" id="error_notice"></div> <!-- errors go here -->
                     </form>
             </div>
         </div>
-        <script>
-                    //stop dropdown from closing on click, so we can select multiple shops
-            $('body').on('click', function(e){
-                dropdown_elem = $('#ShopSelectDropdown');
-                target_element = $(e.target);
-                if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check')){
-                    e.stopPropagation();
-                }
-                if (target_element.attr('id') == 'ShopSelectAllCheckbox'){
-                    checkboxes = $('.form-check-input');
-                    if (target_element.prop('checked') == true ){
-                        checkboxes.each(function(i, element){
-                            $(this).prop('checked', true);
-                        });
-                    } 
-                    else if (target_element.prop('checked') == false ){
-                        checkboxes.each(function(i, element){
-                            $(this).prop('checked', false);
-                        });
-                    } 
-            }
-        });
-
-
-          
-           //function to enable search on the shops dropdown
-            $(document).ready(function(){
-                $("#shop_search").on("keyup", function() {
-                  var value = $(this).val().toLowerCase();
-                  $(".dropdown-menu li").filter(function() {
-                    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-                  });
-                });
-              });
-        </script>
     <div class="row pt-lg-5">
         <div class="col-xl-6">
             <div class="card h-100">
@@ -227,7 +186,7 @@
             <div class="card h-100">
                 <div class="card-header">
                     <i class="fas fa-chart-pie me-1"></i>
-                    Κατάσταση τιμών καταστημάτων
+                    Ανάλυση τιμών καταστημάτων
                 </div>
                 <div class="card-body align-items-center d-flex" style="height:500px;"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
@@ -408,56 +367,17 @@
     }
     });
 
-    document.body.addEventListener("htmx:afterRequest", function(evt){
-        my_response = JSON.parse(evt.detail.xhr.response);
-        console.log(my_response);
-        new_datasets = [];
-        dataset_data = [];
-        for (var i = 0; i < my_response.shops_list.length; i++){
-            this_colour = dynamicColors();
-            for (var j = 0; j < my_response.shops_list[i].prices.length; j++){
-                dataset_data.push(my_response.shops_list[i].prices[j]);
-            }
 
-            new_datasets.push(
-                {
-                    label: my_response.shops_list[i].name,
-                    lineTension: 0.3,
-                    backgroundColor: this_colour + ", 0.2)",
-                    borderColor: this_colour + ", 1)",
-                    pointRadius: 5,
-                    pointBackgroundColor: this_colour + ", 1)",
-                    pointBorderColor: "rgba(255,255,255,0.8)",
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: this_colour + ", 1)",
-                    pointHitRadius: 50,
-                    pointBorderWidth: 2,
-                    data:dataset_data,
-                }
-            );
+     // We create a random rgb colour ATTENTION!! a value is missing!!!
+     var dynamicColors = function() {
+        var r = Math.floor(Math.random() * 255);
+        var g = Math.floor(Math.random() * 255);
+        var b = Math.floor(Math.random() * 255);
+        if (r < 240 && g < 240 && b < 240 || (r == 220 && b == 53 && g == 69)){
+            dynamicColors();
         }
-
-        new_datasets.push(
-            {
-                label: "MAP Τιμή",
-                lineTension: 0.3,
-                backgroundColor: "rgba(220,53,69,0.2)",
-                borderColor: "rgba(220,53,69,1)",
-                pointRadius: 5,
-                pointBackgroundColor: "rgba(220,53,69,1)",
-                pointBorderColor: "rgba(255,255,255,0.8)",
-                pointHoverRadius: 5,
-                pointHoverBackgroundColor: "rgba(220,53,69,1)",
-                pointHitRadius: 50,
-                pointBorderWidth: 2,
-                data:my_response.target_prices,
-            }
-        );
-       
-        myLineChart.data.labels = my_response.timestamp_list;
-        myLineChart.data.datasets = new_datasets;
-        myLineChart.update();
-    });
+        return "rgb(" + r + "," + g + "," + b ;
+     };
         
     // Pie Chart Example
     var ctx = document.getElementById("myPieChart");
@@ -510,94 +430,130 @@
             $(elements).attr("disabled", "true");
         });
     });
+        
+        //stop dropdown from closing on click, so we can select multiple shops
+        $('body').on('click', function(e){
+        dropdown_elem = $('#ShopSelectDropdown');
+        target_element = $(e.target);
+        if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check')){
+            e.stopPropagation();
+        }
+        if (target_element.attr('id') == 'ShopSelectAllCheckbox'){
+            checkboxes = $('.form-check-input');
+            if (target_element.prop('checked') == true ){
+                checkboxes.each(function(i, element){
+                    $(this).prop('checked', true);
+                });
+            } 
+            else if (target_element.prop('checked') == false ){
+                checkboxes.each(function(i, element){
+                    $(this).prop('checked', false);
+                });
+            } 
+    }
+    });
 
-    document.body.addEventListener('click', function (e) {
-        shop_list = document.getElementById('shops_list');
-        if (e.target.classList.contains('form-check-input')){
-            shop_list.value += e.target.value + ' ';
+    //function to enable search on the shops dropdown
+    $(document).ready(function(){
+        $("#shop_search").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".dropdown-menu li").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+        });
+
+    // What should i do with the response from the server?
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+        const targetError = evt.target.attributes.getNamedItem('hx-target-error')
+        if (evt.detail.failed && targetError) {
+            // We got an error
+            error_elem = document.getElementById(targetError.value);
+            error_elem.innerHTML = "Δεν υπάρχουν τιμές για αυτό το διάστημα και καταστήματα που ζητάτε."
+            error_elem.style.display = "block";
+        } else {
+            // Update the charts
+            const my_response_text = evt.detail.xhr.response;
+            my_response = JSON.parse(my_response_text);
+            console.log(my_response.table)
+
+            new_pie_data = [my_response.shops_below, my_response.shops_equal, my_response.shops_above];
+            myPieChart.data.datasets[0].data = new_pie_data;
+            myPieChart.update();
+
+            bubble_charts = [];
+            for(i=0; i < my_response.shops_list.length; i++){
+                this_shop = my_response.shops_list[i];
+                bubble_charts.push(
+                    {
+                        type: 'bubble',
+                        label: this_shop.name,
+                        data: this_shop.prices,
+                        backgroundColor: dynamicColors() + ", 1)"
+                    }
+                );
+            }
+
+            new_mixed_data = {
+                labels: my_response.timestamp_list,
+                datasets: [{
+                    type: 'line',
+                    label: "Target Price",
+                    lineTension: 0.3,
+                    backgroundColor: "rgba(220,53,69,0.2)",
+                    borderColor: "rgba(220,53,69,1)",
+                    pointRadius: 5,
+                    pointBackgroundColor: "rgba(220,53,69,1)",
+                    pointBorderColor: "rgba(255,255,255,0.8)",
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: "rgba(220,53,69,1)",
+                    pointHitRadius: 50,
+                    pointBorderWidth: 2,
+                    data: my_response.target_prices,
+                },
+                    ...bubble_charts,
+                ],
+            };
+            myLineChart.data = new_mixed_data;
+            myLineChart.update();
         }
     });
 
-    var dynamicColors = function() {
-        var r = Math.floor(Math.random() * 255);
-        var g = Math.floor(Math.random() * 255);
-        var b = Math.floor(Math.random() * 255);
-        if (r < 240 && g < 240 && b < 240 || (r == 220 && b == 53 && g == 69)){
-            dynamicColors();
+    document.body.addEventListener('htmx:beforeRequest', function (evt) {
+        const targetError = evt.target.attributes.getNamedItem('hx-target-error')
+        if (targetError) {
+          document.getElementById(targetError.value).style.display = "none";
         }
-        return "rgb(" + r + "," + g + "," + b ;
-     };
+      });
 
-
-    {% comment %} {% for label,date in common_dates.items %}
-    {{label}} : {{date}}
-{% endfor %} {% endcomment %}
-
-    {% comment %} $('#demo').daterangepicker({
-        /*ranges: {
-            'Today': [moment(), moment()],
-            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-            'This Month': [moment().startOf('month'), moment().endOf('month')],
-            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-        },*/
-        ranges: {
-            {% for label,datee in common_dates.items %}
-                '{{label}}' : {{datee|date:'d-m-Y'}},
-            {% endfor %}
-        },
-        "locale": {
-            "format": "MM/DD/YYYY",
-            "separator": " - ",
-            "applyLabel": "Apply",
-            "cancelLabel": "Cancel",
-            "fromLabel": "From",
-            "toLabel": "To",
-            "customRangeLabel": "Custom",
-            "weekLabel": "W",
-            "daysOfWeek": [
-                "Su",
-                "Mo",
-                "Tu",
-                "We",
-                "Th",
-                "Fr",
-                "Sa"
-            ],
-            "monthNames": [
-                "January",
-                "February",
-                "March",
-                "April",
-                "May",
-                "June",
-                "July",
-                "August",
-                "September",
-                "October",
-                "November",
-                "December"
-            ],
-            "firstDay": 1
-        },
-        "alwaysShowCalendars": true,
-        "startDate": "06/18/2022",
-        "endDate": "06/24/2022"
-    }, function(start, end, label) {
-      console.log('New date range selected: ' + start.format('YYYY-MM-DD') + ' to ' + end.format('YYYY-MM-DD') + ' (predefined range: ' + label + ')');
+    // Get all checked items from the dropdown and add them in the request parameters
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+    if (evt.target.id == 'date-picker-form'){
+        checkboxes = $('.form-check-input');
+        shop_list = '';
+        checkboxes.each(
+            function(i,elem) {
+                if($(this).prop('checked') == true){
+                    shop_list += $(this).val() + ' ';
+                }
+            }
+            );
+            if(shop_list == ''){
+                error_elem = document.getElementById('error_notice')
+                error_elem.innerHTML = 'Παρακαλώ επιλέξτε τουλάχιστον ένα κατάστημα.'
+                error_elem.style.display = "block";
+                evt.preventDefault();
+            } else {
+                error_elem = document.getElementById('error_notice')
+                error_elem.innerHTML = ''
+                error_elem.style.display = "none";
+            }
+        }
+        evt.detail.parameters['shops_list'] = shop_list; // add a new parameter into the mix
     });
 
-    ranges = {
-        'Today': [moment(), moment()],
-        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-        'This Month': [moment().startOf('month'), moment().endOf('month')],
-        'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
-    };
 
-    console.log(ranges); {% endcomment %}
+    
 
 </script>
 
