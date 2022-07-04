@@ -138,7 +138,7 @@
             <div class="card mb-4">
                 <div class="card-header mb-4">
                         <i class="fas fa-table me-1 MB-4"></i>
-                       Όλα τα <b>ενεργά</b> προϊόντα στην κατηγορία <b>{{ category.name }}</b>
+                       Όλα τα <b>ενεργά</b> προϊόντα στην κατηγορία  <b>{{ category.name }}</b>
                 </div>
                 <div class="card-body">
                     <div class="dropdown">
@@ -181,7 +181,9 @@
                                 <th data-sortable="true" data-field="diff">Diff</th>
                                 <th data-sortable="true" data-field="per_diff">Diff %</th>
                                 <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                                {% if not seller_flag %}
                                 <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                                {% endif %}
                                 <th data-sortable="true" data-field="date">Date</th>
                             </tr>
                         </thead>
@@ -239,7 +241,9 @@
                                         <td>
                                             {{ retailprice.is_shop_official_reseller }}
                                         </td>
-                                        <td>Seller</td>
+                                        {% if not seller_flag  %}
+                                        <td>{{ retailprice.shop.seller.last_name }}</td>
+                                        {% endif %}
                                         <td>{{retailprice.timestamp}}</td>
                                     </tr>
                             {% endfor %}

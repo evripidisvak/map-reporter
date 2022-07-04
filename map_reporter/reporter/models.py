@@ -12,6 +12,7 @@ from urllib.request import urlretrieve
 from io import BytesIO
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.contrib.auth.models import User, Group
 
 
 class Category(MPTTModel):
@@ -133,6 +134,9 @@ class Source(models.Model):
 class Shop(models.Model):
     name = models.CharField(max_length=100)
     key_account = models.BooleanField(default=False)
+    seller = models.ForeignKey(
+        User, on_delete=models.SET_NULL, default=None, blank=True, null=True, limit_choices_to={'groups__name__in': ["Sales_Dep", "Seller"]}
+        )
     source = models.ForeignKey(
         Source, on_delete=models.CASCADE, default=None, blank=False, null=False
     )
@@ -206,8 +210,11 @@ class RetailPrice(models.Model):
                 productList.append(price.product)
         return productList
     
-    def get_product_shops(product_id):
-        retailprices = RetailPrice.objects.filter(product=product_id)
+    def get_valid_product_shops(product_id, user=None):
+        if user:
+            retailprices = RetailPrice.objects.filter(product=product_id, shop__seller=user)
+        else:    
+            retailprices = RetailPrice.objects.filter(product=product_id)
         shopList = []
 
         for price in retailprices:

@@ -174,7 +174,9 @@
                                 <th data-sortable="true" data-field="diff">Diff</th>
                                 <th data-sortable="true" data-field="per_diff">Diff %</th>
                                 <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                                {% if not seller_flag %}
                                 <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                                {% endif %}
                                 <th data-sortable="true" data-field="date">Date</th>
                             </tr>
                         </thead>
@@ -227,7 +229,9 @@
                                         <td>
                                             {{ retailprice.is_shop_official_reseller }}
                                         </td>
-                                        <td>Seller</td>
+                                        {% if not seller_flag %}
+                                        <td>{{ retailprice.shop.seller.last_name }}</td>
+                                        {% endif %}
                                         <td>{{retailprice.timestamp}}</td>
                                     </tr>
                             {% endfor %}

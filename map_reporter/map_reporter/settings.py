@@ -53,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'map_reporter.login_middleware.RequireLoginMiddleware',
 ]
 
 ROOT_URLCONF = 'map_reporter.urls'
@@ -133,6 +134,12 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Ours
+
+THUMBNAIL_DEBUG = False
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 MEDIA_URL = '/uploads/'
+# LOGIN_URL = '/login/'
+LOGIN_REDIRECT_URL = '/'
+
