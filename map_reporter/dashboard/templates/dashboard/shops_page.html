@@ -74,6 +74,9 @@
                                 <thead>
                                 <tr class="bg-light">
                                     <th data-field="shop_name" data-filter-control="input" data-sortable="true">Όνομα καταστήματος</th>
+                                    {% if not seller_flag %}
+                                    <th data-field="seller" data-filter-control="select" data-sortable="true">Πωλητής</th>
+                                    {% endif %}
                                     <th data-field="prod_count" data-sortable="true"># Προϊόντων</th>
                                     <th data-field="prods_below" data-sortable="true"># Προϊόντων κάτω</th>
                                     <th data-field="prods_equal" data-sortable="true"># Προϊόντων ίσα</th>
@@ -88,6 +91,11 @@
                                                 {{shop.name}}
                                             </a>
                                         </td>
+                                        {% if not seller_flag %}
+                                        <td>
+                                            {{shop.seller.last_name}}
+                                        </td>
+                                        {% endif %}
                                         <td>
                                             {{shop.prod_count}}
                                         </td>

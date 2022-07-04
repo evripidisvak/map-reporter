@@ -30,10 +30,10 @@
         </div>
 
         <div class="col-xl-8">
-            <div class="card mb-4 h-100">
+            <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
-                    Χαρακτηριστικά
+                    Χαρακτηριστικά προϊόντος
                 </div>
                 <div class="card-body align-items-center d-flex">
                     <div class="container">
@@ -50,8 +50,7 @@
                                 <h5 class="p-sm-2">Κατασκευαστής</h5>
                             </div>
                             <div class="col-8 g-0">
-                                {% comment %} TODO add manufacturer url {% endcomment %}
-                                <h5 class="p-sm-2">{{ product.manufacturer }}</h5>
+                                <a class="link-dark fs-5" href="{% url 'manufacturer_info' product.manufacturer.id %}">{{product.manufacturer}}</a>
                             </div>
                         </div>
                         <div class="row gx-5 bg-secondary bg-opacity-25">
@@ -103,6 +102,40 @@
                                         <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
                                     {% endfor %}
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card mb-4">
+                <div class='card-header'>
+                    <i class="fa-solid fa-address-card"></i>
+                    Στοιχεία επικοινωνίας καταστήματος
+                </div>
+                <div class="card-body bg-light">
+                    <div class="container-fluid">
+                        <div class="row gx-5">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Τηλέφωνο: </h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <h5 class="p-sm-2"><a href="tel:{{shop.phone_number}}" class="link-dark">{{shop.phone_number}}</a></h5>
+                            </div>
+                        </div>
+                        <div class="row gx-5">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Διεύθυνση: </h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <h5 class="p-sm-2"><a href="https://www.google.com/maps/place/{{shop.address}}" target="blank" class="link-dark">{{shop.address}}</a></h5>
+                            </div>
+                        </div>
+                        <div class="row gx-5">
+                            <div class="col-4 g-0">
+                                <h5 class="p-sm-2">Πωλητής: </h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <h5 class="p-sm-2"><a href="mailto:{{shop.seller.email}}" class="link-dark">{{ shop.seller.first_name }} {{shop.seller.last_name}}</a></h5>
                             </div>
                         </div>
                     </div>
@@ -177,7 +210,6 @@
                         <th data-sortable="true" data-field="diff">Diff</th>
                         <th data-sortable="true" data-field="diff_per">Diff %</th>
                         <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
-                        <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
                         <th data-sortable="true" data-field="date">Ημερομηνία</th>
                     </tr>
                 </thead>
@@ -214,7 +246,6 @@
                                 <p class="text-success">Ναι</p>
                             {% endif %}
                         </td>
-                        <td>Seller</td>
                         <td>{{retailprice.timestamp}}</td>
                     </tr>
                     {% endfor %}

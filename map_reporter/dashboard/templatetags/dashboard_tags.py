@@ -92,7 +92,8 @@ def datalize(filename, content_type=None):
     """
     if filename:
         #we do this because FUCKIN windows..
-        filename = filename.replace('/','',1).replace('/','\\')
+        # .replace('/','\\')
+        filename = filename.replace('/','',1)
         with open(filename, "rb") as f:
             data = f.read()
 

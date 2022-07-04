@@ -7,23 +7,11 @@
 {% endblock %}
 
 {% block headEnd %}
-<script src="https://unpkg.com/htmx.org@1.7.0" integrity="sha384-EzBXYPt0/T6gxNp0nuPtLkmRpmDBbjg6WmCUZRLXBBwYYmwAUxzlSGej0ARHX0Bo" crossorigin="anonymous"></script>
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-{% endblock headEnd %}
+
+{% endblock %}
 
 {% block main %}
-{% comment %} <input type="text" id="demo" class="form-control"> {% endcomment %}
-<h3 class="mt-4">Ανάλυση για το {{ product.name }}</h3>
-
-
-{% comment %} <form id="date-picker-form" action="/update_dates/" method="post">
-    {% csrf_token %}
-    {{date_picker}}
-    <button class="btn btn-primary" type="submit" value="Submit">Υποβολή</button>
-    <div id="results"></div> <!-- errors go here -->
-</form> {% endcomment %}
-
+    <h3 class="mt-4">{{ product.name }}</h3>
     <div class="row pt-lg-3">
         <div class="col-xl-4">
             <div class="card mb-4 h-100">
@@ -31,7 +19,7 @@
                     <i class="fas fa-chart-area me-1"></i>
                     Φωτογραφία
                 </div>
-                <div class="card-body align-items-center d-flex">
+                <div class="card-body align-items-center d-flex" >
                     <img src="{{product.image.url}}" alt="product.name" width=100%>
                 </div>
             </div>
@@ -118,60 +106,9 @@
             </div>
             </div>
         </div>
-    
-        <div class="container-fluid mt-5">
-            <div class="row">
-                <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
-                    <div class="row">
 
-                        <div class="col-lg-3">
-                            {{date_picker}}
-                    {% comment %} <form name="date_range" id="date-picker-form" hx-post="/update_date/" trigger="submit" hx-target="#results"> {% endcomment %}
-                        </div>
-                        <div class="col-lg-9">
-
-                            <div class="dropdown mt-4">
-                                <button class="btn btn-primary dropdown-toggle" type="button" id="ShopSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                  Επιλέξτε Καταστήματα
-                                </button>
-
-                                <ul class="dropdown-menu overflow-auto p-0" style="max-height:300px;" aria-labelledby="ShopSelectDropdown">
-
-                                    <div class="search sticky-top p-1 w-100 bg-white">
-                                        <input type="text" class="form-control" placeholder="Αναζήτηση" id="shop_search">
-                                    </div>
-                                    <li class="p-2">
-                                        <div class="form-check">
-                                            <label class="form-check-label">
-                                                <input class="select-all" name="select_all" type="checkbox" value="Επιλογή Όλων" id="ShopSelectAllCheckbox">
-                                                Επιλογή Όλων
-                                            </label>
-                                        </div>
-                                    </li>
-                                    {% for shop in shops %}
-                                    <li class="p-2">
-                                        <div class="form-check">
-                                            <label class="form-check-label">
-                                                <input class="form-check-input" name="{{shop}}" type="checkbox" value="{{shop.id}}" id="ShopSelectCheckbox{{ forloop.counter0 }}">
-                                                {{shop}}
-                                            </label>
-                                        </div>
-                                    </li>
-                                    {% endfor %}
-
-                                </ul>
-
-                            </div>
-                        </div>
-
-                    </div>
-                        <button class="btn btn-primary mt-2" type="submit" value="Submit">Υποβολή</button>
-                        <div style="display:none;" class="mt-2 text-danger" id="error_notice"></div> <!-- errors go here -->
-                    </form>
-            </div>
-        </div>
     <div class="row pt-lg-5">
-        <div class="col-xl-6">
+        <div class="col-xl-6 ">
             <div class="card h-100">
                 <div class="card-header">
                     <i class="fas fa-chart-area me-1"></i>
@@ -186,9 +123,10 @@
             <div class="card h-100">
                 <div class="card-header">
                     <i class="fas fa-chart-pie me-1"></i>
-                    Ανάλυση τιμών καταστημάτων
+                    Κατάσταση τιμών καταστημάτων
                 </div>
                 <div class="card-body align-items-center d-flex" style="height:500px;"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
+
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
@@ -286,7 +224,7 @@
         </div>
     </div>
 </div>
-{{common_dates}}
+
 <script>
     // Area Chart
     var ctx = document.getElementById("MinPriceChart");
@@ -338,13 +276,14 @@
     options: {
         responsive: true,
         maintainAspectRatio: false,
+
         scales: {
         xAxes: {
             time: {
             unit: 'date'
             },
             gridLines: {
-            display: false
+            display: false, 
             },
             ticks: {
             maxTicksLimit: 10
@@ -366,22 +305,11 @@
         }
     }
     });
-
-
-     // We create a random rgb colour ATTENTION!! a value is missing!!!
-     var dynamicColors = function() {
-        var r = Math.floor(Math.random() * 255);
-        var g = Math.floor(Math.random() * 255);
-        var b = Math.floor(Math.random() * 255);
-        if (r < 240 && g < 240 && b < 240 || (r == 220 && b == 53 && g == 69)){
-            dynamicColors();
-        }
-        return "rgb(" + r + "," + g + "," + b ;
-     };
         
     // Pie Chart Example
-    var ctx = document.getElementById("myPieChart");
-    var myPieChart = new Chart(ctx, {
+    var pieChart = document.getElementById("myPieChart");
+    
+    var myPieChart = new Chart(pieChart, {
     type: 'pie',
     data: {
         labels: ["Κάτω", "Ακριβώς", "Πάνω"],
@@ -395,6 +323,9 @@
         maintainAspectRatio: false,
     }
     });
+
+
+
 
     //top table
     var $all_products_table = $('#product_prices_table');
@@ -430,148 +361,7 @@
             $(elements).attr("disabled", "true");
         });
     });
-        
-        //stop dropdown from closing on click, so we can select multiple shops
-        $('body').on('click', function(e){
-        dropdown_elem = $('#ShopSelectDropdown');
-        target_element = $(e.target);
-        if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check')){
-            e.stopPropagation();
-        }
-        if (target_element.attr('id') == 'ShopSelectAllCheckbox'){
-            checkboxes = $('.form-check-input');
-            if (target_element.prop('checked') == true ){
-                checkboxes.each(function(i, element){
-                    $(this).prop('checked', true);
-                });
-            } 
-            else if (target_element.prop('checked') == false ){
-                checkboxes.each(function(i, element){
-                    $(this).prop('checked', false);
-                });
-            } 
-    }
-    });
-
-    //function to enable search on the shops dropdown
-    $(document).ready(function(){
-        $("#shop_search").on("keyup", function() {
-            var value = $(this).val().toLowerCase();
-            $(".dropdown-menu li").filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
-            });
-        });
-        });
-
-    // What should i do with the response from the server?
-    document.body.addEventListener('htmx:afterRequest', function (evt) {
-        const targetError = evt.target.attributes.getNamedItem('hx-target-error')
-        if (evt.detail.failed && targetError) {
-            // We got an error
-            error_elem = document.getElementById(targetError.value);
-            error_elem.innerHTML = "Δεν υπάρχουν τιμές για αυτό το διάστημα και καταστήματα που ζητάτε."
-            error_elem.style.display = "block";
-        } else {
-            // Update the charts
-            const my_response_text = evt.detail.xhr.response;
-            my_response = JSON.parse(my_response_text);
-            console.log(my_response.table)
-
-            new_pie_data = [my_response.shops_below, my_response.shops_equal, my_response.shops_above];
-            myPieChart.data.datasets[0].data = new_pie_data;
-            myPieChart.update();
-
-            bubble_charts = [];
-            for(i=0; i < my_response.shops_list.length; i++){
-                this_shop = my_response.shops_list[i];
-                bubble_charts.push(
-                    {
-                        type: 'bubble',
-                        label: this_shop.name,
-                        data: this_shop.prices,
-                        backgroundColor: dynamicColors() + ", 1)"
-                    }
-                );
-            }
-
-            new_mixed_data = {
-                labels: my_response.timestamp_list,
-                datasets: [{
-                    type: 'line',
-                    label: "Target Price",
-                    lineTension: 0.3,
-                    backgroundColor: "rgba(220,53,69,0.2)",
-                    borderColor: "rgba(220,53,69,1)",
-                    pointRadius: 5,
-                    pointBackgroundColor: "rgba(220,53,69,1)",
-                    pointBorderColor: "rgba(255,255,255,0.8)",
-                    pointHoverRadius: 5,
-                    pointHoverBackgroundColor: "rgba(220,53,69,1)",
-                    pointHitRadius: 50,
-                    pointBorderWidth: 2,
-                    data: my_response.target_prices,
-                },
-                    ...bubble_charts,
-                ],
-            };
-            myLineChart.data = new_mixed_data;
-            myLineChart.update();
-            table = $('#product_prices_table');
-            table.bootstrapTable('destroy');
-            table.html(my_response.table);
-            table.bootstrapTable();
-            
-        }
-    });
-
-    document.body.addEventListener('htmx:beforeRequest', function (evt) {
-        const targetError = evt.target.attributes.getNamedItem('hx-target-error')
-        if (targetError) {
-          document.getElementById(targetError.value).style.display = "none";
-        }
-      });
-
-    // Get all checked items from the dropdown and add them in the request parameters
-    document.body.addEventListener('htmx:configRequest', function(evt) {
-    if (evt.target.id == 'date-picker-form'){
-        checkboxes = $('.form-check-input');
-        shop_list = '';
-        checkboxes.each(
-            function(i,elem) {
-                if($(this).prop('checked') == true){
-                    shop_list += $(this).val() + ' ';
-                }
-            }
-            );
-            if(shop_list == ''){
-                error_elem = document.getElementById('error_notice')
-                error_elem.innerHTML = 'Παρακαλώ επιλέξτε τουλάχιστον ένα κατάστημα.'
-                error_elem.style.display = "block";
-                evt.preventDefault();
-            } else {
-                error_elem = document.getElementById('error_notice')
-                error_elem.innerHTML = ''
-                error_elem.style.display = "none";
-            }
-        }
-        evt.detail.parameters['shops_list'] = shop_list; // add a new parameter into the mix
-    });
-
-//function to make the table pre-sorted
-    $(document).ready(function(){
-        the_table = $('#product_prices_table').bootstrapTable({
-            showMultiSort:true,
-            sortPriority:[
-                {
-                    "sortName": "date","sortOrder":"desc"
-                },
-                {
-                    "sortName":"target_price","sortOrder":"asc"
-                }
-                ]
-        });
-    });
 
 </script>
 
-{% endblock main %}
+{% endblock %}

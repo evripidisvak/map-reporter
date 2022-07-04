@@ -60,6 +60,14 @@
                             <h5 class="p-sm-2"><a href="https://www.google.com/maps/place/{{shop.address}}" target="blank" class="link-dark">{{shop.address}}</a></h5>
                         </div>
                     </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Πωλητής: </h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2"><a href="mailto:{{shop.seller.email}}" class="link-dark">{{ shop.seller.first_name }} {{shop.seller.last_name}}</a></h5>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -194,7 +202,6 @@
                         <th data-sortable="true" data-field="target_price">Target Price</th>
                         <th data-sortable="true" data-field="diff">Diff</th>
                         <th data-sortable="true" data-field="per_diff">Diff %</th>
-                        <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
                         <th data-sortable="true" data-field="date">Date</th>
                         <th data-sortable="true" data-field="category" data-filter-control="select">Κατηγορία</th>
                     </tr>
@@ -247,9 +254,6 @@
                                 {% else %}
                                     <p class='text-black'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
                                 {% endif %}
-                            </td>
-                            <td>
-                                Seller
                             </td>
                             <td>
                                 {{retail_price.timestamp}}
