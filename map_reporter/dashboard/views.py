@@ -597,6 +597,67 @@ def get_change(current, previous):
         return float('inf')
 
 
+
+def update_table(filtered_retail_prices):
+    updated_table = '''<table id="product_prices_table" hx-swap-oob="true:#product_prices_table" data-toggle="table" data-show-columns="true" data-show-columns-toggle-all="true" data-pagination="true" data-show-toggle="true" data-show-fullscreen="true" data-buttons="buttons" data-buttons-align="left" data-buttons-class="primary" data-pagination-v-align="both" data-remember-order="true" data-sort-reset="true" data-filter-control="true" data-show-search-clear-button="true" data-show-export="true" data-show-print="true" data-sticky-header="true" data-show-multi-sort="true" >
+        <thead>
+            <tr>
+                <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
+                <th data-sortable="true" data-field="retail_price">Λ. Τιμή</th>
+                <th data-sortable="true" data-field="target_price">Target Price</th>
+                <th data-sortable="true" data-field="diff">Diff</th>
+                <th data-sortable="true" data-field="per_diff">Diff %</th>
+                <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                <th data-sortable="true" data-field="date">Ημερομηνία</th>
+            </tr>
+        </thead>
+        <tbody>'''
+
+    for retailprice in filtered_retail_prices:
+        is_shop_official_reseller = retailprice.is_shop_official_reseller()
+        local_dt = timezone.localtime(retailprice.timestamp)
+        # TODO check date format in tables
+        timestamp_tmp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+        # change color of row depending on price diffs
+        if retailprice.price < retailprice.curr_target_price:
+            updated_table += '<tr class="bg-danger" style="--bs-bg-opacity: .1;">'
+        else:
+            updated_table += '<tr>'
+            #print shop name, retail price and target price
+        shop_info = reverse('shop_info', kwargs={'pk':retailprice.shop.id})
+        updated_table += '''<td><a href="''' + shop_info + '''" class="link-dark">''' + retailprice.shop.name + '''</a></td>
+            <td>''' + str(retailprice.price) + '''
+            </td>
+            <td>''' + str(retailprice.curr_target_price) + '''
+            </td>            
+            <td>'''
+            #print diff 
+        if retailprice.price < retailprice.curr_target_price:
+            updated_table += '<p class="text-danger">' + str(round(retailprice.price - retailprice.curr_target_price, 2)) + '</p>'
+        elif retailprice.price > retailprice.curr_target_price:
+            updated_table += '<p class="text-success">' + str(round(retailprice.price - retailprice.curr_target_price, 2)) + '</p>'
+        else:
+            updated_table += '<p class="text-black">' + str(round(retailprice.price - retailprice.curr_target_price, 2)) + '</p>'
+        updated_table += '''</td>
+                            <td>'''
+                            #print diff %
+        if retailprice.price < retailprice.curr_target_price:
+            updated_table += '<p class="text-danger">' + str(round(get_change(float(retailprice.price), float(retailprice.curr_target_price)), 1)) + '</p>'
+        elif retailprice.price > retailprice.curr_target_price:
+            updated_table += '<p class="text-success">' + str(round(get_change(float(retailprice.price), float(retailprice.curr_target_price)), 1)) + '</p>'
+        else:
+            updated_table += '<p class="text-black">' + str(round(get_change(float(retailprice.price), float(retailprice.curr_target_price)), 1)) + '</p>'
+            #print is official reseller & timestamp
+        updated_table += '''</td>
+                            <td>''' + is_shop_official_reseller + '''</td>
+                            <td>Seller</td>
+                            <td>''' + str(timestamp_tmp) + '''</td>
+                            </tr>'''
+    updated_table +='''</tbody>
+                    </table>'''
+    return updated_table
+
 def update_date(request, product_id):
     if request.method == 'POST':
         try:
@@ -638,7 +699,6 @@ def update_date(request, product_id):
                         target_prices.append(float(filtered_retail_prices.filter(timestamp=timestamp)[0].curr_target_price))
                     else:
                         target_prices.append(0)
-
                 shops_objs = Shop.objects.filter(id__in=shops_list)
 
                 shops_json_objs = []
@@ -669,79 +729,8 @@ def update_date(request, product_id):
                         shops_above += 1
 
                 retail_prices = serializers.serialize('json', filtered_retail_prices)
-#TODO figure out how hx-swap=oob works (look 2 lines below this one.)
-                updated_table = '''<table id="product_prices_table"
-                    hx-swap-oob="#product_prices_table" 
-                    data-toggle="table"
-                    data-show-columns="true"
-                    data-show-columns-toggle-all="true"
-                    data-pagination="true"
-                    data-show-toggle="true"
-                    data-show-fullscreen="true"
-                    data-buttons="buttons" 
-                    data-buttons-align="left"
-                    data-buttons-class="primary"
-                    data-pagination-v-align="both"
-                    data-remember-order="true"
-                    data-sort-reset="true"
-                    data-filter-control="true"
-                    data-show-search-clear-button="true"
-                    data-show-export="true"
-                    data-show-print="true"
-                    data-sticky-header="true"
-                    data-show-multi-sort="true"
-                    >
-                <thead>
-                    <tr>
-                        <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
-                        <th data-sortable="true" data-field="retail_price">Λ. Τιμή</th>
-                        <th data-sortable="true" data-field="target_price">Target Price</th>
-                        <th data-sortable="true" data-field="diff">Diff</th>
-                        <th data-sortable="true" data-field="per_diff">Diff %</th>
-                        <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
-                        <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
-                        <th data-sortable="true" data-field="date">Ημερομηνία</th>
-                    </tr>
-                </thead>
-                <tbody>'''
 
-                for retailprice in filtered_retail_prices:
-                    is_shop_official_reseller = retailprice.is_shop_official_reseller()
-                    local_dt = timezone.localtime(retailprice.timestamp)
-                    # TODO check date format in tables
-                    timestamp_tmp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
-                    if retailprice.price < retailprice.curr_target_price:
-                        updated_table += '<tr class="bg-danger" style="--bs-bg-opacity: .1;">'
-                    else:
-                        updated_table += '<tr>'
-                    shop_info = reverse('shop_info', kwargs={'pk':retailprice.shop.id})
-                    updated_table += '''<td><a href="''' + shop_info + '''" class="link-dark">''' + retailprice.shop.name + '''</a></td>
-                        <td>''' + str(retailprice.price) + '''
-                        </td>
-                        <td>''' + str(retailprice.curr_target_price) + '''
-                        </td>
-                        <td>'''
-                    if retailprice.price < retailprice.curr_target_price:
-                        updated_table += '<p class="text-danger">' + str(retailprice.price - retailprice.curr_target_price) + '</p>'
-                    elif retailprice.price > retailprice.curr_target_price:
-                        updated_table += '<p class="text-success">' + str(retailprice.price - retailprice.curr_target_price) + '</p>'
-                    else:
-                        updated_table += '<p class="text-black">' + str(retailprice.price - retailprice.curr_target_price) + '</p>'
-                    updated_table += '''</td>
-                                        <td>'''
-                    if retailprice.price < retailprice.curr_target_price:
-                        updated_table += '<p class="text-danger">' + str(get_change(float(retailprice.price), float(retailprice.curr_target_price))) + '</p>'
-                    elif retailprice.price > retailprice.curr_target_price:
-                        updated_table += '<p class="text-success">' + str(get_change(float(retailprice.price), float(retailprice.curr_target_price))) + '</p>'
-                    else:
-                        updated_table += '<p class="text-black">' + str(get_change(float(retailprice.price), float(retailprice.curr_target_price))) + '</p>'
-                    updated_table += '''</td>
-                                        <td>''' + is_shop_official_reseller + '''</td>
-                                        <td>Seller</td>
-                                        <td>''' + str(timestamp_tmp) + '''</td>
-                                        </tr>'''
-                updated_table +='''</tbody>
-                                </table>'''
+
                         
                 response_data['date_from'] = date_from
                 response_data['date_to'] = date_to
@@ -751,7 +740,7 @@ def update_date(request, product_id):
                 response_data['shops_below'] = shops_below
                 response_data['shops_equal'] = shops_equal
                 response_data['shops_above'] = shops_above
-                response_data['table'] = updated_table
+                response_data['table'] = update_table(filtered_retail_prices)
 
                 return JsonResponse(response_data)
             else:
@@ -766,4 +755,8 @@ def update_date(request, product_id):
             # json.dumps({"nothing to see": "this isn't happening"}),
             # content_type="application/json"
         )
+
+
+
+
 

@@ -516,6 +516,11 @@
             };
             myLineChart.data = new_mixed_data;
             myLineChart.update();
+            table = $('#product_prices_table');
+            table.bootstrapTable('destroy');
+            table.html(my_response.table);
+            table.bootstrapTable();
+            
         }
     });
 
@@ -552,8 +557,20 @@
         evt.detail.parameters['shops_list'] = shop_list; // add a new parameter into the mix
     });
 
-
-    
+//function to make the table pre-sorted
+    $(document).ready(function(){
+        the_table = $('#product_prices_table').bootstrapTable({
+            showMultiSort:true,
+            sortPriority:[
+                {
+                    "sortName": "date","sortOrder":"desc"
+                },
+                {
+                    "sortName":"target_price","sortOrder":"asc"
+                }
+                ]
+        });
+    });
 
 </script>
 
