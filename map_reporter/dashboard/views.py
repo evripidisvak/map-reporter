@@ -10,11 +10,12 @@ from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate
 from django.views import generic
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.timezone import make_aware
 from django.db.models import *
 from reporter.models import *
 from .forms import DatePicker
-# from django.http import JsonResponse
+from django.http import JsonResponse
 import json
 import datetime
 from django.core import serializers
@@ -587,6 +588,15 @@ def unique(list1):
     unique_list = (list(list_set))
     return unique_list
 
+def get_change(current, previous):
+    if current == previous:
+        return 0
+    try:
+        return (abs(current - previous) / previous) * 100.0
+    except ZeroDivisionError:
+        return float('inf')
+
+
 def update_date(request, product_id):
     if request.method == 'POST':
         try:
@@ -602,67 +612,157 @@ def update_date(request, product_id):
         date_to = date_range_list[1]
         response_data = {}
 
-
         naive_query_date_from = datetime.datetime.strptime(date_from, "%d/%m/%Y")
         naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y")
 
         query_date_from = make_aware(naive_query_date_from)
         query_date_to = make_aware(naive_query_date_to).replace(hour=23, minute=59, second=59, microsecond=999999)
         
-        filtered_retail_prices = RetailPrice.objects.filter(timestamp__range=(query_date_from, query_date_to), product=product, shop__in=shops_list)
+        try:
+            filtered_retail_prices = RetailPrice.objects.filter(timestamp__range=(query_date_from, query_date_to), product=product, shop__in=shops_list)
+            timestamps = []
+            if filtered_retail_prices:
+                for price in filtered_retail_prices:
+                    timestamps.append(price.timestamp)
 
-        timestamps = []
-        for price in filtered_retail_prices:
-            print(price.timestamp)
-            timestamps.append(price.timestamp)
+                timestamps = unique(timestamps)
+                timestamps.sort(reverse=False)
 
-        timestamps = unique(timestamps)
-        timestamps.sort(reverse=False)
+                target_prices = []
+                timestamp_list = []
+                for timestamp in timestamps:
+                    local_dt = timezone.localtime(timestamp)
+                    time_tmp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+                    timestamp_list.append(time_tmp)
+                    if filtered_retail_prices.filter(timestamp=timestamp):
+                        target_prices.append(float(filtered_retail_prices.filter(timestamp=timestamp)[0].curr_target_price))
+                    else:
+                        target_prices.append(0)
 
-        target_prices = []
-        timestamp_list = []
-        for timestamp in timestamps:
-            time_tmp = datetime.datetime.strftime(timestamp, "%d/%m/%Y")
-            timestamp_list.append(time_tmp)
-            try:
-                target_prices.append(float(filtered_retail_prices.filter(timestamp=timestamp)[0].curr_target_price))
-            except:
-                target_prices.append('')
+                shops_objs = Shop.objects.filter(id__in=shops_list)
 
-        shops_objs = Shop.objects.filter(id__in=shops_list)
+                shops_json_objs = []
+                for shop in shops_objs:
+                    tmp_price_list = []
+                    for timestamp in timestamps:
+                        local_dt = timezone.localtime(timestamp)
+                        timestamp_tmp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+                        if filtered_retail_prices.filter(timestamp=timestamp, shop=shop):
+                            for price in filtered_retail_prices.filter(timestamp=timestamp, shop=shop):
+                                tmp_price_list.append({"y":str(price.price), "x":timestamp_tmp, "r":10})
+                    pricestr = []
+                    for idx, price in enumerate(tmp_price_list):
+                        key = "price"+str(idx)
+                        pricestr.append(price)
+                    shops_json_objs.append({"name":shop.name, "prices": pricestr })
+                
+                shops_below = 0
+                shops_equal = 0
+                shops_above = 0
 
-        shops_json_objs = []
-        for shop in shops_objs:
-            tmp_price_list = []
-            for timestamp in timestamps:
-                try:
-                    for price in filtered_retail_prices.filter(timestamp=timestamp, shop=shop):
-                        tmp_price_list.append(float(price.price))
-                    
-                except:
-                    tmp_price_list.append(0)
-            shops_json_objs.append({'name':shop.name, 'prices':tmp_price_list})
+                for price in filtered_retail_prices:
+                    if price.price < price.curr_target_price:
+                        shops_below += 1
+                    elif price.price == price.curr_target_price:
+                        shops_equal += 1
+                    elif price.price > price.curr_target_price:
+                        shops_above += 1
 
-        retail_prices = serializers.serialize('json', filtered_retail_prices)
+                retail_prices = serializers.serialize('json', filtered_retail_prices)
+#TODO figure out how hx-swap=oob works (look 2 lines below this one.)
+                updated_table = '''<table id="product_prices_table"
+                    hx-swap-oob="#product_prices_table" 
+                    data-toggle="table"
+                    data-show-columns="true"
+                    data-show-columns-toggle-all="true"
+                    data-pagination="true"
+                    data-show-toggle="true"
+                    data-show-fullscreen="true"
+                    data-buttons="buttons" 
+                    data-buttons-align="left"
+                    data-buttons-class="primary"
+                    data-pagination-v-align="both"
+                    data-remember-order="true"
+                    data-sort-reset="true"
+                    data-filter-control="true"
+                    data-show-search-clear-button="true"
+                    data-show-export="true"
+                    data-show-print="true"
+                    data-sticky-header="true"
+                    data-show-multi-sort="true"
+                    >
+                <thead>
+                    <tr>
+                        <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
+                        <th data-sortable="true" data-field="retail_price">Λ. Τιμή</th>
+                        <th data-sortable="true" data-field="target_price">Target Price</th>
+                        <th data-sortable="true" data-field="diff">Diff</th>
+                        <th data-sortable="true" data-field="per_diff">Diff %</th>
+                        <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                        <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                        <th data-sortable="true" data-field="date">Ημερομηνία</th>
+                    </tr>
+                </thead>
+                <tbody>'''
 
-        # response_data['date_range'] = date_range
-        response_data['date_from'] = date_from
-        response_data['date_to'] = date_to
-        response_data['shops_list'] = shops_json_objs
-        response_data['target_prices'] = target_prices
-        response_data['timestamp_list'] = timestamp_list
+                for retailprice in filtered_retail_prices:
+                    is_shop_official_reseller = retailprice.is_shop_official_reseller()
+                    local_dt = timezone.localtime(retailprice.timestamp)
+                    # TODO check date format in tables
+                    timestamp_tmp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+                    if retailprice.price < retailprice.curr_target_price:
+                        updated_table += '<tr class="bg-danger" style="--bs-bg-opacity: .1;">'
+                    else:
+                        updated_table += '<tr>'
+                    shop_info = reverse('shop_info', kwargs={'pk':retailprice.shop.id})
+                    updated_table += '''<td><a href="''' + shop_info + '''" class="link-dark">''' + retailprice.shop.name + '''</a></td>
+                        <td>''' + str(retailprice.price) + '''
+                        </td>
+                        <td>''' + str(retailprice.curr_target_price) + '''
+                        </td>
+                        <td>'''
+                    if retailprice.price < retailprice.curr_target_price:
+                        updated_table += '<p class="text-danger">' + str(retailprice.price - retailprice.curr_target_price) + '</p>'
+                    elif retailprice.price > retailprice.curr_target_price:
+                        updated_table += '<p class="text-success">' + str(retailprice.price - retailprice.curr_target_price) + '</p>'
+                    else:
+                        updated_table += '<p class="text-black">' + str(retailprice.price - retailprice.curr_target_price) + '</p>'
+                    updated_table += '''</td>
+                                        <td>'''
+                    if retailprice.price < retailprice.curr_target_price:
+                        updated_table += '<p class="text-danger">' + str(get_change(float(retailprice.price), float(retailprice.curr_target_price))) + '</p>'
+                    elif retailprice.price > retailprice.curr_target_price:
+                        updated_table += '<p class="text-success">' + str(get_change(float(retailprice.price), float(retailprice.curr_target_price))) + '</p>'
+                    else:
+                        updated_table += '<p class="text-black">' + str(get_change(float(retailprice.price), float(retailprice.curr_target_price))) + '</p>'
+                    updated_table += '''</td>
+                                        <td>''' + is_shop_official_reseller + '''</td>
+                                        <td>Seller</td>
+                                        <td>''' + str(timestamp_tmp) + '''</td>
+                                        </tr>'''
+                updated_table +='''</tbody>
+                                </table>'''
+                        
+                response_data['date_from'] = date_from
+                response_data['date_to'] = date_to
+                response_data['shops_list'] = shops_json_objs
+                response_data['target_prices'] = target_prices
+                response_data['timestamp_list'] = timestamp_list
+                response_data['shops_below'] = shops_below
+                response_data['shops_equal'] = shops_equal
+                response_data['shops_above'] = shops_above
+                response_data['table'] = updated_table
 
-        
+                return JsonResponse(response_data)
+            else:
+                raise ValueError('There are no prices for this range')
+        except:
+            raise ValueError('There are no prices for this range')
+            # raise Http404("There are no prices for this range")
 
-        return HttpResponse(
-            json.dumps(response_data),
-
-            # response_data,
-            # content_type="application/json"
-        )
     else:
         return HttpResponse(
-            'You suck...'
+            'This is not the place you are looking for'
             # json.dumps({"nothing to see": "this isn't happening"}),
             # content_type="application/json"
         )
