@@ -2,7 +2,7 @@ from array import array
 from ast import And
 from itertools import product
 from django.http import Http404, HttpResponseRedirect, HttpResponse
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, get_list_or_404
 from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
@@ -99,26 +99,33 @@ class ShopProductInfo(TemplateView):
     def get_context_data(self, **kwargs):
         context = super(ShopProductInfo, self).get_context_data(**kwargs)
 
-        product = Product.objects.get(id=kwargs['pk_product'])
-        urls = Page.objects.filter(product_id=kwargs['pk_product'])
-        shop = Shop.objects.get(id=kwargs['pk_shop'])
+        # product = Product.objects.get(id=kwargs['pk_product'])
+        product = get_object_or_404(Product, id=kwargs['pk_product'])
+        # urls = Page.objects.filter(product_id=kwargs['pk_product'])
+        urls = get_list_or_404(Page, product_id=kwargs['pk_product'])
+        # shop = Shop.objects.get(id=kwargs['pk_shop'])
+        shop = get_object_or_404(Shop, id=kwargs['pk_shop'])
         user = self.request.user
         seller_flag = is_seller(user)
         if seller_flag and not shop.seller == user:
             raise Http404('Δεν έχετε πρόσβαση σε αυτό το κατάστημα.')
 
-        retailprices = RetailPrice.objects.filter(product=kwargs['pk_product'], shop=kwargs['pk_shop'])
         latest_timestamp = RetailPrice.objects.filter(product=kwargs['pk_product'], shop=kwargs['pk_shop']).latest('timestamp').timestamp
+        retailprices = RetailPrice.objects.filter(product=kwargs['pk_product'], shop=kwargs['pk_shop'])
 
-        min_retailprice_list = (
-            retailprices.values('timestamp', 'curr_target_price').annotate(min_price=Min('price')).order_by()
-        )
+        if not retailprices:
+            raise Http404('Δεν υπάρχουν εγγραφές για αυτό το κατάστημα και προϊόν')
+        else:
+            min_retailprice_list = (
+                retailprices.values('timestamp', 'curr_target_price').annotate(min_price=Min('price')).order_by()
+            )
+            min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
+            max_retailprice = min_retailprice_list.aggregate(Max('min_price'))
 
-        min_retailprice = min_retailprice_list.aggregate(Min('min_price'))
-        max_retailprice = min_retailprice_list.aggregate(Max('min_price'))
-
-        mapprices = MapPrice.objects.filter(product=kwargs['pk_product'])
-        keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk_product'])
+        # mapprices = MapPrice.objects.filter(product=kwargs['pk_product'])
+        mapprices = get_list_or_404(MapPrice, product=kwargs['pk_product'])
+        # keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk_product'])
+        keyaccprices = get_list_or_404(KeyAccPrice, product=kwargs['pk_product'])
 
         prices_below = 0
         prices_equal = 0
@@ -160,8 +167,11 @@ class AllProducts(TemplateView):
         user = self.request.user
         seller_flag = is_seller(user)
         table_image_size = '80x80'
-        products = Product.objects.all()
+        # products = Product.objects.all()
+        products = get_list_or_404(Product)
         latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
+        if not latest_timestamp:
+            raise Http404('Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων')
         # products = Product.objects.annotate(shop_count=Count('shop', distinct=True))
         retail_prices = []
         products_below = 0
@@ -232,12 +242,17 @@ class ShopsPage(TemplateView):
         user = self.request.user
         seller_flag = is_seller(user)
         latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
-        products = Product.objects.filter(active=True)
+        if not latest_timestamp:
+            raise Http404('Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων')
+        # products = Product.objects.filter(active=True)
+        products = get_list_or_404(Product, active=True)
 
         if seller_flag:
-            shops = Shop.objects.filter(seller=user)
+            # shops = Shop.objects.filter(seller=user)
+            shops = get_list_or_404(Shop, seller=user)
         else:
-            shops = Shop.objects.all()
+            # shops = Shop.objects.all()
+            shops = get_list_or_404(Shop)
 
         this_shop_below = 0
         this_shop_equal = 0
@@ -288,17 +303,22 @@ class ShopInfo(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(ShopInfo, self).get_context_data(**kwargs)
-        shop = Shop.objects.get(id=kwargs['pk'])
+        # shop = Shop.objects.get(id=kwargs['pk'])
+        shop = get_object_or_404(Shop, id=kwargs['pk'])
         user = self.request.user
         seller_flag = is_seller(user)
         if seller_flag and not shop.seller == user:
             raise Http404('Δεν έχετε πρόσβαση σε αυτό το κατάστημα.')
         latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
+        if not latest_timestamp:
+            raise Http404('Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων')
         products_below = 0
         products_equal = 0
         products_above = 0
         table_image_size = '80x80'
         products = RetailPrice.get_shop_products(shop_id=kwargs['pk'])
+        if not products:
+            raise Http404('Δεν υπάρχουν προϊόντα')
         retail_prices = []
         for product in products:
             try:
@@ -337,8 +357,11 @@ class CategoriesPage(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(CategoriesPage, self).get_context_data(**kwargs)
-        categories = Category.objects.all()
+        # categories = Category.objects.all()
+        categories = get_list_or_404(Category)
         latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
+        if not latest_timestamp:
+            raise Http404('Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων')
         products_below = 0
         products_ok = 0
         for category in categories:
@@ -377,6 +400,8 @@ class CategoryInfo(TemplateView):
         seller_flag = is_seller(user)
         table_image_size = '80x80'
         category_descendants = Category.objects.get(id=kwargs["pk"]).get_descendants(include_self=True)
+        if not category_descendants:
+            raise Http404('Δεν υπάρχει η κατηγορία')
         children_id_list = []
         products_below = 0
         products_ok = 0
@@ -387,10 +412,15 @@ class CategoryInfo(TemplateView):
         for child in category_descendants:
             children_id_list.append(child.id)
 
-        category = Category.objects.get(id=kwargs['pk'])
-        products = Product.objects.filter(main_category__in=children_id_list)
-        products_count = products.count()
+        # category = Category.objects.get(id=kwargs['pk'])
+        category = get_object_or_404(Category, id=kwargs['pk'])
+        # products = Product.objects.filter(main_category__in=children_id_list)
+        products = get_list_or_404(Product, main_category__in=children_id_list)
+        # products_count = products.count()
+        products_count = len(products)
         latest_timestamp = RetailPrice.objects.filter(product__main_category__in=children_id_list).latest('timestamp').timestamp
+        if not latest_timestamp:
+            raise Http404('Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων')
         retailprices = []
 
         for product in products:
@@ -448,8 +478,11 @@ class ManufacturersPage(TemplateView):
         context = super(ManufacturersPage, self).get_context_data(**kwargs)
         user = self.request.user
         seller_flag = is_seller(user)
-        manufacturers = Manufacturer.objects.all()
+        # manufacturers = Manufacturer.objects.all()
+        manufacturers = get_list_or_404(Manufacturer)
         latest_timestamp = RetailPrice.objects.latest('timestamp').timestamp
+        if not latest_timestamp:
+            raise Http404('Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων')
 
         products_below = 0
         for manufacturer in manufacturers:
@@ -495,9 +528,12 @@ class ManufacturerInfo(TemplateView):
         shops_equal = 0
         shops_above = 0
 
-        manufacturer = Manufacturer.objects.get(id=kwargs['pk']) 
-        products = Product.objects.filter(manufacturer=kwargs['pk'])
-        products_count = products.count()
+        # manufacturer = Manufacturer.objects.get(id=kwargs['pk'])
+        manufacturer = get_object_or_404(Manufacturer, id=kwargs['pk'])
+        # products = Product.objects.filter(manufacturer=kwargs['pk'])
+        products = get_list_or_404(Product, manufacturer=kwargs['pk'])
+        # products_count = products.count()
+        products_count = len(products)
         if seller_flag:
             latest_timestamp = RetailPrice.objects.filter(product__manufacturer=kwargs['pk'], shop__seller = user).latest('timestamp').timestamp
         else:
@@ -560,8 +596,10 @@ class ProductInfo(TemplateView):
         date_picker = DatePicker
         context = super(ProductInfo, self).get_context_data(**kwargs)
 
-        product = Product.objects.get(id=kwargs['pk'])
-        urls = Page.objects.filter(product_id=kwargs['pk'])
+        # product = Product.objects.get(id=kwargs['pk'])
+        product = get_object_or_404(Product, id=kwargs['pk'])
+        # urls = Page.objects.filter(product_id=kwargs['pk'])
+        urls = get_list_or_404(Page, product_id=kwargs['pk'])
         
         user = self.request.user
         seller_flag = is_seller(user)
