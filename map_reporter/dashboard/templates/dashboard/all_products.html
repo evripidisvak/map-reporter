@@ -20,7 +20,7 @@
                     <i class='fas fa-chart-pie me-1'></i>
                     Κατάσταση τιμών καταστημάτων
                 </div>
-                <div class='card-body align-items-center d-flex'><canvas id='myPieChart' width='100%' height='50'></canvas></div>
+                <div class="card-body align-items-center d-flex" d-flex style="height:500px;"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
                 <div class='card-footer small text-muted'>Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
@@ -73,15 +73,16 @@
                     >
                         <thead>
                             <tr class="bg-light">
-                                <th data-field="product_image">Φωτογραφία</th>
-                                <th data-field="active" data-filter-control="select" data-sortable="true">Active</th>
-                                <th data-field="manufacturer" data-filter-control="select" data-sortable="true">Κατασκευαστής</th>
-                                <th data-field="model" data-filter-control="select" data-sortable="true">Μοντέλο</th>
-                                <th data-field="map_price" data-sortable="true">MAP Price</th>
-                                <th data-field="shop_count" data-sortable="true"># Καταστημάτων</th>
-                                <th data-field="shops_below" data-sortable="true">Κατ. below</th>
-                                <th data-field="shops_equal" data-sortable="true">Κατ. equal</th>
-                                <th data-field="shops_above" data-sortable="true">Κατ. above</th>
+                                <th data-field="product_image_t">Φωτογραφία</th>
+                                <th data-field="active_t" data-filter-control="select" data-sortable="true">Active</th>
+                                <th data-field="manufacturer_t" data-filter-control="select" data-sortable="true">Κατασκευαστής</th>
+                                <th data-field="model_t" data-filter-control="input" data-sortable="true">Μοντέλο</th>
+                                <th data-field="sku" data-filter-control="input" data-sortable="true">SKU</th>
+                                <th data-field="map_price_t" data-sortable="true">MAP Price</th>
+                                <th data-field="shop_count_t" data-sortable="true"># Καταστημάτων</th>
+                                <th data-field="shops_below_t" data-sortable="true">Κατ. below</th>
+                                <th data-field="shops_equal_t" data-sortable="true">Κατ. equal</th>
+                                <th data-field="shops_above_t" data-sortable="true">Κατ. above</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -108,7 +109,10 @@
                                 </a>
                             </td>
                             <td>
-                                {{product.map_price}}
+                                {{product.sku}}
+                            </td>
+                            <td>
+                                {{product.map_price}} €
                             </td>
                             <td>
                                 {{product.shop_count}}
@@ -160,6 +164,7 @@
                     data-remember-order="true"
                     data-sort-reset="true"
                     data-filter-control="true"
+                    data-sort-select-options="true"
                     data-show-search-clear-button="true"
                     data-show-export="true"
                     data-show-print="true"
@@ -171,19 +176,21 @@
                     <!--data-search-highlight use for highlight individual column search-->
                     <thead>
                         <tr class="bg-light">
-                            <th data-sortable="true" data-field="product_image">Φωτογραφία</th>
-                            <th data-sortable="true" data-field="manufacturer" data-filter-control="select">Κατασκευαστής</th>
-                            <th data-sortable="true" data-field="model" data-filter-control="input">Μοντέλο</th>
-                            <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
-                            <th data-sortable="true" data-field="retail_price">Τιμή</th>
-                            <th data-sortable="true" data-field="target_price">Target Price</th>
-                            <th data-sortable="true" data-field="diff">Diff</th>
-                            <th data-sortable="true" data-field="per_diff">Diff %</th>
-                            <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                            <th data-sortable="true" data-field="product_image_b">Φωτογραφία</th>
+                            <th data-sortable="true" data-field="manufacturer_b" data-filter-control="select">Κατασκευαστής</th>
+                            <th data-sortable="true" data-field="model_b" data-filter-control="input">Μοντέλο</th>
+                            <th data-sortable="true" data-field="sku_b" data-filter-control="input">SKU</th>
+                            <th data-sortable="true" data-field="shop_b" data-filter-control="input">Κατάστημα</th>
+                            <th data-sortable="true" data-field="retail_price_b">Τιμή</th>
+                            <th data-sortable="true" data-field="target_price_b">Target Price</th>
+                            <th data-sortable="true" data-field="diff_b">Diff</th>
+                            <th data-sortable="true" data-field="per_diff_b">Diff %</th>
+                            <th data-sortable="true" data-field="official_reseller_b" data-filter-control="select">Επ. Μεταπωλητής</th>
                             {% if not seller_flag %}
                             <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
                             {% endif %}
                             <th data-sortable="true" data-field="date">Date</th>
+                            {% comment %} We can use this: data-filter-control="datepicker" to show a datepicker filter at the column headers {% endcomment %}
                         </tr>
                     </thead>
                     <tbody>
@@ -213,30 +220,33 @@
                                     </a>
                                 </td>
                                 <td>
+                                    {{retail_price.product.sku}}
+                                </td>
+                                <td>
                                     <a href="{% url 'shop_info' retail_price.shop.id %}" class="link-dark">{{retail_price.shop}}</a>
                                 </td>
                                 <td>
-                                    {{retail_price.price}}
+                                    {{retail_price.price}} €
                                 </td>
                                 <td>
-                                    {{retail_price.curr_target_price}}
+                                    {{retail_price.curr_target_price}} €
                                 </td>
                                 <td>
                                     {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
-                                        <p class='text-danger'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
+                                        <p class='text-danger'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
                                     {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
-                                        <p class='text-success'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
+                                        <p class='text-success'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
                                     {% else %}
-                                        <p class='text-black'>{{retail_price.price|sub:retail_price.curr_target_price}}</p>
+                                        <p class='text-black'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if retail_price.price|ch_sub:retail_price.curr_target_price < 0 %}
-                                        <p class='text-danger'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
+                                        <p class='text-danger'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
                                     {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
-                                        <p class='text-success'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
+                                        <p class='text-success'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
                                     {% else %}
-                                        <p class='text-black'>{{retail_price.price|ch_sub:retail_price.curr_target_price}}</p>
+                                        <p class='text-black'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
                                     {% endif %}
                                 </td>
                                 <td>
@@ -267,6 +277,10 @@
             backgroundColor: ['#dc3545', '#28a745', '#007bff'],
             }],
         },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+        }
         });
 
         //top table

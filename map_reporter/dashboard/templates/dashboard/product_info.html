@@ -227,19 +227,20 @@
                     data-show-print="true"
                     data-sticky-header="true"
                     data-show-multi-sort="true"
+                    data-sort-priority='[{"sortName": "date","sortOrder":"desc"},{"sortName":"retail_price","sortOrder":"asc"}]'
                     >
                 <thead>
                     <tr>
-                        <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
-                        <th data-sortable="true" data-field="retail_price">Λ. Τιμή</th>
-                        <th data-sortable="true" data-field="target_price">Target Price</th>
-                        <th data-sortable="true" data-field="diff">Diff</th>
-                        <th data-sortable="true" data-field="per_diff">Diff %</th>
-                        <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>
+                        <th data-sortable="true" data-field="shop_t" data-filter-control="input">Κατάστημα</th>
+                        <th data-sortable="true" data-field="retail_price_t">Λ. Τιμή</th>
+                        <th data-sortable="true" data-field="target_price_t">Target Price</th>
+                        <th data-sortable="true" data-field="diff_t">Diff</th>
+                        <th data-sortable="true" data-field="per_diff_t">Diff %</th>
+                        <th data-sortable="true" data-field="official_reseller_t" data-filter-control="select">Επ. Μεταπωλητής</th>
                         {% if not seller_flag %}
-                            <th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>
+                            <th data-sortable="true" data-field="seller_t" data-filter-control="select">Πωλητής</th>
                         {% endif %}
-                        <th data-sortable="true" data-field="date">Ημερομηνία</th>
+                        <th data-sortable="true" data-field="date_t">Ημερομηνία</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -251,27 +252,27 @@
                     {% endif %}
                         <td><a href="{% url 'shop_info' retailprice.shop.id %}" class="link-dark">{{retailprice.shop}}</a></td>
                         <td>
-                            {{retailprice.price}}
+                            {{retailprice.price}} €
                         </td>
                         <td>
-                            {{retailprice.curr_target_price}}
+                            {{retailprice.curr_target_price}} €
                         </td>
                         <td>
                             {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
-                                <p class="text-danger">{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                <p class="text-danger">{{retailprice.price|sub:retailprice.curr_target_price}} €</p>
                             {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
-                                <p class="text-success">{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                <p class="text-success">{{retailprice.price|sub:retailprice.curr_target_price}} €</p>
                             {% else %}
-                                <p class="text-black">{{retailprice.price|sub:retailprice.curr_target_price}}</p>
+                                <p class="text-black">{{retailprice.price|sub:retailprice.curr_target_price}} €</p>
                             {% endif %}
                         </td>
                         <td>
                             {% if retailprice.price|ch_sub:retailprice.curr_target_price < 0 %}
-                                <p class="text-danger">{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                <p class="text-danger">{{retailprice.price|ch_sub:retailprice.curr_target_price}} %</p>
                             {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
-                                <p class="text-success">{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                <p class="text-success">{{retailprice.price|ch_sub:retailprice.curr_target_price}} %</p>
                             {% else %}
-                                <p class="text-black">{{retailprice.price|ch_sub:retailprice.curr_target_price}}</p>
+                                <p class="text-black">{{retailprice.price|ch_sub:retailprice.curr_target_price}} %</p>
                             {% endif %}
                         </td>
                         <td>
@@ -425,6 +426,21 @@
             }).trigger('change')
     });
 
+   /* $(document).ready(function(){
+        the_table = $('#product_prices_table').bootstrapTable({
+            sortPriority:[
+                    {
+                        "sortName": "date",
+                        "sortOrder":"desc"
+                    },
+                    {
+                        "sortName":"retail_price",
+                        "sortOrder":"asc"
+                    },
+                ]
+        });
+    });*/
+
     $(window).on('load', ()=>{
         export_btn_group = $('.export.btn-group');
         exoport_dropdown = export_btn_group.find("[aria-label='Export']");
@@ -561,7 +577,7 @@
     });
 
 //function to make the table pre-sorted
-    $(document).ready(function(){
+    {% comment %} $(document).ready(function(){
         the_table = $('#product_prices_table').bootstrapTable({
             showMultiSort:true,
             sortPriority:[
@@ -573,8 +589,10 @@
                 }
                 ]
         });
-    });
-
+    }); {% endcomment %}
+    /*$(function() {
+        $('#product_prices_table').bootstrapTable()
+      });*/
 </script>
 
 {% endblock main %}

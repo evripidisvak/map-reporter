@@ -397,8 +397,13 @@ class CategoryInfo(TemplateView):
             shops_equal = 0
             shops_above = 0
             try:
-                product_latest_timestamp = RetailPrice.objects.filter(product=product, shop__seller=user).latest('timestamp').timestamp
-                ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=product_latest_timestamp, shop__seller=user)
+                if seller_flag:
+                    product_latest_timestamp = RetailPrice.objects.filter(product=product, shop__seller=user).latest('timestamp').timestamp
+                    ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=product_latest_timestamp, shop__seller=user)
+                else:
+                    product_latest_timestamp = RetailPrice.objects.filter(product=product).latest('timestamp').timestamp
+                    ltst_pr_rec = RetailPrice.objects.filter(product=product, timestamp=product_latest_timestamp)
+                    
                 products_below_increased = False
                 for retail_price in ltst_pr_rec:
                     if retail_price.product.active:
@@ -638,17 +643,17 @@ def update_table(filtered_retail_prices, seller_flag):
     updated_table = '''<table id="product_prices_table" hx-swap-oob="true:#product_prices_table" data-toggle="table" data-show-columns="true" data-show-columns-toggle-all="true" data-pagination="true" data-show-toggle="true" data-show-fullscreen="true" data-buttons="buttons" data-buttons-align="left" data-buttons-class="primary" data-pagination-v-align="both" data-remember-order="true" data-sort-reset="true" data-filter-control="true" data-show-search-clear-button="true" data-show-export="true" data-show-print="true" data-sticky-header="true" data-show-multi-sort="true" >
         <thead>
             <tr>
-                <th data-sortable="true" data-field="shop" data-filter-control="input">Κατάστημα</th>
-                <th data-sortable="true" data-field="retail_price">Λ. Τιμή</th>
-                <th data-sortable="true" data-field="target_price">Target Price</th>
-                <th data-sortable="true" data-field="diff">Diff</th>
-                <th data-sortable="true" data-field="per_diff">Diff %</th>
-                <th data-sortable="true" data-field="official_reseller" data-filter-control="select">Επ. Μεταπωλητής</th>'''
+                <th data-sortable="true" data-field="shop_t" data-filter-control="input">Κατάστημα</th>
+                <th data-sortable="true" data-field="retail_price_t">Λ. Τιμή</th>
+                <th data-sortable="true" data-field="target_price_t">Target Price</th>
+                <th data-sortable="true" data-field="diff_t">Diff</th>
+                <th data-sortable="true" data-field="per_diff_t">Diff %</th>
+                <th data-sortable="true" data-field="official_reseller_t" data-filter-control="select">Επ. Μεταπωλητής</th>'''
     if not seller_flag:
-        updated_table +='''<th data-sortable="true" data-field="seller" data-filter-control="select">Πωλητής</th>'''
+        updated_table +='''<th data-sortable="true" data-field="seller_t" data-filter-control="select">Πωλητής</th>'''
     
     updated_table +='''
-                <th data-sortable="true" data-field="date">Ημερομηνία</th>
+                <th data-sortable="true" data-field="date_t">Ημερομηνία</th>
             </tr>
         </thead>
         <tbody>'''
@@ -670,9 +675,9 @@ def update_table(filtered_retail_prices, seller_flag):
             #print shop name, retail price and target price
         shop_info = reverse('shop_info', kwargs={'pk':retailprice.shop.id})
         updated_table += '''<td><a href="''' + shop_info + '''" class="link-dark">''' + retailprice.shop.name + '''</a></td>
-            <td>''' + str(retailprice.price) + '''
+            <td>''' + str(retailprice.price) + ''' €
             </td>
-            <td>''' + str(retailprice.curr_target_price) + '''
+            <td>''' + str(retailprice.curr_target_price) + '''  €
             </td>            
             <td>'''
             #print diff 
@@ -682,7 +687,7 @@ def update_table(filtered_retail_prices, seller_flag):
             updated_table += '<p class="text-success">'
         else:
             updated_table += '<p class="text-black">'
-        updated_table += str(round(retailprice.price - retailprice.curr_target_price, 2)) +  '''</p>
+        updated_table += str(round(retailprice.price - retailprice.curr_target_price, 2)) +  '''  €</p>
                             </td>
                             <td>'''
                             #print diff %
@@ -693,7 +698,7 @@ def update_table(filtered_retail_prices, seller_flag):
         else:
             updated_table += '<p class="text-black">'
             #print is official reseller & timestamp
-        updated_table += str(round(get_change(float(retailprice.price), float(retailprice.curr_target_price)), 1)) + '''</p>
+        updated_table += str(round(get_change(float(retailprice.price), float(retailprice.curr_target_price)), 2)) + ''' %</p>
                             </td>
                             <td>''' + is_shop_official_reseller + '''</td>'''
         if not seller_flag:
