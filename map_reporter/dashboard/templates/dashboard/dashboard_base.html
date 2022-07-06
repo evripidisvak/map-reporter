@@ -25,6 +25,7 @@
         <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
         <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+        <script src="https://unpkg.com/htmx.org@1.7.0" integrity="sha384-EzBXYPt0/T6gxNp0nuPtLkmRpmDBbjg6WmCUZRLXBBwYYmwAUxzlSGej0ARHX0Bo" crossorigin="anonymous"></script>
         <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
         {% block headEnd %}
         {% endblock %}
@@ -37,8 +38,10 @@
             <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
             <!-- Navbar Search-->
             <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+                {% csrf_token %}
                 <div class="input-group">
-                    <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." aria-describedby="btnNavbarSearch" />
+                    <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." name="top-search" id="top-search" 
+                    hx-post="{% url 'topbar_search' %}" hx-trigger="keyup changed delay:500ms" hx-target="#search-results"  />
                     <button class="btn btn-primary" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
                 </div>
             </form>
@@ -97,6 +100,7 @@
             </div>
             <div id="layoutSidenav_content">
                 <main>
+                    <div id="search-results">Manolis now available on Linux!</div>
                     <div class="container-fluid px-4 mt-4">
                     {% block main %}
                     
@@ -117,6 +121,27 @@
                 </footer>
             </div>
         </div>
+        <script>
+             /*
+            search_input = $("#top-search");
+            search_input.on("change keyup", function(evt){
+                console.log("Hallaw");
+                console.log($(this).val());
+                var data = "";
+                $.ajax({
+                    'url': {% url 'topbar_search' %},
+                    'data': data,
+                    'method': 'get',
+                    'complete': function(response){
+                        console.log(response);
+                    }
+                });
+            });
+            */
+        </script>
+
+
+
         {% comment %} TODO Check imports and fins best liks / download them localy {% endcomment %}
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
         {% comment %} <script src="{% static '\map_reporter\js\jspdf.min.js' %}"></script>  {% endcomment %}

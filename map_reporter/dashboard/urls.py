@@ -20,6 +20,7 @@ urlpatterns = [
     path('manufacturers/', views.ManufacturersPage.as_view(), name='manufacturer_page'),
     path('manufacturer/<int:pk>/', views.ManufacturerInfo.as_view(), name='manufacturer_info'),
     # path('update_date_range/', views.update_date, name='update_date'),
+    path('topbar_seach/', views.topbar_search, name='topbar_search'),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
