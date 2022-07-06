@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-=k1n2g+*x6xi-ja0k^u)xg3ce^)pyu6unxs9$+o2=v65g57t72
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.localhost', '127.0.0.1', '[::1]']
 
 
 # Application definition
@@ -136,7 +136,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Ours
 
-THUMBNAIL_DEBUG = False
+THUMBNAIL_DEBUG = True
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 MEDIA_URL = '/uploads/'

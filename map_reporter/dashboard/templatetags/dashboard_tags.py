@@ -28,10 +28,10 @@ def ch_sub(value, arg):
     if value == 0 or arg == 0:
         return "-"
     try:
-        return round(((float(value) - float(arg)) / float(value) * 100), 1)
+        return round(((float(value) - float(arg)) / float(value) * 100), 2)
     except (ValueError, TypeError, ZeroDivisionError):
         try:
-            return round(((value - arg) / value * 100),1)
+            return round(((value - arg) / value * 100),2)
         except Exception:
             return "-"
 
@@ -75,8 +75,6 @@ class LinebreaklessNode(Node):
     def render(self, context):
         strip_line_breaks = allow_lazy(lambda x: x.replace('\n', ''), six.text_type)
         return strip_line_breaks(self.nodelist.render(context).strip())
-
-# register.filter('sub', sub)
 
 
 @register.filter
