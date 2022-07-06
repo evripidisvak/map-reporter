@@ -28,8 +28,9 @@ class Category(MPTTModel):
         return self.name
 
     class Meta:
-        verbose_name = 'Category'
-        verbose_name_plural = 'Categories'
+        verbose_name = "Category"
+        verbose_name_plural = "Categories"
+
 
 class Manufacturer(models.Model):
     name = models.CharField(max_length=50)
@@ -52,10 +53,11 @@ class Product(models.Model):
     #     max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     # )
     main_category = models.ForeignKey(Category, models.SET_NULL, blank=True, null=True)
-    upload_path = 'product_images'
-    image = models.ImageField(upload_to='product_images', default='product_images/placeholder_img.png')
+    upload_path = "product_images"
+    image = models.ImageField(
+        upload_to="product_images", default="product_images/placeholder_img.png"
+    )
     image_url = models.URLField(null=True, blank=True)
-
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -80,35 +82,44 @@ class Product(models.Model):
         #     KeyAccPrice.objects.create(
         #         price=new_key_acc_price, timestamp=timezone.now(), product=self
         #     )
-        
+
         # Save the image from the image_url field
         if self.image_url:
-            upload_path = 'uploads/product_images'
-            filename = urlparse(self.image_url).path.split('/')[-1]
-            urllib.request.urlretrieve(self.image_url, os.path.join(upload_path, filename))
-            file_save_dir = 'product_images'
+            upload_path = "uploads/product_images"
+            filename = urlparse(self.image_url).path.split("/")[-1]
+            urllib.request.urlretrieve(
+                self.image_url, os.path.join(upload_path, filename)
+            )
+            file_save_dir = "product_images"
             self.image = os.path.join(file_save_dir, filename)
-            self.image_url = ''
-        
+            self.image_url = ""
+
         # Optimize uploaded image
         if self.image:
             output = BytesIO()
             img = Image.open(self.image)
             output = BytesIO()
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
+            if img.mode != "RGB":
+                img = img.convert("RGB")
             if img.width > 800 or img.height > 800:
                 img.resize((800, 800))
-            img.save(output, format='jpeg', quality=80)
+            img.save(output, format="jpeg", quality=80)
             output.seek(0)
-            self.image = InMemoryUploadedFile(output,'ImageField', "%s.jpg" %self.image.name.split('.')[0], 'image/jpeg', sys.getsizeof(output), None)
+            self.image = InMemoryUploadedFile(
+                output,
+                "ImageField",
+                "%s.jpg" % self.image.name.split(".")[0],
+                "image/jpeg",
+                sys.getsizeof(output),
+                None,
+            )
         super(Product, self).save()
 
     def is_active(self):
-        if  self.active:
-            return 'Ναι'
+        if self.active:
+            return "Ναι"
         else:
-            return 'Οχι'
+            return "Οχι"
 
     def name(self):
         return str(self.manufacturer.name + " " + self.model)
@@ -119,7 +130,9 @@ class Product(models.Model):
     @property
     def image_preview(self):
         if self.image:
-            return mark_safe('<img src="{}" width="200" height="200" />'.format(self.image.url))
+            return mark_safe(
+                '<img src="{}" width="200" height="200" />'.format(self.image.url)
+            )
         return ""
 
 
@@ -135,8 +148,13 @@ class Shop(models.Model):
     name = models.CharField(max_length=100)
     key_account = models.BooleanField(default=False)
     seller = models.ForeignKey(
-        User, on_delete=models.SET_NULL, default=None, blank=True, null=True, limit_choices_to={'groups__name__in': ["Sales_Dep", "Seller"]}
-        )
+        User,
+        on_delete=models.SET_NULL,
+        default=None,
+        blank=True,
+        null=True,
+        limit_choices_to={"groups__name__in": ["Sales_Dep", "Seller"]},
+    )
     source = models.ForeignKey(
         Source, on_delete=models.CASCADE, default=None, blank=False, null=False
     )
@@ -209,11 +227,13 @@ class RetailPrice(models.Model):
             if not price.product in productList:
                 productList.append(price.product)
         return productList
-    
+
     def get_valid_product_shops(product_id, user=None):
         if user:
-            retailprices = RetailPrice.objects.filter(product=product_id, shop__seller=user)
-        else:    
+            retailprices = RetailPrice.objects.filter(
+                product=product_id, shop__seller=user
+            )
+        else:
             retailprices = RetailPrice.objects.filter(product=product_id)
         shopList = []
 
