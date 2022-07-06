@@ -21,6 +21,7 @@ import datetime
 from django.core import serializers
 from django.contrib.auth.views import *
 from django.db.models import Q
+from django.views.decorators.csrf import csrf_exempt
 # from datetime import date, datetime, timedelta
 
 
@@ -808,19 +809,74 @@ def update_date(request, product_id):
         )
 
 
+
+
 #TODO search SKU, Product model, Category Name, Shop name, manufacturer name
 def topbar_search(request):
     if request.method == 'POST':
-        results = {}
         term = request.POST.get('top-search')
-        if term:
-            products = Product.objects.filter(Q(model__contains=term) | Q(sku__contains=term))
-            category = Category.objects.filter(Q(name__contains=term))
-            shops = Shop.objects.filter(Q(name__contains=term))
-            manufacturers = Manufacturer.objects.filter(Q(name__contains=term))
-            results['products'] = products
-            results['category'] = category
-            results['shops'] = shops
-            results['manufacturers'] = manufacturers
+        if len(term) >= 3 and not term == "":
+            results = '<div id="results">'
+            products = Product.objects.filter(Q(model__contains=term) | Q(sku__contains=term))[:6]
+            categories = Category.objects.filter(Q(name__contains=term))[:6]
+            shops = Shop.objects.filter(Q(name__contains=term))[:6]
+            manufacturers = Manufacturer.objects.filter(Q(name__contains=term))[:6]
+            if products:
+                results += '<p class="mt-1 text-bold">Προϊόντα</p>'
+                for product in products:
+                    product_url = reverse('product_info', kwargs={'pk':product.id})
+                    results += '<a style="display:block;" href="'+ product_url +'">' + product.model + '</a>'
+            if categories:
+                results += '<p class="mt-1 text-bold">Κατηγορίες</p>'
+                for category in categories:
+                    category_url = reverse('category_info', kwargs={'pk':category.id})
+                    results += '<a style="display:block;" href="'+ category_url +'">' + category.name + '</a>'
+            if shops:
+                results += '<p class="mt-1 text-bold">Καταστήματα</p>'
+                for shop in shops:
+                    shop_url = reverse('shop_info', kwargs={'pk':shop.id})
+                    results += '<a style="display:block;" href="'+ shop_url +'">' + shop.name + '</a>'
+            if manufacturers:
+                results += '<p class="mt-1 text-bold">Κατασκευαστές</p>'
+                for manufacturer in manufacturers:
+                    manufacturer_url = reverse('manufacturer_info', kwargs={'pk':manufacturer.id})
+                    results += '<a style="display:block;" href="'+ manufacturer_url +'">' + manufacturer.name + '</a>'
+            if results == '<div id="results">':
+                results = '<div id="results">Δεν βρέθηκαν αποτελέσματα</div>'
+            else:
+                results += '</div>'
+        else:
+            results = ""
         print(results)
     return HttpResponse(results)
+
+
+
+
+
+# product_info = reverse('product_info', kwargs={'pk':product.id})
+
+
+# @csrf_exempt
+class SearchResults(TemplateView):
+    
+    template_name = 'dashboard/search_results.html'
+    def get_context_data(self, **kwargs):              
+        term = self.request.GET.__getitem__('top-search')
+        context = super(SearchResults, self).get_context_data(**kwargs)
+        results = ''
+        
+        products = Product.objects.filter(Q(model__contains=term) | Q(sku__contains=term))[:6]
+        categories = Category.objects.filter(Q(name__contains=term))[:6]
+        shops = Shop.objects.filter(Q(name__contains=term))[:6]
+        manufacturers = Manufacturer.objects.filter(Q(name__contains=term))[:6]
+
+        context.update(
+            {
+                'results': results,
+                'query': term,
+                
+            }
+        )
+        return context
+
