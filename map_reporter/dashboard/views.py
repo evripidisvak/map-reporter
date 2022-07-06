@@ -20,6 +20,7 @@ import json
 import datetime
 from django.core import serializers
 from django.contrib.auth.views import *
+from django.db.models import Q
 # from datetime import date, datetime, timedelta
 
 
@@ -802,6 +803,19 @@ def update_date(request, product_id):
         )
 
 
-
-
-
+#TODO search SKU, Product model, Category Name, Shop name, manufacturer name
+def topbar_search(request):
+    if request.method == 'POST':
+        results = {}
+        term = request.POST.get('top-search')
+        if term:
+            products = Product.objects.filter(Q(model__contains=term) | Q(sku__contains=term))
+            category = Category.objects.filter(Q(name__contains=term))
+            shops = Shop.objects.filter(Q(name__contains=term))
+            manufacturers = Manufacturer.objects.filter(Q(name__contains=term))
+            results['products'] = products
+            results['category'] = category
+            results['shops'] = shops
+            results['manufacturers'] = manufacturers
+        print(results)
+    return HttpResponse(results)
