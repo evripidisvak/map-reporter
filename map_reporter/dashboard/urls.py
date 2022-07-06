@@ -19,6 +19,7 @@ urlpatterns = [
     path('category/<int:pk>/', views.CategoryInfo.as_view(), name='category_info'),
     path('manufacturers/', views.ManufacturersPage.as_view(), name='manufacturer_page'),
     path('manufacturer/<int:pk>/', views.ManufacturerInfo.as_view(), name='manufacturer_info'),
+    path('search_results/', views.SearchResults.as_view(), name='search_results'),
     # path('update_date_range/', views.update_date, name='update_date'),
     path('topbar_seach/', views.topbar_search, name='topbar_search'),
 ]
