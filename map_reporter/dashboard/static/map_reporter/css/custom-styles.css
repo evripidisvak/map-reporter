@@ -67,3 +67,39 @@
     filter: none;
     opacity: 0.5;
 }
+
+
+/*Topbar search and Search results page styles */
+
+#term{
+    background: bisque;
+    padding: 3px;
+    border-radius: 5px;
+}
+
+#results-response {
+    font-size: 18px;
+    background: white;
+    padding: 20px;
+  }
+
+  .result-header{
+    font-size:20px;
+    font-weight: 600;
+  }
+
+  #search-results {
+    position: absolute;
+    top: 50px;
+    color: black;   
+    width:100%;         
+}
+
+#mini_search_results{
+    background: white;
+    border: 1px solid black;
+    border-radius: 5px;
+    width:initial;
+    padding:10px 5px;
+}
+

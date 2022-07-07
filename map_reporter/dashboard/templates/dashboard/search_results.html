@@ -8,13 +8,19 @@
 
 
 {% block headEnd %}
+<style>
+ 
+
+</style>
 
 <!--scripts go here-->
 {% endblock headEnd %}
 
 {% block main %}
-<h3 class="mt-4">Αποτελέσματα Αναζήτησης</h3>
+<h3 class="mt-4 mb-4">Αποτελέσματα αναζήτησης για: <span id="term">'{{term}}'</span></h3>
 
-{{query}}
+<div id="results-response">
+        {{results|safe}}
+</div>
 
 {% endblock %}
