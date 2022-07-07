@@ -1,8 +1,9 @@
 from array import array
 from ast import And
 from itertools import product
+from this import d
 from django.http import Http404, HttpResponseRedirect, HttpResponse
-from django.shortcuts import render, get_object_or_404, get_list_or_404
+from django.shortcuts import render, get_object_or_404, get_list_or_404, redirect
 from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
@@ -21,6 +22,8 @@ import datetime
 from django.core import serializers
 from django.contrib.auth.views import *
 from django.db.models import Q
+from dashboard.templatetags import dashboard_tags
+from sorl.thumbnail import get_thumbnail
 # from datetime import date, datetime, timedelta
 
 
@@ -1020,75 +1023,100 @@ def update_date(request, product_id):
         )
 
 
+# <a href="{% url 'product_info' product.id %}">
+# {% thumbnail product.image table_image_size as im %}
+#     <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}" class="prod-img">
+# </a>
+# {% endthumbnail %}
+
+#TODO make search work with greek accents
+def meerkat_search(products, categories, shops, manufacturers, div_id, col_class):
+    if div_id == 'mini_search_results':
+        img_size = '50x50'
+    else:
+        img_size = '80x80'
+    results = '<div class="container-fluid" ><div id="'+ div_id +'" class="row">'
+    if products:
+        results += '<div class="'+ col_class +'"> <p class="text-bold result-header">Προϊόντα</p>'
+        for product in products:
+            im = get_thumbnail(product.image, img_size)
+            product_url = reverse('product_info', kwargs={'pk':product.id})
+            results += '<a class="link-dark mt-3" style="display:block;" href="'+ product_url +'"><div class="row align-items-center"><div class="col-3"><img src="'+im.url+'" alt="'+product.model+'" class="prod-img"></div><div class="col-9 align-middle">' + product.model + ' - ' + product.sku + '</div></div></a>'
+        results += '</div>'
+    if categories:
+        results += '<div class="'+ col_class +'"> <p class="text-bold result-header">Κατηγορίες</p>'
+        for category in categories:
+            category_url = reverse('category_info', kwargs={'pk':category.id})
+            results += '<a class="link-dark mt-3" style="display:block;" href="'+ category_url +'">' + category.name + '</a>'
+        results += '</div>'
+    if shops:
+        results += '<div class="'+ col_class +'"> <p class="text-bold result-header">Καταστήματα</p>'
+        for shop in shops:
+            shop_url = reverse('shop_info', kwargs={'pk':shop.id})
+            results += '<a class="link-dark mt-3" style="display:block;" href="'+ shop_url +'">' + shop.name + '</a>'
+        results += '</div>'
+    if manufacturers:
+        results += '<div class="'+ col_class +'"> <p class="text-bold result-header">Κατασκευαστές</p>'
+        for manufacturer in manufacturers:
+            manufacturer_url = reverse('manufacturer_info', kwargs={'pk':manufacturer.id})
+            results += '<a class="link-dark mt-3" style="display:block;" href="'+ manufacturer_url +'">' + manufacturer.name + '</a>'
+        results += '</div>'
+    if results == '<div id="'+ div_id +'">':
+        results = '<div id="results" class="mt-4 text-bold result-header">Δεν βρέθηκαν αποτελέσματα</div>'
+    else:
+        results += '</div></div>'
+    return results
 
 
 
-#TODO search SKU, Product model, Category Name, Shop name, manufacturer name
 def topbar_search(request):
     if request.method == 'POST':
         term = request.POST.get('top-search')
-        if len(term) >= 3 and not term == "":
-            results = '<div id="results">'
-            products = Product.objects.filter(Q(model__contains=term) | Q(sku__contains=term))[:6]
-            categories = Category.objects.filter(Q(name__contains=term))[:6]
-            shops = Shop.objects.filter(Q(name__contains=term))[:6]
-            manufacturers = Manufacturer.objects.filter(Q(name__contains=term))[:6]
-            if products:
-                results += '<p class="mt-1 text-bold">Προϊόντα</p>'
-                for product in products:
-                    product_url = reverse('product_info', kwargs={'pk':product.id})
-                    results += '<a style="display:block;" href="'+ product_url +'">' + product.model + '</a>'
-            if categories:
-                results += '<p class="mt-1 text-bold">Κατηγορίες</p>'
-                for category in categories:
-                    category_url = reverse('category_info', kwargs={'pk':category.id})
-                    results += '<a style="display:block;" href="'+ category_url +'">' + category.name + '</a>'
-            if shops:
-                results += '<p class="mt-1 text-bold">Καταστήματα</p>'
-                for shop in shops:
-                    shop_url = reverse('shop_info', kwargs={'pk':shop.id})
-                    results += '<a style="display:block;" href="'+ shop_url +'">' + shop.name + '</a>'
-            if manufacturers:
-                results += '<p class="mt-1 text-bold">Κατασκευαστές</p>'
-                for manufacturer in manufacturers:
-                    manufacturer_url = reverse('manufacturer_info', kwargs={'pk':manufacturer.id})
-                    results += '<a style="display:block;" href="'+ manufacturer_url +'">' + manufacturer.name + '</a>'
-            if results == '<div id="results">':
-                results = '<div id="results">Δεν βρέθηκαν αποτελέσματα</div>'
+        if request.headers.get('Triggeringevent') == 'nosubmit':
+            if len(term) >= 3 and not term == '':
+                products = Product.objects.filter(Q(model__icontains=term) | Q(sku__contains=term))[:6]
+                categories = Category.objects.filter(Q(name__icontains=term))[:6]
+                shops = Shop.objects.filter(Q(name__icontains=term))[:6]
+                manufacturers = Manufacturer.objects.filter(Q(name__icontains=term))[:6]
+                div_id = 'mini_search_results'
+                col_class = 'col-lg-12'
+                results = meerkat_search(products, categories, shops, manufacturers, div_id, col_class)
             else:
-                results += '</div>'
+                results = ""
         else:
-            results = ""
-        print(results)
-    return HttpResponse(results)
+            term = request.POST.get('top-search')
+            results = redirect(reverse('search_results', kwargs={'term':'s:'+term}))
+            return results
+        return HttpResponse(results)
 
 
-
-
-
-# product_info = reverse('product_info', kwargs={'pk':product.id})
-
-
-# @csrf_exempt
-class SearchResults(TemplateView):
-    
+class SearchResults(TemplateView):    
     template_name = 'dashboard/search_results.html'
-    def get_context_data(self, **kwargs):              
-        term = self.request.GET.__getitem__('top-search')
+    def get_context_data(self, **kwargs):
+        # term = self.request.GET.__getitem__('top-search')
+        term = kwargs['term'][2:]
         context = super(SearchResults, self).get_context_data(**kwargs)
-        results = ''
-        
-        products = Product.objects.filter(Q(model__contains=term) | Q(sku__contains=term))[:6]
-        categories = Category.objects.filter(Q(name__contains=term))[:6]
-        shops = Shop.objects.filter(Q(name__contains=term))[:6]
-        manufacturers = Manufacturer.objects.filter(Q(name__contains=term))[:6]
-
-        context.update(
-            {
-                'results': results,
-                'query': term,
-                
-            }
-        )
+        if term == '' or len(term) < 3:
+            results = ''
+            context.update(
+                {
+                    'results': 'Παρακαλώ εισάγετε τουλάχιστον 3 χαρακτήρες',
+                    'term': term,
+                }
+            )
+        else:
+            products = Product.objects.filter(Q(model__icontains=term) | Q(sku__icontains=term))
+            categories = Category.objects.filter(Q(name__icontains=term))
+            shops = Shop.objects.filter(Q(name__icontains=term))
+            manufacturers = Manufacturer.objects.filter(Q(name__icontains=term))
+            div_id = 'full_search_results'
+            col_class = 'col-lg-3'
+            results = meerkat_search(products, categories, shops, manufacturers, div_id, col_class)
+            context.update(
+                {
+                    'results': results,
+                    'term': term,
+                }
+            )
         return context
 
