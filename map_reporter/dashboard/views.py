@@ -34,11 +34,114 @@ def is_seller(user):
     return user.groups.filter(name="Seller").exists()
 
 
-class Index(View):
-    template = "dashboard/index.html"
+class Index(TemplateView):
+    template_name = "dashboard/index.html"
 
-    def get(self, request):
-        return render(request, self.template)
+    # def get(self, request):
+    #     return render(request, self.template)
+
+    def get_context_data(self, **kwargs):
+        context = super(Index, self).get_context_data(**kwargs)
+
+        user = self.request.user
+        seller_flag = is_seller(user)
+        table_image_size = "80x80"
+        # products = Product.objects.all()
+        products = get_list_or_404(Product, active=True)
+        latest_timestamp = RetailPrice.objects.latest("timestamp").timestamp
+        if not latest_timestamp:
+            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+        # products = Product.objects.annotate(shop_count=Count('shop', distinct=True))
+        retail_prices = []
+        products_below = 0
+        this_products_below = 0
+        products_equal = 0
+        this_products_equal = 0
+        products_above = 0
+        this_products_above = 0
+
+        for product in products:
+            try:
+                if seller_flag:
+                    product_latest_timestamp = (
+                        RetailPrice.objects.filter(
+                            product_id=product.id, shop__seller=user
+                        )
+                        .latest("timestamp")
+                        .timestamp
+                    )
+                    tmp = RetailPrice.objects.filter(
+                        timestamp=product_latest_timestamp,
+                        product=product,
+                        shop__seller=user,
+                    )
+                else:
+                    product_latest_timestamp = (
+                        RetailPrice.objects.filter(product_id=product.id)
+                        .latest("timestamp")
+                        .timestamp
+                    )
+                    tmp = RetailPrice.objects.filter(
+                        timestamp=product_latest_timestamp, product=product,
+                    )
+                this_products_below = 0
+                this_products_equal = 0
+                this_products_above = 0
+                for tmp_pr in tmp:
+                    retail_prices.append(tmp_pr)
+                    if tmp_pr.price < tmp_pr.curr_target_price:
+                        products_below += 1
+                        this_products_below += 1
+                    elif tmp_pr.price == tmp_pr.curr_target_price:
+                        products_equal += 1
+                        this_products_equal += 1
+                    elif tmp_pr.price > tmp_pr.curr_target_price:
+                        products_above += 1
+                        this_products_above += 1
+                product.shops_below = this_products_below
+                product.shops_equal = this_products_equal
+                product.shops_above = this_products_above
+                product.shop_count = (
+                    this_products_below + this_products_equal + this_products_above
+                )
+
+            except:
+                pass
+        
+        shops_below = 0
+        shops_ok = 0
+        
+        if seller_flag:
+            shops = Shop.objects.filter(seller=user)
+        else:
+            shops = Shop.objects.all()
+
+        for shop in shops:
+            this_shop_below = False
+            retailprices = RetailPrice.objects.filter(shop=shop).order_by('-timestamp')
+            for retailprice in retailprices:
+                if retailprice.product.active and retailprice.price < retailprice.curr_target_price:
+                    shops_below += 1
+                    this_shop_below = True
+            if not this_shop_below:
+                shops_ok += 1
+
+        context.update(
+            {
+                "products": products,
+                "retail_prices": retail_prices,
+                "products_below": products_below,
+                "products_equal": products_equal,
+                "products_above": products_above,
+                'shops_below': shops_below,
+                'shops_ok': shops_ok,
+                "table_image_size": table_image_size,
+                "latest_timestamp": latest_timestamp,
+                "seller_flag": seller_flag,
+                "user": user,
+            }
+        )
+        return context
 
 
 # class ProductInfo(TemplateView):
@@ -169,6 +272,7 @@ class ShopProductInfo(TemplateView):
                 "prices_above": prices_above,
                 "latest_timestamp": latest_timestamp,
                 "shop": shop,
+                "user": user,
             }
         )
         return context
@@ -254,6 +358,7 @@ class AllProducts(TemplateView):
                 "table_image_size": table_image_size,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
+                "user": user,
             }
         )
         return context
@@ -321,6 +426,7 @@ class ShopsPage(TemplateView):
                 "shops_above": shops_above,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
+                "user": user,
             }
         )
         return context
@@ -381,6 +487,7 @@ class ShopInfo(TemplateView):
                 "products_equal": products_equal,
                 "products_above": products_above,
                 "latest_timestamp": latest_timestamp,
+                "user": user,
             }
         )
         return context
@@ -391,6 +498,7 @@ class CategoriesPage(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(CategoriesPage, self).get_context_data(**kwargs)
+        user = self.request.user
         # categories = Category.objects.all()
         categories = get_list_or_404(Category)
         latest_timestamp = RetailPrice.objects.latest("timestamp").timestamp
@@ -433,6 +541,7 @@ class CategoriesPage(TemplateView):
             {
                 "categories": categories,
                 "latest_timestamp": latest_timestamp,
+                "user": user,
             }
         )
         return context
@@ -533,6 +642,7 @@ class CategoryInfo(TemplateView):
                 "table_image_size": table_image_size,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
+                "user": user,
             }
         )
 
@@ -598,6 +708,7 @@ class ManufacturersPage(TemplateView):
                 "manufacturers": manufacturers,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
+                "user": user,
             }
         )
         return context
@@ -695,6 +806,7 @@ class ManufacturerInfo(TemplateView):
                 "table_image_size": table_image_size,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
+                "user": user,
             }
         )
 
@@ -782,6 +894,7 @@ class ProductInfo(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "date_picker": date_picker,
                 "seller_flag": seller_flag,
+                "user": user,
             }
         )
         return context
@@ -1031,10 +1144,7 @@ def update_date(request, product_id):
 
 #TODO make search work with greek accents
 def meerkat_search(products, categories, shops, manufacturers, div_id, col_class):
-    if div_id == 'mini_search_results':
-        img_size = '50x50'
-    else:
-        img_size = '80x80'
+    img_size = '80x80'
     results = '<div class="container-fluid" ><div id="'+ div_id +'" class="row">'
     if products:
         results += '<div class="'+ col_class +'"> <p class="text-bold result-header">Προϊόντα</p>'
@@ -1093,7 +1203,7 @@ def topbar_search(request):
 class SearchResults(TemplateView):    
     template_name = 'dashboard/search_results.html'
     def get_context_data(self, **kwargs):
-        # term = self.request.GET.__getitem__('top-search')
+        user = self.request.user
         term = kwargs['term'][2:]
         context = super(SearchResults, self).get_context_data(**kwargs)
         if term == '' or len(term) < 3:
@@ -1116,6 +1226,7 @@ class SearchResults(TemplateView):
                 {
                     'results': results,
                     'term': term,
+                    "user": user,
                 }
             )
         return context
