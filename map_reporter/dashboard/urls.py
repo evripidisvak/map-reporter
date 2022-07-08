@@ -9,6 +9,7 @@ urlpatterns = [
     path('', views.Index.as_view(), name='index'),
     # path('login/', views.Login.as_view(), name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('logout/', views.logout_view, name='log_out'),
     path('all_products/', views.AllProducts.as_view(), name='all_products'),
     path('product_info/<int:pk>/', views.ProductInfo.as_view(), name='product_info'),
     # path('product_analysis/<int:pk>/', views.ProductAnalysis.as_view(), name='product_analysis'),

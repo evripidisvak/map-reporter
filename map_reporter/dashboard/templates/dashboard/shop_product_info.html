@@ -249,7 +249,7 @@
                                 <p class="text-success">Ναι</p>
                             {% endif %}
                         </td>
-                        <td>{{retailprice.timestamp}}</td>
+                        <td>{{retailprice.timestamp|date:"d/m/Y, H:m"}}</td>
                     </tr>
                     {% endfor %}
                     
@@ -266,7 +266,7 @@
     min_price = 0;
     {% for retailprice in retailprices %}
         prices.push(parseFloat({{retailprice.price}}));
-        timestamps.push({{retailprice.timestamps}});
+        timestamps.push({{retailprice.timestamps|date:"d/m/Y, H:m"}});
     {% endfor %}
     // Area Chart
     var ctx = document.getElementById("MinPriceChart");
@@ -275,7 +275,7 @@
     data: {
         labels: [
             {% for min_retailprice in min_retailprice_list %}
-                '{{min_retailprice.timestamp}}',
+                '{{min_retailprice.timestamp|date:"d/m/Y, H:m"}}',
             {% endfor %}
         ],
         datasets: [{
