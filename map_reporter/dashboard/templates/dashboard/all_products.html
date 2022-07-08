@@ -7,8 +7,7 @@
 {% endblock %}
 
 {% block headEnd %}
-
-
+<!--scripts and styles go here-->
 {% endblock %}
 {% block main %}
     <h1 class='mb-4'>Όλα τα προϊόντα</h1>
@@ -22,15 +21,16 @@
                 </div>
                 <div class="card-body align-items-center d-flex" d-flex style="height:500px;"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
                 <div class='card-footer small text-muted'>Τελευταία ενημέρωση {{ latest_timestamp }}</div>
+                <div class='card-footer small text-muted'>Στο παραπάνω γράφημα απεικονίζονται ο αριθμός των τιμών από όλα τα ενεργά προϊόντα, από όλα τα καταστήματα, την τελευταία φορά που τα βρήκαμε ανάλογα με το εάν είναι κάτω, ίσα ή πάνω από την τιμή στόχου.</div>
             </div>
         </div>
-        <div class='col-6'>
+        {% comment %} <div class='col-6'>
             <div class="card mb-4 h-100">
                 <div class="card-body align-items-center d-flex">
                     {% lorem 1 p random %}
                 </div>
             </div>
-        </div>
+        </div> {% endcomment %}
     </div>
 
     <div class="row pt-lg-5">
