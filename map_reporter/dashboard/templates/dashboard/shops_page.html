@@ -18,18 +18,19 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-pie me-1"></i>
-                    % Καταστημάτων που είναι οκ στην τιμή
+                    Αριθμός Καταστημάτων που είναι οκ στην τιμή
                 </div>
                 <div class="card-body align-items-center d-flex" style="height:500px;">
                     <canvas id="myPieChart" width="100%" height="50"></canvas>
                 </div>
+                <div class='card-footer small text-muted'>Στο παραπάνω γράφημα απεικονίζεται ο αριθμός των καταστημάτων που έχουν τουλάχιστον ένα ενεργό προϊόν κάτω από την τιμή στόχου και ο αριθμός αυτών που δεν έχουν καμία τιμή κάτω από τον στόχο.</div>
                 <div class='card-footer small text-muted'>Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
         <div class="col col-6">
-            <h5 class="mb-4">
+            {% comment %} <h5 class="mb-4">
                Lorem, ipsum dolor sit amet consectetur adipisicing elit. Dolor vitae adipisci unde explicabo eaque porro aspernatur, nisi sapiente est nesciunt iste cum! Iste iusto autem quo doloribus suscipit laudantium quam!
-            </h5>
+            </h5> {% endcomment %}
         </div> 
     </div>    
 </div>    
@@ -126,10 +127,10 @@
     var myPieChart = new Chart(ctx, {
     type: 'pie',
     data: {
-        labels: ["Κάτω", "Ακριβώς", "Πάνω"],
+        labels: ["Κάτω", "OK"],
         datasets: [{
-        data: [{{shops_below}}, {{shops_equal}}, {{shops_above}}],
-        backgroundColor: ['#dc3545', '#28a745', '#007bff'],
+        data: [{{shops_below}}, {{shops_ok}}],
+        backgroundColor: ['#dc3545', '#28a745'],
         }],
     },
     options: {

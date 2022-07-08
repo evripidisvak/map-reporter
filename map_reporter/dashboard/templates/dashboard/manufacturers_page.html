@@ -16,20 +16,21 @@
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-bar me-1"></i>
-                    Ποσοστό σωστών προϊόντων ανά κατηγορία
+                    Αριθμός σωστών ενεργών προϊόντων ανά κατασκεαστή
                 </div>
                 <div class="card-body align-items-center d-flex"><canvas id="manufacturersStackedBarChart" width="100%" height="400"></canvas></div>
+                <div class='card-footer small text-muted'>Στο παραπάνω γράφημα απεικονίζεται ο αριθμός των ενεργών προϊόντων ανά κατασκευαστή, ανάλογα με το εάν η τιμή των προϊόντων είναι πάνω ή κάτω από την τιμή στόχο.</div>
                 <div class='card-footer small text-muted'>Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
         <div class="col col-6">
-            <h5 class="mb-4">
+            {% comment %} <h5 class="mb-4">
                 <div class="card mb-4 h-100">
                     <div class="card-body align-items-center d-flex">
                         {% lorem 1 p random %}
                     </div>
                 </div>
-            </h5>
+            </h5> {% endcomment %}
         </div> 
     </div>    
 </div>    
