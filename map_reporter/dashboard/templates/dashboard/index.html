@@ -196,7 +196,7 @@ Dashboard
                                 {% if not seller_flag %}
                                 <td>{{ retail_price.shop.seller.last_name }}</td>
                                 {% endif %}
-                                <td>{{retail_price.timestamp}}</td>
+                                <td>{{retail_price.timestamp|date:"d/m/Y, H:m"}}</td>
                             </tr>
                         {% endif %}
                         {% endif %}

@@ -253,7 +253,7 @@
                                         {% if not seller_flag  %}
                                         <td>{{ retailprice.shop.seller.last_name }}</td>
                                         {% endif %}
-                                        <td>{{retailprice.timestamp}}</td>
+                                        <td>{{retailprice.timestamp|date:"d/m/Y, H:m"}}</td>
                                     </tr>
                             {% endfor %}
                             </tbody>

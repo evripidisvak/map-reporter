@@ -121,20 +121,19 @@
             <div class="row">
                 <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
                     <div class="row">
-
-                        <div class="col-lg-3">
+                        <div class="col-lg-5">
+                            <p>Επιλέξτε ημερομηνίες και καταστήματα από τη φόρμα για να εμφανίσετε την πορεία των τιμών του προϊόντος ανάμεσα στις επιλεγμένες ημερομηνίες για τα καταστήματα που επιθυμείτε στα παρακάτω γραφήματα.</p>
+                        
+                            <label class="mb-2">Επιλέξτε ημερομηνίες</label>
                             {{date_picker}}
                     {% comment %} <form name="date_range" id="date-picker-form" hx-post="/update_date/" trigger="submit" hx-target="#results"> {% endcomment %}
                         </div>
-                        <div class="col-lg-9">
-
+                        
                             <div class="dropdown mt-4">
                                 <button class="btn btn-primary dropdown-toggle" type="button" id="ShopSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                   Επιλέξτε Καταστήματα
                                 </button>
-
                                 <ul class="dropdown-menu overflow-auto p-0" style="max-height:300px;" aria-labelledby="ShopSelectDropdown">
-
                                     <div class="search sticky-top p-1 w-100 bg-white">
                                         <input type="text" class="form-control" placeholder="Αναζήτηση" id="shop_search">
                                     </div>
@@ -156,14 +155,10 @@
                                         </div>
                                     </li>
                                     {% endfor %}
-
                                 </ul>
-
                             </div>
-                        </div>
-
                     </div>
-                        <button class="btn btn-primary mt-2" type="submit" value="Submit">Υποβολή</button>
+                        <button class="btn btn-primary mt-4" type="submit" value="Submit"><i class="fa-solid fa-paper-plane"></i> Υποβολή</button>
                         <div style="display:none;" class="mt-2 text-danger" id="error_notice"></div> <!-- errors go here -->
                     </form>
             </div>
@@ -282,7 +277,7 @@
                         {% if not seller_flag %}
                             <td>{{ retailprice.shop.seller.last_name }}</td>
                         {% endif %}
-                        <td>{{retailprice.timestamp}}</td>
+                        <td>{{retailprice.timestamp|date:"d/m/Y, H:m"}}</td>
                     </tr>
                     {% endfor %}
                     
@@ -300,7 +295,7 @@
     data: {
         labels: [
             {% for min_retailprice in min_retailprice_list %}
-                '{{min_retailprice.timestamp}}',
+                '{{min_retailprice.timestamp|date:"d/m/Y, H:m"}}',
             {% endfor %}
         ],
         datasets: [{

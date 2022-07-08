@@ -8,7 +8,7 @@ from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.views import generic
 from django.urls import reverse
 from django.utils import timezone
@@ -24,6 +24,7 @@ from django.contrib.auth.views import *
 from django.db.models import Q
 from dashboard.templatetags import dashboard_tags
 from sorl.thumbnail import get_thumbnail
+from django.conf import settings
 
 
 
@@ -123,6 +124,8 @@ class Index(TemplateView):
             if not this_shop_below:
                 shops_ok += 1
 
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "products": products,
@@ -136,6 +139,7 @@ class Index(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
         return context
@@ -250,6 +254,9 @@ class ShopProductInfo(TemplateView):
             elif price.price > price.curr_target_price:
                 prices_above += 1
 
+
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "product": product,
@@ -266,6 +273,7 @@ class ShopProductInfo(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "shop": shop,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
         return context
@@ -340,7 +348,9 @@ class AllProducts(TemplateView):
 
             except:
                 pass
-
+        
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "products": products,
@@ -352,6 +362,7 @@ class AllProducts(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
         return context
@@ -413,7 +424,8 @@ class ShopsPage(TemplateView):
                 shops_ok += 1
 
 
-
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "shops": shops,
@@ -422,6 +434,7 @@ class ShopsPage(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
         return context
@@ -472,6 +485,9 @@ class ShopInfo(TemplateView):
             elif retail_price.price == retail_price.curr_target_price:
                 products_above += 1
 
+
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "shop": shop,
@@ -483,6 +499,7 @@ class ShopInfo(TemplateView):
                 "products_above": products_above,
                 "latest_timestamp": latest_timestamp,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
         return context
@@ -532,11 +549,14 @@ class CategoriesPage(TemplateView):
             category.product_count = product_count
             category.products_ok = product_count - products_below
 
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "categories": categories,
                 "latest_timestamp": latest_timestamp,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
         return context
@@ -629,6 +649,9 @@ class CategoryInfo(TemplateView):
             category.products_count = products_count
             category.products_ok = products_count - products_below
 
+
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "category": category,
@@ -638,6 +661,7 @@ class CategoryInfo(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
 
@@ -698,12 +722,15 @@ class ManufacturersPage(TemplateView):
             manufacturer.product_count = product_count
             manufacturer.products_ok = product_count - products_below
 
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "manufacturers": manufacturers,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
         return context
@@ -793,6 +820,8 @@ class ManufacturerInfo(TemplateView):
             manufacturer.products_count = products_count
             manufacturer.products_ok = products_count - products_below
 
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "manufacturer": manufacturer,
@@ -802,6 +831,7 @@ class ManufacturerInfo(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
 
@@ -876,6 +906,9 @@ class ProductInfo(TemplateView):
         except:
             pass
 
+        
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
         context.update(
             {
                 "product": product,
@@ -894,6 +927,7 @@ class ProductInfo(TemplateView):
                 "date_picker": date_picker,
                 "seller_flag": seller_flag,
                 "user": user,
+                "user_is_staff": user.is_staff,
             }
         )
         return context
@@ -1226,6 +1260,13 @@ class SearchResults(TemplateView):
                     'results': results,
                     'term': term,
                     "user": user,
+                    "user_is_staff": user.is_staff,
                 }
             )
         return context
+
+
+
+def logout_view(request):
+    logout(request)
+    return HttpResponseRedirect(settings.LOGIN_URL)

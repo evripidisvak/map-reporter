@@ -265,7 +265,7 @@
                                 {% endif %}
                             </td>
                             <td>
-                                {{retail_price.timestamp}}
+                                {{retail_price.timestamp|date:"d/m/Y, H:m"}}
                             </td>
                             <td>
                                 {{retail_price.product.main_category}}
