@@ -196,21 +196,117 @@
                 dom: 'Bfrtip',
                 lengthChange: false,
                 searching: true,
+                paging: true,
                 info: false,
                 buttons: [
                     {
+                        // Save as PDF button
+                        // TODO Checj margins, add datetime of export, fix title in pdf, check file name
                         extend: 'pdf',
-                        text: 'Save current page',
+                        text: 'PDF',
                         orientation: 'landscape',
                         pageSize: 'A4',
                         //filename: '*',
                         exportOptions: {
-                            modifier: {
-                                page: 'current',
-                            }
+                            format: {
+                                body: function ( inner, coldex, rowdex ) {
+                                  if (inner.length <= 0) return inner;
+                                  var el = $.parseHTML(inner);
+                                  var result='';
+                                  $.each( el, function (index, item) {
+                                      if (item.nodeName == '#text') {
+                                          result += item.textContent;
+                                        //result += item.textContent.trim();
+                                    }
+                                    else if (item.nodeName == 'STRONG'){
+                                        result += item.outerHTML;
+                                        //result += item.outerHTML.trim();
+                                    }
+                                    else if (item.nodeName == 'A'){
+                                        nodes = item.childNodes;
+                                        is_image = false;
+                                        for(elem of nodes.values()){
+                                            if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
+                                                image = elem.getAttribute('aria-src').trim();
+                                                result += image;
+                                                is_image = true;
+                                            }
+                                        }
+                                        if(! is_image){
+                                            result += item.outerHTML;
+                                        }
+                                    }
+                                    else {
+                                        result += item.outerHTML;
+                                        //result += item.innerText.trim();
+                                    }
+                                  });
+                                  return result;
+                                }
+                              },
+                              modifier: {
+                                //page: 'current',
+                            },
                         },
-                        customize: function(doc){ //for images we need to iterate the table and get the scr of each image (Yes. Really.)
-                            
+                        customize: function(doc){
+                            doc.content[1].table.dontBreakRows = true; 
+                            doc.styles.redcelleven = {
+                                color: '#dc3545',
+                                fillColor: '#fceaec',
+                            };
+                            doc.styles.redcellodd = {
+                                color: '#dc3545',
+                                fillColor: '#e2d2d4',
+                            };
+                            doc.styles.redroweven = {
+                                fillColor: '#fceaec',
+                            };
+                            doc.styles.redrowodd = {
+                                fillColor: '#e2d2d4',
+                            };
+                            var photo_index = 0;
+                            for(i = 0; i < doc.content[1].table.body[0].length; i++){
+                                if (doc.content[1].table.body[0][i].text == 'Φωτογραφία'){
+                                    photo_index = i;
+                                    break;
+                                }
+                            }
+                            for(j = 1; j < doc.content[1].table.body.length; j++){
+                                red_row = false;
+                                red_cell = false;
+                                doc.content[1].table.body[j][photo_index] = {
+                                    image: doc.content[1].table.body[j][photo_index].text,
+                                    width: 50,
+                                }
+                                for(z = 1; z < doc.content[1].table.body[j].length; z++){
+                                    if(z != photo_index){
+                                        if(typeof doc.content[1].table.body[j][z].text !== 'undefined' && doc.content[1].table.body[j][z].text != 'undefined'){
+                                            if(doc.content[1].table.body[j][z].text.includes('text-danger')){
+                                                red_row = true;
+                                                if(j % 2 == 0){
+                                                    doc.content[1].table.body[j][z].style = 'redcelleven';
+                                                } else {
+                                                    doc.content[1].table.body[j][z].style = 'redcellodd';
+                                                }
+                                            }
+                                            let reg = /<\/?.+?\/?>/g;
+                                            new_value = doc.content[1].table.body[j][z].text.replace(reg, '').trim();
+                                            doc.content[1].table.body[j][z].text = new_value;
+                                        }
+                                    }
+                                }
+                                if(red_row){
+                                    for(z = 1; z < doc.content[1].table.body[j].length; z++){
+                                        if(doc.content[1].table.body[j][z].style != 'redcellodd' && doc.content[1].table.body[j][z].style != 'redcelleven' ){
+                                            if(j % 2 == 0){
+                                                doc.content[1].table.body[j][z].style = 'redroweven';
+                                            }else {
+                                                doc.content[1].table.body[j][z].style = 'redrowodd';
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         },
                     },
                     //customise print button
@@ -274,7 +370,7 @@
                             });
                         },
                     },
-                    'copy', 'csv', 'excel', 'pdf', 'print'
+                    'copy', 'csv', 'excel'
                 ],
                 orderCellsTop: true,
                 fixedColumns:   true,
