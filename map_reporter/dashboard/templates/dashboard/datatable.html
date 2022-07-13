@@ -128,22 +128,20 @@
                                 <td>
                                     {{retail_price.curr_target_price}} €
                                 </td>
-                                <td>
-                                    {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
-                                        <p class='text-danger'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
+                                {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
+                                <td class='text-danger'> {{retail_price.price|sub:retail_price.curr_target_price}} €
                                     {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
-                                        <p class='text-success'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
+                                        <td class='text-success'>{{retail_price.price|sub:retail_price.curr_target_price}} €
                                     {% else %}
-                                        <p class='text-black'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
+                                        <td class='text-black'>{{retail_price.price|sub:retail_price.curr_target_price}} €
                                     {% endif %}
                                 </td>
-                                <td>
-                                    {% if retail_price.price|ch_sub:retail_price.curr_target_price < 0 %}
-                                        <p class='text-danger'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
+                                {% if retail_price.price|ch_sub:retail_price.curr_target_price < 0 %}
+                                <td class='text-danger'> {{retail_price.price|ch_sub:retail_price.curr_target_price}} %
                                     {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
-                                        <p class='text-success'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
+                                        <td class='text-success'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %
                                     {% else %}
-                                        <p class='text-black'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
+                                        <td class='text-black'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %
                                     {% endif %}
                                 </td>
                                 <td>
@@ -195,7 +193,6 @@
           
             var table = $('#all-products-prices-table').DataTable({
                 order: [[11, 'desc'],[2, 'asc'],[5, 'asc']],
-                //"orderCellsTop": true,
                 dom: 'Bfrtip',
                 lengthChange: false,
                 searching: true,
@@ -203,6 +200,7 @@
                 info: false,
                 buttons: [
                     {
+                        // Save as PDF button
                         // TODO Checj margins, add datetime of export, fix title in pdf, check file name
                         extend: 'pdf',
                         text: 'PDF',
@@ -311,7 +309,68 @@
                             }
                         },
                     },
-                    'copy', 'csv', 'excel', 'print'
+                    //customise print button
+                    {
+                        extend: 'print',
+                        text: 'Εκτύπωση',
+                        exportOptions: {
+                            stripHtml: false,
+                            //function to keep images and other html tags
+                            format: {
+                                body: function ( inner, coldex, rowdex ) {
+                                  if (inner.length <= 0) return inner;
+                                  var el = $.parseHTML(inner);
+                                  var result='';
+                                  $.each( el, function (index, item) {
+                                    if (item.nodeName == '#text') {
+                                        result += item.textContent;
+                                    }
+                                    else if (item.nodeName == 'STRONG'){
+                                        result += item.outerHTML;
+                                    } 
+                                    else if (item.nodeName == 'A'){                                       
+                                        result += item.outerHTML;
+                                    }
+                                    else {
+                                        result += item.innerText;
+                                    } 
+                                  });
+                                  return result;
+                                }
+                              },
+                            },
+                            //customise print output
+                            //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
+                            //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                        customize: function(window, print_btn_object, api){
+                            rows = api.rows({search:'applied'}).nodes();
+                            columns = api.columns({search:'applied'}).nodes();
+                            cells = api.cells('.text-danger', {search:'applied'});
+                            //console.log(cells.indexes());
+                            $(window.document.body).css('webkit-print-color-adjust', 'exact');
+                            $(window.document.body).css('print-color-adjust', 'exact');
+                            table = $(window.document.body).find('table');
+                            table_head = table.find('thead');
+                            table_head.css('background-color', '#F8F9FA');
+                            table_body = table.find('tbody');
+                            trs = table_body.find('tr');
+                            tds = table_body.find('td');
+                            table.find('th').css('white-space', 'nowrap');
+                            $.each(rows, function(index, item){
+                                if (item.classList.contains('bg-danger')){
+                                    $(trs[index]).css('background-color', '#FCEAEC');
+                                }
+                                $.each(item.cells, function(indx, td){
+                                    if (td.classList.contains('text-danger')){
+                                        $(trs[index].cells[indx]).css('color', '#ff0000');
+                                    } else if (td.classList.contains('text-success')){
+                                        $(trs[index].cells[indx]).css('color', '#198754');
+                                    }
+                                });
+                            });
+                        },
+                    },
+                    'copy', 'csv', 'excel'
                 ],
                 orderCellsTop: true,
                 fixedColumns:   true,
@@ -411,6 +470,10 @@
           $.fn.dataTable.ext.search.pop();
         });
         } );
+
+
+        
+     
 
     </script>
 
