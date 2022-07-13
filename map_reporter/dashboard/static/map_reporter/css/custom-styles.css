@@ -135,3 +135,7 @@ table.data-table thead td{
 }
 
 
+th, td {
+    white-space: nowrap !important;
+    text-align: center;
+  }
