@@ -11,6 +11,7 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('logout/', views.logout_view, name='log_out'),
     path('all_products/', views.AllProducts.as_view(), name='all_products'),
+    path('data_tables/', views.DataTables.as_view(), name='data_tables'),
     path('product_info/<int:pk>/', views.ProductInfo.as_view(), name='product_info'),
     # path('product_analysis/<int:pk>/', views.ProductAnalysis.as_view(), name='product_analysis'),
     path('shops/', views.ShopsPage.as_view(), name='shops_page'),
@@ -21,7 +22,6 @@ urlpatterns = [
     path('manufacturers/', views.ManufacturersPage.as_view(), name='manufacturer_page'),
     path('manufacturer/<int:pk>/', views.ManufacturerInfo.as_view(), name='manufacturer_info'),
     path('search_results/<str:term>', views.SearchResults.as_view(), name='search_results'),
-    # path('update_date_range/', views.update_date, name='update_date'),
     path('topbar_seach/', views.topbar_search, name='topbar_search'),
 ]
 

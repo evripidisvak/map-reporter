@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'mptt',
     'sorl.thumbnail',
     'bootstrap_daterangepicker',
+    'django_tables2',
 ]
 
 MIDDLEWARE = [
