@@ -1,0 +1,325 @@
+{% extends 'dashboard_base.html' %}
+{% load dashboard_tags %}
+{% load static %}
+{% load thumbnail %}
+{% block title %}
+Προϊόντα
+{% endblock %}
+
+{% block headEnd %}
+<!--scripts and styles go here-->
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.print.min.js"></script>
+{% comment %} <script src="https://cdn.datatables.net/fixedcolumns/4.1.0/js/dataTables.fixedColumns.min.js"></script> {% endcomment %}
+
+{% endblock %}
+{% block main %}
+    <h1 class='mb-4'>Όλα τα προϊόντα</h1>
+    {{daterange_timestamp|date:"Y-m-d, H:m:s"}}
+    {{daterange_timestamp}}
+
+    <div class="row">
+        <div class="col-6">
+            <div class='card mb-4 h-100'>
+                <div class='card-header'>
+                    <i class='fas fa-chart-pie me-1'></i>
+                    Κατάσταση τιμών καταστημάτων
+                </div>
+                <div class="card-body align-items-center d-flex" d-flex style="height:500px;"><canvas id="myPieChart" width="100%" height="50"></canvas></div>
+                <div class='card-footer small text-muted'>Τελευταία ενημέρωση {{ latest_timestamp }}</div>
+                <div class='card-footer small text-muted'>Στο παραπάνω γράφημα απεικονίζονται ο αριθμός των τιμών από όλα τα ενεργά προϊόντα, από όλα τα καταστήματα, την τελευταία φορά που τα βρήκαμε ανάλογα με το εάν είναι κάτω, ίσα ή πάνω από την τιμή στόχου.</div>
+            </div>
+        </div>
+        {% comment %} <div class='col-6'>
+            <div class="card mb-4 h-100">
+                <div class="card-body align-items-center d-flex">
+                    {% lorem 1 p random %}
+                </div>
+            </div>
+        </div> {% endcomment %}
+    </div>
+
+
+
+    <div class="row pt-lg-5">
+        <div class='card mb-4'>
+            <div class='card-header mb-4'>
+                <i class='fas fa-table me-1'></i>
+                Τελευταίες τιμές όλων των ενεργών προϊόντων
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                {% comment %} <div id="reportrange" class="btn btn-primary"> <span></span> <b class="caret"></b></div> {% endcomment %}
+                <table id='all-products-prices-table' class="data-table">
+                    <!--data-search-highlight use for highlight individual column search-->
+                    <thead>
+                        <tr class="bg-light">
+                            <th>Φωτογραφία</th>
+                            <th class="select-filter">Κατασκευαστής</th>
+                            <th class="text-filter">Μοντέλο</th>
+                            <th class="text-filter">SKU</th>
+                            <th class="text-filter">Κατάστημα</th>
+                            <th>Τιμή</th>
+                            <th>Target Price</th>
+                            <th>Diff</th>
+                            <th>Diff %</th>
+                            <th class="select-filter">Επ. Μεταπωλητής</th>
+                            <th class="select-filter">Πωλητής</th>
+                            <th>Date</th>
+                        </tr>
+                    
+                        <tr class="bg-light head-filters">
+                            <th class="no-filter">Φωτογραφία</th>
+                            <th class="select">Κατασκευαστής</th>
+                            <th class="text">Μοντέλο</th>
+                            <th class="text">SKU</th>
+                            <th class="text">Κατάστημα</th>
+                            <th class="no-filter">Τιμή</th>
+                            <th class="no-filter">Target Price</th>
+                            <th class="no-filter">Diff</th>
+                            <th class="no-filter">Diff %</th>
+                            <th class="select">Επ. Μεταπωλητής</th>
+                            <th class="select">Πωλητής</th>
+                            <th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for retail_price in retail_prices %}
+                        {% if retail_price.product.active %}
+                        {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
+                            <tr class="bg-danger" style="--bs-bg-opacity: .1;">
+                        {% else %}
+                            <tr>
+                        {% endif %}
+                                <td>
+                                    <a href="{% url 'product_info' retail_price.product.id %}">
+                                    {% thumbnail retail_price.product.image table_image_size as im %}
+                                        <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
+                                    {% endthumbnail %}
+                                    </a>
+                                    
+                                </td>
+                                <td>
+                                    <a href="{% url 'manufacturer_info' retail_price.product.manufacturer.id %}" class="link-dark">
+                                        {{retail_price.product.manufacturer}}
+                                    </a>
+                                </td>
+                                <td>
+                                    <a href="{% url 'product_info' retail_price.product.id %}" class="link-dark">
+                                        {{retail_price.product.model}}
+                                    </a>
+                                </td>
+                                <td>
+                                    {{retail_price.product.sku}}
+                                </td>
+                                <td>
+                                    <a href="{% url 'shop_info' retail_price.shop.id %}" class="link-dark">{{retail_price.shop}}</a>
+                                </td>
+                                <td>
+                                    {{retail_price.price}} €
+                                </td>
+                                <td>
+                                    {{retail_price.curr_target_price}} €
+                                </td>
+                                <td>
+                                    {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
+                                        <p class='text-danger'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
+                                    {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
+                                        <p class='text-success'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
+                                    {% else %}
+                                        <p class='text-black'>{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if retail_price.price|ch_sub:retail_price.curr_target_price < 0 %}
+                                        <p class='text-danger'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
+                                    {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
+                                        <p class='text-success'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
+                                    {% else %}
+                                        <p class='text-black'>{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ retail_price.is_shop_official_reseller }}
+                                </td>
+                                {% if not seller_flag %}
+                                <td>{{ retail_price.shop.seller.last_name }}</td>
+                                {% endif %}
+                                <td>{{retail_price.timestamp|date:"d/m/Y, H:m"}}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    </tbody>
+                </table>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <script>
+        // Pie Chart
+        var ctx = document.getElementById('myPieChart');
+        var myPieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: ['Κάτω', 'Ακριβώς', 'Πάνω'],
+            datasets: [{
+            data: [{{products_below}}, {{products_equal}}, {{products_above}}],
+            backgroundColor: ['#dc3545', '#28a745', '#007bff'],
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+        }
+        });
+
+        $(document).ready(function() {
+            // Setup - add a text input to each footer cell
+            $('#all-products-prices-table tr.head-filters th').each( function (i) {
+                var title = $('#all-products-prices-table thead th').eq( $(this).index() ).text();
+                
+                if ( $(this).hasClass('text') ){
+                    $(this).html( '<input type="text" placeholder="'+title+'" data-index="'+i+'" />' );
+                } else if ( $(this).hasClass('no-filter')){
+                    $(this).html('');
+                }
+            } );
+          
+            var table = $('#all-products-prices-table').DataTable({
+                order: [[11, 'desc'],[2, 'asc'],[5, 'asc']],
+                //"orderCellsTop": true,
+                dom: 'Bfrtip',
+                lengthChange: false,
+                searching: true,
+                paging: false,
+                info: false,
+                buttons: [
+                    {
+                        extend: 'pdf',
+                        text: 'Save current page',
+                        orientation: 'landscape',
+                        pageSize: 'A4',
+                        //filename: '*',
+                        exportOptions: {
+                            modifier: {
+                                page: 'current',
+                            }
+                        },
+                        customize: function(doc){ //for images we need to iterate the table and get the scr of each image (Yes. Really.)
+                            
+                        },
+                    },
+                    'copy', 'csv', 'excel', 'pdf', 'print'
+                ],
+                orderCellsTop: true,
+                fixedColumns:   true,
+                initComplete: function(){
+                    this.api()
+                    .columns('.select-filter')
+                    .every(function () {
+                            var column = this;
+                            var select = $('<select><option value=""></option></select>').appendTo($("#all-products-prices-table thead tr:eq(1) th").eq(column.index()).empty()).on('change', function () {
+                                    //var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                                    var val = $(this).val();
+                                    column.search(val ? val : '', false, true).draw();
+                                });
+                            column
+                                .data()
+                                .unique()
+                                .sort()
+                                .each(function (d, j) {
+                                    let reg = /<\/?.+?\/?>/g;
+                                    new_value = d.replace(reg, '').trim();
+                                    select.append('<option value="' + new_value + '">' + new_value + '</option>');
+                                });
+                        });
+                    },
+            });
+         
+          
+         
+            // Filter event handler
+            $( table.table().container() ).on( 'keyup', 'thead input', function () {
+                table
+                    .column( $(this).data('index') )
+                    .search( this.value )
+                    .draw();
+            } );
+
+            /*DATERANGEPICKER START*/
+        $(function() {
+            var start = moment("2022-01-01 12:34:16");
+            var the_end = '{{daterange_timestamp}}';
+            var end = moment(the_end);
+        
+            function cb() {
+              $('#reportrange span').html('Επιλέξτε ημερομηνία');
+            }
+        
+            $('#reportrange').daterangepicker({
+              startDate: moment().subtract(6, 'days'),
+              endDate: moment(),
+              alwaysShowCalendars: true,
+              ranges: {
+                'Σήμερα': [moment(), moment()],
+                'Χθές': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                '7 προηγούμενες ημέρες': [moment().subtract(6, 'days'), moment()],
+                '30 προηγούμενες ημέρες': [moment().subtract(29, 'days'), moment()],
+                'Τρέχων μήνας': [moment().startOf('month'), moment().endOf('month')],
+                'Προηγούμενος μήνας': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')]
+              },
+              locale:{
+                  format:"D/M/YYYY",
+              },
+            }, cb);
+        
+            cb();
+        
+          });
+         
+        
+          $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
+           var start = picker.startDate;
+           var end = picker.endDate;
+           
+            $('#reportrange span').html(start.format('D/M/YYYY') + ' - ' + end.format('D/M/YYYY'));
+            $.fn.dataTable.ext.search.push(
+                function(settings, data, dataIndex) {
+                var min = start;
+                var max = end;
+                var startDate = moment(data[11], 'D/M/YYYY');
+                
+                if (min == null && max == null) {
+                  return true;
+                }
+                if (min == null && startDate <= max) {
+                  return true;
+                }
+                if (max == null && startDate >= min) {
+                  return true;
+                }
+                if (startDate <= max && startDate >= min) {
+                  return true;
+                }
+                return false;
+              }
+            );
+
+          table.draw();
+          $.fn.dataTable.ext.search.pop();
+        });
+        } );
+
+    </script>
+
+    
+
+    {% endblock %}

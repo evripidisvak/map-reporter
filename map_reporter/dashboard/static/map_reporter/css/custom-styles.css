@@ -116,3 +116,22 @@
 label[for="id_date_range_with_predefined_ranges"]{
     display: none !important;
 }
+
+.dataTables_wrapper .dataTables_filter input{
+    margin-bottom: 20px !important;
+}
+
+
+.dt-buttons{
+    display: inline !important;
+}
+
+table.data-table thead td{
+    width:0;
+}
+
+.data-table input{
+    width: 100%;
+}
+
+

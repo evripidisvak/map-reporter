@@ -25,6 +25,9 @@ from django.db.models import Q
 from dashboard.templatetags import dashboard_tags
 from sorl.thumbnail import get_thumbnail
 from django.conf import settings
+from .tables import ProductTable
+
+
 
 
 
@@ -143,7 +146,6 @@ class Index(TemplateView):
             }
         )
         return context
-
 
 # class ProductInfo(TemplateView):
 #     # TODO error handling in case no retail prices exist
@@ -1270,3 +1272,96 @@ class SearchResults(TemplateView):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(settings.LOGIN_URL)
+
+
+
+class DataTables(TemplateView):
+    template_name = "dashboard/datatable.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(DataTables, self).get_context_data(**kwargs)
+        user = self.request.user
+        seller_flag = is_seller(user)
+        table_image_size = "80x80"
+        # products = Product.objects.all()
+        products = get_list_or_404(Product)
+        latest_timestamp = RetailPrice.objects.latest("timestamp").timestamp
+        if not latest_timestamp:
+            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+        # products = Product.objects.annotate(shop_count=Count('shop', distinct=True))
+        retail_prices = []
+        products_below = 0
+        this_products_below = 0
+        products_equal = 0
+        this_products_equal = 0
+        products_above = 0
+        this_products_above = 0
+
+        for product in products:
+            try:
+                if seller_flag:
+                    product_latest_timestamp = (
+                        RetailPrice.objects.filter(
+                            product_id=product.id, shop__seller=user
+                        )
+                        .latest("timestamp")
+                        .timestamp
+                    )
+                    tmp = RetailPrice.objects.filter(
+                        timestamp=product_latest_timestamp,
+                        product=product,
+                        shop__seller=user,
+                    )
+                else:
+                    product_latest_timestamp = (
+                        RetailPrice.objects.filter(product_id=product.id)
+                        .latest("timestamp")
+                        .timestamp
+                    )
+                    tmp = RetailPrice.objects.filter(
+                        timestamp=product_latest_timestamp, product=product
+                    )
+                this_products_below = 0
+                this_products_equal = 0
+                this_products_above = 0
+                for tmp_pr in tmp:
+                    retail_prices.append(tmp_pr)
+                    if tmp_pr.product.active and tmp_pr.price < tmp_pr.curr_target_price:
+                        products_below += 1
+                        this_products_below += 1
+                    elif tmp_pr.product.active and tmp_pr.price == tmp_pr.curr_target_price:
+                        products_equal += 1
+                        this_products_equal += 1
+                    elif tmp_pr.product.active and tmp_pr.price > tmp_pr.curr_target_price:
+                        products_above += 1
+                        this_products_above += 1
+                product.shops_below = this_products_below
+                product.shops_equal = this_products_equal
+                product.shops_above = this_products_above
+                product.shop_count = (
+                    this_products_below + this_products_equal + this_products_above
+                )
+
+            except:
+                pass
+        
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+        daterange_timestamp = datetime.datetime.strftime(local_dt, "%Y-%m-%d %H:%M:%S")
+        context.update(
+            {
+                "products": products,
+                "retail_prices": retail_prices,
+                "products_below": products_below,
+                "products_equal": products_equal,
+                "products_above": products_above,
+                "table_image_size": table_image_size,
+                "latest_timestamp": latest_timestamp,
+                'daterange_timestamp': daterange_timestamp,
+                "seller_flag": seller_flag,
+                "user": user,
+                "user_is_staff": user.is_staff,
+            }
+        )
+        return context
+
