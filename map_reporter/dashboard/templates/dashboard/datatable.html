@@ -53,7 +53,6 @@
                 Τελευταίες τιμές όλων των ενεργών προϊόντων
             </div>
             <div class="card-body">
-                <div class="table-responsive">
                 {% comment %} <div id="reportrange" class="btn btn-primary"> <span></span> <b class="caret"></b></div> {% endcomment %}
                 {% comment %} display class is shorthand for: stripe, hover, row-border, order-column {% endcomment %}
                 <table id='all-products-prices-table' class="data-table display">
@@ -169,7 +168,6 @@
                     </tbody>
                 </table>
         </div>
-        </div>
     </div>
     </div>
 
@@ -197,7 +195,7 @@
             $('#all-products-prices-table tr.head-filters th').each( function (i) {
                 var title = $('#all-products-prices-table thead th').eq( $(this).index() ).text();
                 if ( $(this).hasClass('text') ){
-                    $(this).html( '<input type="text" placeholder="'+title+'" data-index="'+i+'" />' );
+                    $(this).html( '<input type="text" class="form-control" placeholder="'+title+'" data-index="'+i+'" />' );
                 } else if ( $(this).hasClass('no-filter')){
                     $(this).html('');
                 }
@@ -228,6 +226,7 @@
                     lengthMenu: "Εμφάνιση _MENU_ γραμμών",
                   },
                 paging: true,
+                responsive: true,
                 buttons: [
                     {
                         // Save as PDF button
@@ -480,7 +479,7 @@
                     .columns('.select-filter')
                     .every(function () {
                             var column = this;
-                            var select = $('<select><option value=""></option></select>').appendTo($("#all-products-prices-table thead tr:eq(1) th").eq(column.index()).empty()).on('change', function () {
+                            var select = $('<select class="form-select"><option value=""></option></select>').appendTo($("#all-products-prices-table thead tr:eq(1) th").eq(column.index()).empty()).on('change', function () {
                                     var val = $(this).val();
                                     column.search(val ? val : '', false, true).draw();
                                 });
