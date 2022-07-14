@@ -600,7 +600,7 @@ class CategoryInfo(TemplateView):
         )
         if not latest_timestamp:
             raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
-        retailprices = []
+        retail_prices = []
 
         for product in products:
             shops_below = 0
@@ -631,7 +631,7 @@ class CategoryInfo(TemplateView):
                 products_below_increased = False
                 for retail_price in ltst_pr_rec:
                     if retail_price.product.active:
-                        retailprices.append(retail_price)
+                        retail_prices.append(retail_price)
                     if retail_price.price < retail_price.curr_target_price:
                         if not products_below_increased:
                             products_below += 1
@@ -658,7 +658,7 @@ class CategoryInfo(TemplateView):
             {
                 "category": category,
                 "products": products,
-                "retailprices": retailprices,
+                "retail_prices": retail_prices,
                 "table_image_size": table_image_size,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
