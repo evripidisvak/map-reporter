@@ -29,8 +29,6 @@ from .tables import ProductTable
 
 
 
-
-
 def is_seller(user):
     return user.groups.filter(name="Seller").exists()
 
