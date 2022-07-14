@@ -506,8 +506,8 @@ table.dataTable td {
   /* background: linear-gradient(to bottom, #585858 0%, #111 100%); */
   /* W3C */
 }
-#all-products-prices-table_paginate a {
-  border: 1px solid rgb(222, 226, 230);
+.paginate_button {
+  border: 1px solid rgb(222, 226, 230) !important;
 }
 .dataTables_wrapper .dataTables_paginate .paginate_button:active {
   outline: none;
