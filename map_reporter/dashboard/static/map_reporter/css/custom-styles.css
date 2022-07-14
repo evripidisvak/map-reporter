@@ -139,3 +139,13 @@ th, td {
     white-space: nowrap !important;
     text-align: center;
   }
+
+
+
+  table.dataTable thead th{
+    border-bottom: transparent !important;
+  }
+
+  tr.bg-light.head-filters th{
+    border-bottom: 1px solid #333 !important;
+  }
