@@ -9,8 +9,8 @@
 {% block headEnd %}
 <!--scripts and styles go here-->
 
-<link rel="stylesheet" href="{% static '/map_reporter/css/jquery.dataTables.css' %}">
 {% comment %} <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/jquery.dataTables.min.css"> {% endcomment %}
+<link rel="stylesheet" href="{% static '/map_reporter/css/jquery.dataTables.css' %}">
 <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
@@ -53,7 +53,6 @@
                 Τελευταίες τιμές όλων των ενεργών προϊόντων
             </div>
             <div class="card-body">
-                {% comment %} <div id="reportrange" class="btn btn-primary"> <span></span> <b class="caret"></b></div> {% endcomment %}
                 {% comment %} display class is shorthand for: stripe, hover, row-border, order-column {% endcomment %}
                 <table id='all-products-prices-table' class="data-table display">
                     <!--data-search-highlight use for highlight individual column search-->
@@ -224,6 +223,7 @@
                     },
                     info: "Σελίδα _PAGE_ από _PAGES_",
                     lengthMenu: "Εμφάνιση _MENU_ γραμμών",
+                    infoFiltered: " - φιλτραρισμένο από _MAX_ γραμμές",
                   },
                 paging: true,
                 responsive: true,
