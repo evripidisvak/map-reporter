@@ -828,7 +828,7 @@ class ManufacturerInfo(TemplateView):
             {
                 "manufacturer": manufacturer,
                 "products": products,
-                "retailprices": retailprices,
+                "retail_prices": retailprices,
                 "table_image_size": table_image_size,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,

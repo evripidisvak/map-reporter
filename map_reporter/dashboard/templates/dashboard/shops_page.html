@@ -43,45 +43,27 @@
                         Καταστήματα
                     </div>
                         <div class="card-body">
-                            <div class="dropdown">
-                                <button class="btn btn-primary dropdown-toggle" type="button" id="print-selector" data-bs-toggle="dropdown" aria-expanded="false">
-                                  Τύπος Εξαγωγής
-                                </button>
-                                <ul class="dropdown-menu" aria-labelledby="print-selector" id="shops-table_print-dropdown">
-                                  <li><a class="dropdown-item" area-value="" href="#">Εξαγωγή σελίδας</a></li>
-                                  <li><a class="dropdown-item" area-value="all" href="#">Εξαγωγή όλων</a></li>
-                                  <li><a class="dropdown-item" area-value="selected" href="#">Εξαγωγή επιλεγμένων</a></li>
-                                </ul>
-                              </div>
-                            <table id='shops-table' 
-                            data-toggle="table" 
-                            data-show-columns="true" 
-                            data-show-columns-toggle-all="true" 
-                            data-pagination="true" 
-                            data-show-toggle="true" 
-                            data-show-fullscreen="true" 
-                            data-buttons="buttons" 
-                            data-buttons-align="left" 
-                            data-buttons-class="primary" 
-                            data-pagination-v-align="both" 
-                            data-remember-order="true" 
-                            data-sort-reset="true" 
-                            data-filter-control="true" 
-                            data-show-search-clear-button="true" 
-                            data-show-multi-sort="true" 
-                            data-show-export="true" 
-                            data-show-print="true" 
-                            data-sticky-header="true">
+                            <table id='table_1' class="data-table display">
                                 <thead>
                                 <tr class="bg-light">
-                                    <th data-field="shop_name_t" data-filter-control="input" data-sortable="true">Όνομα καταστήματος</th>
+                                    <th class="text-filter">Όνομα καταστήματος</th>
                                     {% if not seller_flag %}
-                                    <th data-field="seller_t" data-filter-control="select" data-sortable="true">Πωλητής</th>
+                                    <th class="select-filter">Πωλητής</th>
                                     {% endif %}
-                                    <th data-field="prod_count_t" data-sortable="true"># Προϊόντων</th>
-                                    <th data-field="prods_below_t" data-sortable="true"># Προϊόντων κάτω</th>
-                                    <th data-field="prods_equal_t" data-sortable="true"># Προϊόντων ίσα</th>
-                                    <th data-field="prods_above_t" data-sortable="true"># Προϊόντων πάνω</th>
+                                    <th># Προϊόντων</th>
+                                    <th># Προϊόντων κάτω</th>
+                                    <th># Προϊόντων ίσα</th>
+                                    <th># Προϊόντων πάνω</th>
+                                </tr>
+                                <tr class="bg-light head-filters">
+                                    <th class="text">Όνομα καταστήματος</th>
+                                    {% if not seller_flag %}
+                                    <th class="select">Πωλητής</th>
+                                    {% endif %}
+                                    <th class="no-filter"># Προϊόντων</th>
+                                    <th class="no-filter"># Προϊόντων κάτω</th>
+                                    <th class="no-filter"># Προϊόντων ίσα</th>
+                                    <th class="no-filter"># Προϊόντων πάνω</th>
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -139,42 +121,326 @@
     }
     });
 
- //top table
- var $shops_table = $('#shops-table');
+    $(document).ready(function() {
+        //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
+        $('#table_1 tr.head-filters th').each( function (i) {
+            var title = $('#table_1 thead th').eq( $(this).index() ).text();
+            if ( $(this).hasClass('text') ){
+                $(this).html( '<input type="text" class="form-control" placeholder="'+title+'" data-index="'+i+'" />' );
+            } else if ( $(this).hasClass('no-filter')){
+                $(this).html('');
+            }
+        } );
 
- $(function() {
-     $('#shops-table_print-dropdown').find('.dropdown-item').on('click', function (e) {
-         e.preventDefault();
-         selector_btn = document.getElementById('print-selector');
-         selector_btn.innerText = e.target.innerText; 
-         data = {};
-         if (e.target.attributes['area-value'].value == 'selected'){
-             data = {
-                 field: 'state',
-                 checkbox: true,
-                 visible: $(this).attr('area-value') === 'selected'
-             };
-         }
-         $shops_table.bootstrapTable('destroy').bootstrapTable({
-             exportDataType: $(this).attr('area-value'),
-             exportTypes: ['csv', 'txt', 'excel', 'pdf'],
-             columns: [
-                 data,
-             ],
-             docDefinition:{
-                pageOrientation:'portrait',
-             },
-         })
-         }).trigger('change')
+        //make excluding img col from export dynamic. columns is also used to find the date column dynamically.
+      columns = document.getElementById('table_1').rows[0].cells.length;
+      export_cols = [];
+      exclude_cols = [0];
+      for(i=0; i < columns; i++){
+        if(! exclude_cols.includes(i)){
+            export_cols.push(i);
+        }
+      }
+      //initialise data table
+        table_1 = $('#table_1').DataTable({
+            //order: [[12, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],
+            dom: 'Bfplrtipl',
+            info:true,
+            searching: true,
+            language: {
+                search: "Αναζήτηση: ",
+                paginate:{
+                    previous: "&lt;",
+                    next: "&gt;",
+                },
+                info: "Σελίδα _PAGE_ από _PAGES_",
+                lengthMenu: "Εμφάνιση _MENU_ γραμμών",
+                infoFiltered: " - φιλτραρισμένο από _MAX_ γραμμές",
+              },
+            paging: true,
+            responsive: true,
+            buttons: [
+                {
+                    // Save as PDF button
+                    // TODO Check margins, add datetime of export, fix title in pdf, check file name
+                    extend: 'pdf',
+                    text: 'PDF',
+                    className: 'btn btn-secondary',
+                    orientation: 'portrait',
+                    pageSize: 'A4',
+                    //filename: '*',
+                    exportOptions: {
+                        format: {
+                            body: function ( inner, coldex, rowdex ) {
+                              if (inner.length <= 0) return inner;
+                              var el = $.parseHTML(inner);
+                              var result='';
+                              $.each( el, function (index, item) {
+                                  if (item.nodeName == '#text') {
+                                      result += item.textContent;
+                                    //result += item.textContent.trim();
+                                }
+                                else if (item.nodeName == 'STRONG'){
+                                    result += item.outerHTML;
+                                    //result += item.outerHTML.trim();
+                                }
+                                else if (item.nodeName == 'A'){
+                                    result += item.textContent;
+                                    /*nodes = item.childNodes;
+                                    is_image = false;
+                                    for(elem of nodes.values()){
+                                        if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
+                                            image = elem.getAttribute('aria-src').trim();
+                                            result += image;
+                                            is_image = true;
+                                        }
+                                    }
+                                    if(! is_image){
+                                        result += item.outerHTML;
+                                    }*/
+                                }
+                                else {
+                                    result += item.outerHTML;
+                                }
+                              });
+                              return result;
+                            }
+                          },
+                          modifier: {
+                        },
+                    },
+                    customize: function(doc){
+                        doc.content[1].table.dontBreakRows = true; 
+                        doc.pageMargins = [ 1,1,1,1 ];
+                        doc.content[1].table.dontBreakRows = true;
+                        doc.styles.title = {
+                            alignment: "center",
+                            fontSize: 12,
+                            noWrap: true,
+                        };
+                        doc.styles.redcelleven = {
+                            color: '#dc3545',
+                            fillColor: '#fceaec',
+                            alignment: "center",
+                            //noWrap: true,
+                        };
+                        doc.styles.redcellodd = {
+                            color: '#dc3545',
+                            fillColor: '#e2d2d4',
+                            alignment: "center",
+                            //noWrap: true,
+                        };
+                        doc.styles.redroweven = {
+                            fillColor: '#fceaec',
+                            alignment: "center",
+                            //noWrap: true,
+                        };
+                        doc.styles.redrowodd = {
+                            fillColor: '#e2d2d4',
+                            alignment: "center",
+                            //noWrap: true,
+                        };
+                        /*var photo_index = 0;
+                        for(i = 0; i < doc.content[1].table.body[0].length; i++){
+                            if (doc.content[1].table.body[0][i].text == 'Φωτογραφία'){
+                                photo_index = i;
+                                break;
+                            }
+                        }
+                        for(j = 1; j < doc.content[1].table.body.length; j++){
+                            red_row = false;
+                            red_cell = false;
+                            doc.content[1].table.body[j][photo_index] = {
+                                image: doc.content[1].table.body[j][photo_index].text,
+                                width: 50,
+                            }
+                            for(z = 1; z < doc.content[1].table.body[j].length; z++){
+                                if(z != photo_index){
+                                    if(typeof doc.content[1].table.body[j][z].text !== 'undefined' && doc.content[1].table.body[j][z].text != 'undefined'){
+                                        if(doc.content[1].table.body[j][z].text.includes('text-danger')){
+                                            red_row = true;
+                                            if(j % 2 == 0){
+                                                doc.content[1].table.body[j][z].style = 'redcelleven';
+                                            } else {
+                                                doc.content[1].table.body[j][z].style = 'redcellodd';
+                                            }
+                                        }
+                                        let reg = /<\/?.+?\/?>/g;
+                                        new_value = doc.content[1].table.body[j][z].text.replace(reg, '').trim();
+                                        doc.content[1].table.body[j][z].text = new_value;
+                                    }
+                                }
+                            }
+                            if(red_row){
+                                for(z = 1; z < doc.content[1].table.body[j].length; z++){
+                                    if(doc.content[1].table.body[j][z].style != 'redcellodd' && doc.content[1].table.body[j][z].style != 'redcelleven' ){
+                                        if(j % 2 == 0){
+                                            doc.content[1].table.body[j][z].style = 'redroweven';
+                                        }else {
+                                            doc.content[1].table.body[j][z].style = 'redrowodd';
+                                        }
+                                    }
+                                }
+                            }
+                        }*/
+                    },
+                },
+                {
+                    extend:'excel',
+                    className: 'btn btn-secondary',
+                    text:'Excel',
+                    exportOptions: {
+                        //columns: export_cols,
+                        stripHtml: true,
+                        //function to keep images and other html tags <- does not work, set stripHTML to true. 
+                       /*format: {
+                            body: function ( inner, coldex, rowdex ) {
+                              if (inner.length <= 0) return inner;
+                              var el = $.parseHTML(inner);
+                              var result='';
+                              $.each( el, function (index, item) {
+                                  if (item.nodeName == '#text') {
+                                    if (item.textContent !== 'undefined'){
+                                        result += item.textContent;
+                                    } else {
+                                        result += item.nextSibling.innerText;
+                                    }
+                                }
+                                else if (item.nodeName == 'A'){
+                                    nodes = item.childNodes;
+                                    is_image = false;
+                                    for(elem of nodes.values()){
+                                        if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
+                                            image = elem.getAttribute('aria-src').trim();
+                                            result += image;
+                                            is_image = true;
+                                        }
+                                    }
+                                    if(! is_image){
+                                        result += item.innerText.trim();
+                                    }
+                                }
+                                else {
+                                    result += item.innerText;
+                                } 
+                              });
+                              return result;
+                            }
+                          },*/
+                        },
+                }, 
+                {
+                    extend:'csv',
+                    className: 'btn btn-secondary',
+                    exportOptions:{
+                        //columns: export_cols, //columns we want to exclude (look at the start of the script)
+                    }
+                },
+                //customise print button
+                {
+                    extend: 'print',
+                    text: 'Εκτύπωση',
+                    className: 'btn btn-secondary',
+                    orientation: 'landscape',
+                    exportOptions: {
+                        stripHtml: false,
+                        //function to keep images and other html tags
+                        format: {
+                            body: function ( inner, coldex, rowdex ) {
+                              if (inner.length <= 0) return inner;
+                              var el = $.parseHTML(inner);
+                              var result='';
+                              $.each( el, function (index, item) {
+                                if (item.nodeName == '#text') {
+                                    if (item.textContent !== 'undefined'){
+                                        result += item.textContent;
+                                    } else {
+                                        result += item.nextSibling.innerText;
+                                    }
+                                }
+                                else if (item.nodeName == 'STRONG'){
+                                    result += item.outerHTML;
+                                } 
+                                else if (item.nodeName == 'A'){                                       
+                                    result += item.outerHTML;
+                                }
+                                else {
+                                    result += item.innerText;
+                                } 
+                              });
+                              return result;
+                            }
+                          },
+                        },
+                        //customise print output
+                        //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
+                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                    customize: function(window, print_btn_object, api){
+                        rows = api.rows({search:'applied'}).nodes();
+                        columns = api.columns({search:'applied'}).nodes();
+                        cells = api.cells('.danger-text', {search:'applied'});
+                        $(window.document.body).css('webkit-print-color-adjust', 'exact');
+                        $(window.document.body).css('print-color-adjust', 'exact');
+                        table = $(window.document.body).find('table');
+                        table_head = table.find('thead');
+                        table_head.css('background-color', '#F8F9FA');
+                        table_body = table.find('tbody');
+                        trs = table_body.find('tr');
+                        tds = table_body.find('td');
+                        table.find('th').css('white-space', 'nowrap');
+                        $.each(rows, function(index, item){
+                            if (item.classList.contains('bg-danger')){
+                                $(trs[index]).css('background-color', '#FCEAEC');
+                            }
+                            $.each(item.cells, function(indx, td){
+                                if (td.classList.contains('danger-text')){
+                                    $(trs[index].cells[indx]).css('color', '#ff0000');
+                                } else if (td.classList.contains('success-text')){
+                                    $(trs[index].cells[indx]).css('color', '#198754');
+                                }
+                            });
+                        });
+                    },
+                },
+                {
+                    extend:'copy',
+                    className: 'btn btn-secondary',
+                    text: 'Αντιγραφή',
+                },
+            ],
+            orderCellsTop: true,
+            fixedColumns:   true,
+            //add select filters where we have select-filter class on the first th row of the thead.
+            initComplete: function(){
+                this.api()
+                .columns('.select-filter')
+                .every(function () {
+                        var column = this;
+                        var select = $('<select class="form-select"><option value=""></option></select>').appendTo($("#table_1 thead tr:eq(1) th").eq(column.index()).empty()).on('change', function () {
+                                var val = $(this).val();
+                                column.search(val ? val : '', false, true).draw();
+                            });
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                let reg = /<\/?.+?\/?>/g;
+                                new_value = d.replace(reg, '').trim();
+                                select.append('<option value="' + new_value + '">' + new_value + '</option>');
+                            });
+                    });
+                },
         });
+     
+      
+     
+        // Filter event handler
+        //if table is undefined, refresh the page.
+        $( table_1.table().container() ).on( 'keyup', 'thead input', function () {
+            table_1.column( $(this).data('index') ).search( this.value ).draw();
+        } );
 
-        $(window).on('load', ()=>{
-            export_btn_group = $('.export.btn-group');
-            exoport_dropdown = export_btn_group.find("[aria-label='Export']");
-            exoport_dropdown.parent().css("cursor", "not-allowed");
-            exoport_dropdown.each( (index, elements) => {
-                $(elements).attr("disabled", "true");
-            });
-        });
+    } );
 </script>
 {% endblock %}
