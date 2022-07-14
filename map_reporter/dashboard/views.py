@@ -951,23 +951,35 @@ def get_change(current, previous):
 
 
 def update_table(filtered_retail_prices, seller_flag):
-    updated_table = """<table id="product_prices_table" hx-swap-oob="true:#product_prices_table" data-toggle="table" data-show-columns="true" data-show-columns-toggle-all="true" data-pagination="true" data-show-toggle="true" data-show-fullscreen="true" data-buttons="buttons" data-buttons-align="left" data-buttons-class="primary" data-pagination-v-align="both" data-remember-order="true" data-sort-reset="true" data-filter-control="true" data-show-search-clear-button="true" data-show-export="true" data-show-print="true" data-sticky-header="true" data-show-multi-sort="true" >
-        <thead>
-            <tr>
-                <th data-sortable="true" data-field="shop_t" data-filter-control="input">Κατάστημα</th>
-                <th data-sortable="true" data-field="retail_price_t">Λ. Τιμή</th>
-                <th data-sortable="true" data-field="target_price_t">Target Price</th>
-                <th data-sortable="true" data-field="diff_t">Diff</th>
-                <th data-sortable="true" data-field="per_diff_t">Diff %</th>
-                <th data-sortable="true" data-field="official_reseller_t" data-filter-control="select">Επ. Μεταπωλητής</th>"""
+    updated_table = """<table id='table_1' class="data-table display">
+                <thead>
+                    <tr class="bg-light">
+                        <th class="text-filter">Κατάστημα</th>
+                        <th>Τιμή</th>
+                        <th>Τιμή MAP</th>
+                        <th>Διαφ.</th>
+                        <th>Διαφ. %</th>
+                        <th class="select-filter">Επ. Μεταπωλ.</th>"""
     if not seller_flag:
-        updated_table += """<th data-sortable="true" data-field="seller_t" data-filter-control="select">Πωλητής</th>"""
+        updated_table += """<th class="select-filter">Πωλητής</th>"""
 
     updated_table += """
-                <th data-sortable="true" data-field="date_t">Ημερομηνία</th>
-            </tr>
-        </thead>
-        <tbody>"""
+                <th>Ημερομηνία</th>
+                    </tr>
+                    <tr class="bg-light head-filters">
+                        <th class="text">Κατάστημα</th>
+                        <th class="no-filter">Τιμή</th>
+                        <th class="no-filter">Τιμή MAP</th>
+                        <th class="no-filter">Διαφ.</th>
+                        <th class="no-filter">Διαφ. %</th>
+                        <th class="select">Επ. Μεταπωλ.</th>"""
+
+    if not seller_flag:
+        updated_table += """<th class="select">Πωλητής</th>"""
+
+    updated_table += """<th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th>
+                    </tr>
+                </thead>"""
 
     for retailprice in filtered_retail_prices:
         is_shop_official_reseller = retailprice.is_shop_official_reseller()

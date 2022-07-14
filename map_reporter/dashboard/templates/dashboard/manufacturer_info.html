@@ -136,7 +136,9 @@
                                 <th>Διαφ.</th>
                                 <th>Διαφ. %</th>
                                 <th class="select-filter">Επ. Μεταπωλ.</th>
-                                <th class="select-filter">Πωλητής</th>
+                                {% if not seller_flag %}
+                                    <th class="select-filter">Πωλητής</th>
+                                {% endif %}
                                 <th>Ημερομηνία</th>
                             </tr>
                         
@@ -151,7 +153,9 @@
                                 <th class="no-filter">Διαφ.</th>
                                 <th class="no-filter">Διαφ. %</th>
                                 <th class="select">Επ. Μεταπωλ.</th>
-                                <th class="select">Πωλητής</th>
+                                {% if not seller_flag %}
+                                    <th class="select">Πωλητής</th>
+                                {% endif %}
                                 <th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th>
                             </tr>
                         </thead>
@@ -593,9 +597,14 @@ $(document).ready(function() {
         export_cols.push(i);
     }
   }
+  {% if not seller_flag %}
+    date_column_sort = 10;
+{% else%}
+    date_column_sort = 11;
+{% endif %}
   //initialise data table
     table_2 = $('#table_2').DataTable({
-        order: [[11, 'desc'],[2, 'asc'],[1, 'asc'],[5, 'asc']],
+        order: [[date_column_sort, 'desc'],[2, 'asc'],[1, 'asc'],[5, 'asc']],
         dom: 'Bfplrtipl',
         info:true,
         searching: true,
