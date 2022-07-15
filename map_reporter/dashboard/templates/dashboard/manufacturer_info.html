@@ -43,7 +43,7 @@
                     <i class="fas fa-table me-1 MB-4"></i>
                     Όλα τα προϊόντα <b>{{ manufacturer.name }}</b>
                 </div>
-                <div class="card-body">
+                <div class="card-body overflow-auto">
                     <table id='table_1' class="data-table display">
                         <thead>
                             <tr class="bg-light">
@@ -121,7 +121,7 @@
                 <div class="card-header mb-4">
                 <i class="fas fa-table"></i> Όλα τα <b>ενεργά</b> προϊόντα <b>{{ manufacturer.name }}</b>
                 </div>
-                <div class="card-body">
+                <div class="card-body overflow-auto">
                     <table id='table_2' class="data-table display">
                         <!--data-search-highlight use for highlight individual column search-->
                         <thead>
@@ -598,9 +598,9 @@ $(document).ready(function() {
     }
   }
   {% if not seller_flag %}
-    date_column_sort = 10;
-{% else%}
     date_column_sort = 11;
+{% else%}
+    date_column_sort = 10;
 {% endif %}
   //initialise data table
     table_2 = $('#table_2').DataTable({
