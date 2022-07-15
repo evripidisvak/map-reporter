@@ -4,7 +4,7 @@
 Κατασκευαστές
 {% endblock %}
 {% block headEnd %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js" integrity="sha512-sW/w8s4RWTdFFSduOTGtk4isV1+190E/GghVffMA9XczdJ2MDzSzLEubKAs5h0wzgSJOQTRYyaz73L3d6RtJSg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
 {% endblock %}
 
 {% block main %}
@@ -24,13 +24,6 @@
             </div>
         </div>
         <div class="col col-6">
-            {% comment %} <h5 class="mb-4">
-                <div class="card mb-4 h-100">
-                    <div class="card-body align-items-center d-flex">
-                        {% lorem 1 p random %}
-                    </div>
-                </div>
-            </h5> {% endcomment %}
         </div> 
     </div>    
 </div>    
@@ -160,15 +153,6 @@
             }
         } );
 
-        //make excluding img col from export dynamic. columns is also used to find the date column dynamically.
-      /*columns = document.getElementById('table_1').rows[0].cells.length;
-      export_cols = [];
-      exclude_cols = [];
-      for(i=0; i < columns; i++){
-        if(! exclude_cols.includes(i)){
-            export_cols.push(i);
-        }
-      }*/
       //initialise data table
         table_1 = $('#table_1').DataTable({
             order: [[0, 'asc']],
@@ -196,7 +180,6 @@
                     className: 'btn btn-secondary',
                     orientation: 'portait',
                     pageSize: 'A4',
-                    //filename: '*',
                     customize: function(doc){
                         doc.content[1].table.dontBreakRows = true; 
                         doc.styles.title = {
@@ -211,7 +194,6 @@
                     className: 'btn btn-secondary',
                     text:'Excel',
                     exportOptions: {
-                        //columns: export_cols,
                         stripHtml: true,
                         },
                 }, 
@@ -219,7 +201,6 @@
                     extend:'csv',
                     className: 'btn btn-secondary',
                     exportOptions:{
-                        //columns: export_cols, //columns we want to exclude (look at the start of the script)
                     }
                 },
                 //customise print button

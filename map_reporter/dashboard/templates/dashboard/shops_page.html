@@ -28,9 +28,6 @@
             </div>
         </div>
         <div class="col col-6">
-            {% comment %} <h5 class="mb-4">
-               Lorem, ipsum dolor sit amet consectetur adipisicing elit. Dolor vitae adipisci unde explicabo eaque porro aspernatur, nisi sapiente est nesciunt iste cum! Iste iusto autem quo doloribus suscipit laudantium quam!
-            </h5> {% endcomment %}
         </div> 
     </div>    
 </div>    
@@ -143,7 +140,6 @@
       }
       //initialise data table
         table_1 = $('#table_1').DataTable({
-            //order: [[12, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],
             dom: 'Bfplrtipl',
             info:true,
             searching: true,
@@ -168,7 +164,6 @@
                     className: 'btn btn-secondary',
                     orientation: 'portrait',
                     pageSize: 'A4',
-                    //filename: '*',
                     exportOptions: {
                         format: {
                             body: function ( inner, coldex, rowdex ) {
@@ -178,26 +173,12 @@
                               $.each( el, function (index, item) {
                                   if (item.nodeName == '#text') {
                                       result += item.textContent;
-                                    //result += item.textContent.trim();
                                 }
                                 else if (item.nodeName == 'STRONG'){
                                     result += item.outerHTML;
-                                    //result += item.outerHTML.trim();
                                 }
                                 else if (item.nodeName == 'A'){
                                     result += item.textContent;
-                                    /*nodes = item.childNodes;
-                                    is_image = false;
-                                    for(elem of nodes.values()){
-                                        if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
-                                            image = elem.getAttribute('aria-src').trim();
-                                            result += image;
-                                            is_image = true;
-                                        }
-                                    }
-                                    if(! is_image){
-                                        result += item.outerHTML;
-                                    }*/
                                 }
                                 else {
                                     result += item.outerHTML;
@@ -222,67 +203,20 @@
                             color: '#dc3545',
                             fillColor: '#fceaec',
                             alignment: "center",
-                            //noWrap: true,
                         };
                         doc.styles.redcellodd = {
                             color: '#dc3545',
                             fillColor: '#e2d2d4',
                             alignment: "center",
-                            //noWrap: true,
                         };
                         doc.styles.redroweven = {
                             fillColor: '#fceaec',
                             alignment: "center",
-                            //noWrap: true,
                         };
                         doc.styles.redrowodd = {
                             fillColor: '#e2d2d4',
                             alignment: "center",
-                            //noWrap: true,
                         };
-                        /*var photo_index = 0;
-                        for(i = 0; i < doc.content[1].table.body[0].length; i++){
-                            if (doc.content[1].table.body[0][i].text == 'Φωτογραφία'){
-                                photo_index = i;
-                                break;
-                            }
-                        }
-                        for(j = 1; j < doc.content[1].table.body.length; j++){
-                            red_row = false;
-                            red_cell = false;
-                            doc.content[1].table.body[j][photo_index] = {
-                                image: doc.content[1].table.body[j][photo_index].text,
-                                width: 50,
-                            }
-                            for(z = 1; z < doc.content[1].table.body[j].length; z++){
-                                if(z != photo_index){
-                                    if(typeof doc.content[1].table.body[j][z].text !== 'undefined' && doc.content[1].table.body[j][z].text != 'undefined'){
-                                        if(doc.content[1].table.body[j][z].text.includes('text-danger')){
-                                            red_row = true;
-                                            if(j % 2 == 0){
-                                                doc.content[1].table.body[j][z].style = 'redcelleven';
-                                            } else {
-                                                doc.content[1].table.body[j][z].style = 'redcellodd';
-                                            }
-                                        }
-                                        let reg = /<\/?.+?\/?>/g;
-                                        new_value = doc.content[1].table.body[j][z].text.replace(reg, '').trim();
-                                        doc.content[1].table.body[j][z].text = new_value;
-                                    }
-                                }
-                            }
-                            if(red_row){
-                                for(z = 1; z < doc.content[1].table.body[j].length; z++){
-                                    if(doc.content[1].table.body[j][z].style != 'redcellodd' && doc.content[1].table.body[j][z].style != 'redcelleven' ){
-                                        if(j % 2 == 0){
-                                            doc.content[1].table.body[j][z].style = 'redroweven';
-                                        }else {
-                                            doc.content[1].table.body[j][z].style = 'redrowodd';
-                                        }
-                                    }
-                                }
-                            }
-                        }*/
                     },
                 },
                 {
@@ -290,50 +224,13 @@
                     className: 'btn btn-secondary',
                     text:'Excel',
                     exportOptions: {
-                        //columns: export_cols,
                         stripHtml: true,
-                        //function to keep images and other html tags <- does not work, set stripHTML to true. 
-                       /*format: {
-                            body: function ( inner, coldex, rowdex ) {
-                              if (inner.length <= 0) return inner;
-                              var el = $.parseHTML(inner);
-                              var result='';
-                              $.each( el, function (index, item) {
-                                  if (item.nodeName == '#text') {
-                                    if (item.textContent !== 'undefined'){
-                                        result += item.textContent;
-                                    } else {
-                                        result += item.nextSibling.innerText;
-                                    }
-                                }
-                                else if (item.nodeName == 'A'){
-                                    nodes = item.childNodes;
-                                    is_image = false;
-                                    for(elem of nodes.values()){
-                                        if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
-                                            image = elem.getAttribute('aria-src').trim();
-                                            result += image;
-                                            is_image = true;
-                                        }
-                                    }
-                                    if(! is_image){
-                                        result += item.innerText.trim();
-                                    }
-                                }
-                                else {
-                                    result += item.innerText;
-                                } 
-                              });
-                              return result;
-                            }
-                          },*/
                         },
                 }, 
                 {
                     extend:'csv',
                     className: 'btn btn-secondary',
                     exportOptions:{
-                        //columns: export_cols, //columns we want to exclude (look at the start of the script)
                     }
                 },
                 //customise print button
