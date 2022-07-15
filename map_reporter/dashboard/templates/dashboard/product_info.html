@@ -7,22 +7,11 @@
 {% endblock %}
 
 {% block headEnd %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 {% endblock headEnd %}
 
 {% block main %}
-{% comment %} <input type="text" id="demo" class="form-control"> {% endcomment %}
 <h3 class="mt-4">Ανάλυση για το {{ product.name }}</h3>
-
-
-{% comment %} <form id="date-picker-form" action="/update_dates/" method="post">
-    {% csrf_token %}
-    {{date_picker}}
-    <button class="btn btn-primary" type="submit" value="Submit">Υποβολή</button>
-    <div id="results"></div> <!-- errors go here -->
-</form> {% endcomment %}
-
     <div class="row pt-lg-3">
         <div class="col-xl-4">
             <div class="card mb-4 h-100">
@@ -385,7 +374,6 @@
         $('body').on('click', function(e){
         dropdown_elem = $('#ShopSelectDropdown');
         target_element = $(e.target);
-        console.log(target_element);
         if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check') || target_element.hasClass('dropdown-menu show') || target_element.hasClass('dropdown-shop') ){
             e.stopPropagation();
         }
@@ -426,8 +414,6 @@
             // Update the charts
             const my_response_text = evt.detail.xhr.response;
             my_response = JSON.parse(my_response_text);
-            console.log(my_response.table)
-
             new_pie_data = [my_response.shops_below, my_response.shops_equal, my_response.shops_above];
             myPieChart.data.datasets[0].data = new_pie_data;
             myPieChart.update();
@@ -627,7 +613,6 @@ table_1.draw();
                 className: 'btn btn-secondary',
                 orientation: 'landscape',
                 pageSize: 'A4',
-                //filename: '*',
                 exportOptions: {
                     format: {
                         body: function ( inner, coldex, rowdex ) {
@@ -637,11 +622,9 @@ table_1.draw();
                           $.each( el, function (index, item) {
                               if (item.nodeName == '#text') {
                                   result += item.textContent;
-                                //result += item.textContent.trim();
                             }
                             else if (item.nodeName == 'STRONG'){
                                 result += item.outerHTML;
-                                //result += item.outerHTML.trim();
                             }
                             else if (item.nodeName == 'A'){
                                 result += item.innerHTML;
@@ -666,20 +649,16 @@ table_1.draw();
                     doc.styles.redcelleven = {
                         color: '#dc3545',
                         fillColor: '#fceaec',
-                        //noWrap: true,
                     };
                     doc.styles.redcellodd = {
                         color: '#dc3545',
                         fillColor: '#e2d2d4',
-                        //noWrap: true,
                     };
                     doc.styles.redroweven = {
                         fillColor: '#fceaec',
-                        //noWrap: true,
                     };
                     doc.styles.redrowodd = {
                         fillColor: '#e2d2d4',
-                        //noWrap: true,
                     };
                     for(j = 1; j < doc.content[1].table.body.length; j++){
                         red_row = false;

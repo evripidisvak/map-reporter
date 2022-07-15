@@ -261,7 +261,7 @@
             maintainAspectRatio: false,
         }
         });
-//TABLE 1        
+                                            //TABLE 1        
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $(document).ready(function() {
     //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
@@ -310,7 +310,6 @@ $(document).ready(function() {
                 className: 'btn btn-secondary',
                 orientation: 'landscape',
                 pageSize: 'A4',
-                //filename: '*',
                 exportOptions: {
                     format: {
                         body: function ( inner, coldex, rowdex ) {
@@ -320,11 +319,9 @@ $(document).ready(function() {
                           $.each( el, function (index, item) {
                               if (item.nodeName == '#text') {
                                   result += item.textContent;
-                                //result += item.textContent.trim();
                             }
                             else if (item.nodeName == 'STRONG'){
                                 result += item.outerHTML;
-                                //result += item.outerHTML.trim();
                             }
                             else if (item.nodeName == 'A'){
                                 nodes = item.childNodes;
@@ -361,20 +358,16 @@ $(document).ready(function() {
                     doc.styles.redcelleven = {
                         color: '#dc3545',
                         fillColor: '#fceaec',
-                        //noWrap: true,
                     };
                     doc.styles.redcellodd = {
                         color: '#dc3545',
                         fillColor: '#e2d2d4',
-                        //noWrap: true,
                     };
                     doc.styles.redroweven = {
                         fillColor: '#fceaec',
-                        //noWrap: true,
                     };
                     doc.styles.redrowodd = {
                         fillColor: '#e2d2d4',
-                        //noWrap: true,
                     };
                     var photo_index = 0;
                     for(i = 0; i < doc.content[1].table.body[0].length; i++){
@@ -629,7 +622,6 @@ $(function() {
                         className: 'btn btn-secondary',
                         orientation: 'landscape',
                         pageSize: 'A4',
-                        //filename: '*',
                         exportOptions: {
                             format: {
                                 body: function ( inner, coldex, rowdex ) {
@@ -639,11 +631,9 @@ $(function() {
                                   $.each( el, function (index, item) {
                                       if (item.nodeName == '#text') {
                                           result += item.textContent;
-                                        //result += item.textContent.trim();
                                     }
                                     else if (item.nodeName == 'STRONG'){
                                         result += item.outerHTML;
-                                        //result += item.outerHTML.trim();
                                     }
                                     else if (item.nodeName == 'A'){
                                         nodes = item.childNodes;
@@ -680,20 +670,16 @@ $(function() {
                             doc.styles.redcelleven = {
                                 color: '#dc3545',
                                 fillColor: '#fceaec',
-                                //noWrap: true,
                             };
                             doc.styles.redcellodd = {
                                 color: '#dc3545',
                                 fillColor: '#e2d2d4',
-                                //noWrap: true,
                             };
                             doc.styles.redroweven = {
                                 fillColor: '#fceaec',
-                                //noWrap: true,
                             };
                             doc.styles.redrowodd = {
                                 fillColor: '#e2d2d4',
-                                //noWrap: true,
                             };
                             var photo_index = 0;
                             for(i = 0; i < doc.content[1].table.body[0].length; i++){
