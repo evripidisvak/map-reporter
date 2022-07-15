@@ -8,12 +8,8 @@
 
 {% block headEnd %}
 
-<!--scripts and styles go here-->
-<script src="{% static '/map_reporter/js/all-products-page-data-table.js' %}"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/v/dt/jszip-2.5.0/dt-1.10.16/b-1.5.1/b-html5-1.5.1/b-print-1.5.1/datatables.min.js"></script>
 {% endblock %}
+
 {% block main %}
     <h1 class='mb-4'>Όλα τα προϊόντα</h1>
 
@@ -29,13 +25,6 @@
                 <div class='card-footer small text-muted'>Στο παραπάνω γράφημα απεικονίζονται ο αριθμός των τιμών από όλα τα ενεργά προϊόντα, από όλα τα καταστήματα, την τελευταία φορά που τα βρήκαμε ανάλογα με το εάν είναι κάτω, ίσα ή πάνω από την τιμή στόχου.</div>
             </div>
         </div>
-        {% comment %} <div class='col-6'>
-            <div class="card mb-4 h-100">
-                <div class="card-body align-items-center d-flex">
-                    {% lorem 1 p random %}
-                </div>
-            </div>
-        </div> {% endcomment %}
     </div>
 
     <div class="row pt-lg-5">
@@ -439,41 +428,6 @@ $(document).ready(function() {
                 exportOptions: {
                     columns: export_cols,
                     stripHtml: true,
-                    //function to keep images and other html tags <- does not work, set stripHTML to true. 
-                   /*format: {
-                        body: function ( inner, coldex, rowdex ) {
-                          if (inner.length <= 0) return inner;
-                          var el = $.parseHTML(inner);
-                          var result='';
-                          $.each( el, function (index, item) {
-                              if (item.nodeName == '#text') {
-                                if (item.textContent !== 'undefined'){
-                                    result += item.textContent;
-                                } else {
-                                    result += item.nextSibling.innerText;
-                                }
-                            }
-                            else if (item.nodeName == 'A'){
-                                nodes = item.childNodes;
-                                is_image = false;
-                                for(elem of nodes.values()){
-                                    if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
-                                        image = elem.getAttribute('aria-src').trim();
-                                        result += image;
-                                        is_image = true;
-                                    }
-                                }
-                                if(! is_image){
-                                    result += item.innerText.trim();
-                                }
-                            }
-                            else {
-                                result += item.innerText;
-                            } 
-                          });
-                          return result;
-                        }
-                      },*/
                     },
             }, 
             {
@@ -618,39 +572,6 @@ $(function() {
     cb();
 
   });
- 
-
-  /*$('#reportrange').on('apply.daterangepicker', function(ev, picker) {
-   var start = picker.startDate;
-   var end = picker.endDate;
-   date_column = columns - 1;
-    $('#reportrange span').html(start.format('D/M/YYYY') + ' - ' + end.format('D/M/YYYY'));
-    $.fn.dataTable.ext.search.push(
-        function(settings, data, dataIndex) {
-        var min = start;
-        var max = end;
-        //dynamically find date column(must be the last column of the table)
-        var startDate = moment(data[date_column], 'D/M/YYYY');
-        
-        if (min == null && max == null) {
-          return true;
-        }
-        if (min == null && startDate <= max) {
-          return true;
-        }
-        if (max == null && startDate >= min) {
-          return true;
-        }
-        if (startDate <= max && startDate >= min) {
-          return true;
-        }
-        return false;
-      }
-    );
-
-table_1.draw();
-  $.fn.dataTable.ext.search.pop();
-});*/
 } );
 
 
@@ -826,41 +747,6 @@ table_1.draw();
                         exportOptions: {
                             columns: export_cols,
                             stripHtml: true,
-                            //function to keep images and other html tags <- does not work, set stripHTML to true. 
-                           /*format: {
-                                body: function ( inner, coldex, rowdex ) {
-                                  if (inner.length <= 0) return inner;
-                                  var el = $.parseHTML(inner);
-                                  var result='';
-                                  $.each( el, function (index, item) {
-                                      if (item.nodeName == '#text') {
-                                        if (item.textContent !== 'undefined'){
-                                            result += item.textContent;
-                                        } else {
-                                            result += item.nextSibling.innerText;
-                                        }
-                                    }
-                                    else if (item.nodeName == 'A'){
-                                        nodes = item.childNodes;
-                                        is_image = false;
-                                        for(elem of nodes.values()){
-                                            if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
-                                                image = elem.getAttribute('aria-src').trim();
-                                                result += image;
-                                                is_image = true;
-                                            }
-                                        }
-                                        if(! is_image){
-                                            result += item.innerText.trim();
-                                        }
-                                    }
-                                    else {
-                                        result += item.innerText;
-                                    } 
-                                  });
-                                  return result;
-                                }
-                              },*/
                             },
                     }, 
                     {
