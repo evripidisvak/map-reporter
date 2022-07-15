@@ -598,9 +598,9 @@ $(document).ready(function() {
     }
   }
   {% if not seller_flag %}
-    date_column_sort = 10;
-{% else%}
     date_column_sort = 11;
+{% else%}
+    date_column_sort = 10;
 {% endif %}
   //initialise data table
     table_2 = $('#table_2').DataTable({

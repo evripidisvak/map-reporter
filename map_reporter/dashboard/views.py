@@ -845,7 +845,6 @@ class ProductInfo(TemplateView):
     def get_context_data(self, **kwargs):
         date_picker = DatePicker
         context = super(ProductInfo, self).get_context_data(**kwargs)
-
         # product = Product.objects.get(id=kwargs['pk'])
         product = get_object_or_404(Product, id=kwargs["pk"])
         # urls = Page.objects.filter(product_id=kwargs['pk'])
@@ -1370,7 +1369,7 @@ class DataTables(TemplateView):
                 'daterange_timestamp': daterange_timestamp,
                 "seller_flag": seller_flag,
                 "user": user,
-                "user_is_staff": user.is_staff,
+                "user_is_staff": user.is_staff,                
             }
         )
         return context

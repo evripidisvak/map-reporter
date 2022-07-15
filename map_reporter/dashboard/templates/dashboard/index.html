@@ -13,9 +13,9 @@ Dashboard
 {% block main %}
 <div class="container-fluid px-4">
     <h1 class="mt-4">Αρχική</h1>
-    <ol class="breadcrumb mb-4">
+    {% comment %} <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item active">Αρχική</li>
-    </ol>
+    </ol> {% endcomment %}
     <div class="row">
         <div class="col-xl-3 col-md-6">
             <div class="card bg-primary text-white mb-4">
@@ -85,7 +85,6 @@ Dashboard
                 Τελευταίες τιμές όλων των ενεργών προϊόντων με πρόβλημα
             </div>
             <div class="card-body">
-              <div class="dropdown">
                 <table id="table_1" class="data-table display">
                     <!--data-search-highlight use for highlight individual column search-->
                     <thead>
@@ -262,11 +261,13 @@ Dashboard
             export_cols.push(i);
         }
       }
+    
     {% if not seller_flag %}
-        date_column_sort = 11;
-    {% else%}
         date_column_sort = 12;
+    {% else %}
+        date_column_sort = 11;
     {% endif %}
+
       //initialise data table
         table_1 = $('#table_1').DataTable({
             order: [[date_column_sort, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],

@@ -137,7 +137,7 @@
                                     <div class="search sticky-top p-1 w-100 bg-white">
                                         <input type="text" class="form-control" placeholder="Αναζήτηση" id="shop_search">
                                     </div>
-                                    <li class="p-2">
+                                    <li class="p-2 dropdown-shop">
                                         <div class="form-check">
                                             <label class="form-check-label">
                                                 <input class="select-all" name="select_all" type="checkbox" value="Επιλογή Όλων" id="ShopSelectAllCheckbox">
@@ -146,7 +146,7 @@
                                         </div>
                                     </li>
                                     {% for shop in shops %}
-                                    <li class="p-2">
+                                    <li class="p-2 dropdown-shop">
                                         <div class="form-check">
                                             <label class="form-check-label">
                                                 <input class="form-check-input" name="{{shop}}" type="checkbox" value="{{shop.id}}" id="ShopSelectCheckbox{{ forloop.counter0 }}">
@@ -171,7 +171,7 @@
                     Ελάχιστες τιμές προϊόντος
                 </div>
                 <div class="card-body align-items-center d-flex" style="height:500px;"><canvas id="MinPriceChart" width="100%" height="40"></canvas></div>
-                <div class="card-footer small text-muted">Το παραπάνω αναλυτικό γράφημα απεικονίζει την πορεία των τιμών του προϊόντος σε όλα τα καταστήματα μέσα στον χρόνο. Μέσω του φίλτρου μπορείτε να επιλέξετε συγκεκριμένες ημερομηνίες και καταστήματα.</div>
+                <div class="card-footer small text-muted">Το παραπάνω αναλυτικό γράφημα απεικονίζει την πορεία των ελάχστων τιμών του προϊόντος από όλα τα καταστήματα μέσα στον χρόνο. Μέσω του φίλτρου μπορείτε να επιλέξετε συγκεκριμένες ημερομηνίες και καταστήματα, ώστε να εμφανιστούν οι τιμές στο διάστημα από τα επιλεγμένα καταστήματα.</div>
                 <div class="card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp }}</div>
             </div>
         </div>
@@ -383,7 +383,8 @@
         $('body').on('click', function(e){
         dropdown_elem = $('#ShopSelectDropdown');
         target_element = $(e.target);
-        if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check')){
+        console.log(target_element);
+        if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check') || target_element.hasClass('dropdown-menu show') || target_element.hasClass('dropdown-shop') ){
             e.stopPropagation();
         }
         if (target_element.attr('id') == 'ShopSelectAllCheckbox'){
@@ -592,21 +593,11 @@ table_1.draw();
 } //config the table ends
 
 
-
-    //make excluding img col from export dynamic. columns is also used to find the date column dynamically.
-  /*columns = document.getElementById('table_1').rows[0].cells.length;
-  export_cols = [];
-  exclude_cols = [0];
-  for(i=0; i < columns; i++){
-    if(! exclude_cols.includes(i)){
-        export_cols.push(i);
-    }
-  }*/
   //initialise data table
 {% if not seller_flag %}
-  date_column_sort = 6;
-{% else%}
   date_column_sort = 7;
+{% else%}
+  date_column_sort = 6;
 {% endif %}
     config = {
         order: [[date_column_sort, 'desc'],[1, 'asc']],
@@ -665,7 +656,6 @@ table_1.draw();
                 },
                 customize: function(doc){
                     doc.content[1].table.dontBreakRows = true;
-                    //doc.pageMargins = [ 1,1,1,1 ];
                     doc.styles.title = {
                         alignment: "center",
                         fontSize: 12,
@@ -726,51 +716,12 @@ table_1.draw();
                 className: 'btn btn-secondary',
                 text:'Excel',
                 exportOptions: {
-                    //columns: export_cols,
                     stripHtml: true,
-                    //function to keep images and other html tags <- does not work, set stripHTML to true. 
-                   /*format: {
-                        body: function ( inner, coldex, rowdex ) {
-                          if (inner.length <= 0) return inner;
-                          var el = $.parseHTML(inner);
-                          var result='';
-                          $.each( el, function (index, item) {
-                              if (item.nodeName == '#text') {
-                                if (item.textContent !== 'undefined'){
-                                    result += item.textContent;
-                                } else {
-                                    result += item.nextSibling.innerText;
-                                }
-                            }
-                            else if (item.nodeName == 'A'){
-                                nodes = item.childNodes;
-                                is_image = false;
-                                for(elem of nodes.values()){
-                                    if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
-                                        image = elem.getAttribute('aria-src').trim();
-                                        result += image;
-                                        is_image = true;
-                                    }
-                                }
-                                if(! is_image){
-                                    result += item.innerText.trim();
-                                }
-                            }
-                            else {
-                                result += item.innerText;
-                            } 
-                          });
-                          return result;
-                        }
-                      },*/
                     },
             }, 
             {
                 extend:'csv',
                 className: 'btn btn-secondary',
-                exportOptions:{
-                    //columns: export_cols, //columns we want to exclude (look at the start of the script)
-                }
             },
             //customise print button
             {
