@@ -27,7 +27,7 @@
         <div class="col-xl-4">
             <div class="card mb-4 h-100">
                 <div class="card-header">
-                    <i class="fas fa-chart-area me-1"></i>
+                    <i class="fas fa-image me-1"></i>
                     Φωτογραφία
                 </div>
                 <div class="card-body align-items-center d-flex">
@@ -39,7 +39,7 @@
         <div class="col-xl-8">
             <div class="card mb-4 h-100">
                 <div class="card-header">
-                    <i class="fas fa-chart-area me-1"></i>
+                    <i class="fas fa-list me-1"></i>
                     Χαρακτηριστικά
                 </div>
                 <div class="card-body align-items-center d-flex">
@@ -57,7 +57,9 @@
                                 <h5 class="p-sm-2">Κατασκευαστής</h5>
                             </div>
                             <div class="col-8 g-0">
-                                <a class="link-dark fs-5" href="{% url 'manufacturer_info' product.manufacturer.id %}">{{product.manufacturer}}</a>
+                                <p class="ps-2">
+                                    <a class="link-dark fs-5" href="{% url 'manufacturer_info' product.manufacturer.id %}">{{product.manufacturer}}</a>
+                                </p>
                             </div>
                         </div>
                         <div class="row gx-5 bg-secondary bg-opacity-25">
@@ -89,7 +91,7 @@
                                 <h5 class="p-sm-2">Κατηγορία</h5>
                             </div>
                             <div class="col-8 g-0">
-                                <p class="p-sm-2">
+                                <p class="ps-2">
                                     {% for category in product.main_category.get_family %}
                                         <a class="link-dark fs-5" href="{% url 'category_info' category.id %}">{{category}}</a>
                                         {% if not forloop.last %}
@@ -121,15 +123,12 @@
             <div class="row">
                 <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
                     <div class="row">
-                        <div class="col-lg-5">
-                            <p>Επιλέξτε ημερομηνίες και καταστήματα από τη φόρμα για να εμφανίσετε την πορεία των τιμών του προϊόντος ανάμεσα στις επιλεγμένες ημερομηνίες για τα καταστήματα που επιθυμείτε στα παρακάτω γραφήματα.</p>
-                        
-                            <label class="mb-2">Επιλέξτε ημερομηνίες</label>
-                            {{date_picker}}
-                    {% comment %} <form name="date_range" id="date-picker-form" hx-post="/update_date/" trigger="submit" hx-target="#results"> {% endcomment %}
-                        </div>
-                        
-                            <div class="dropdown mt-4">
+                        <p>Επιλέξτε ημερομηνίες και καταστήματα από τη φόρμα για να εμφανίσετε την πορεία των τιμών του προϊόντος ανάμεσα στις επιλεγμένες ημερομηνίες για τα καταστήματα που επιθυμείτε στα παρακάτω γραφήματα.</p>
+                        <div class="col-lg-12">
+                            <div class="m-2 d-inline-block">
+                                {{date_picker}}
+                            </div>
+                            <div class="dropdown m-2 d-inline-block">
                                 <button class="btn btn-primary dropdown-toggle" type="button" id="ShopSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                                   Επιλέξτε Καταστήματα
                                 </button>
@@ -157,10 +156,13 @@
                                     {% endfor %}
                                 </ul>
                             </div>
+                        </div>
                     </div>
-                        <button class="btn btn-primary mt-4" type="submit" value="Submit"><i class="fa-solid fa-paper-plane"></i> Υποβολή</button>
+                    <div class="row">
+                        <button class="btn btn-primary mt-2 ms-3" type="submit" value="Submit" style="width:auto;"><i class="fa-solid fa-paper-plane"></i> Υποβολή</button>
                         <div style="display:none;" class="mt-2 text-danger" id="error_notice"></div> <!-- errors go here -->
                     </form>
+                    </div>
             </div>
         </div>
     <div class="row pt-lg-5">
@@ -193,7 +195,7 @@
             <i class="fas fa-table me-1"></i>
             Πίνακας τιμών προϊόντος
         </div>
-        <div class="card-body">
+        <div class="card-body overflow-auto">
             <table id='table_1' class="data-table display">
                 <thead>
                     <tr class="bg-light">

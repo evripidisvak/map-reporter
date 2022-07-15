@@ -6,17 +6,6 @@
 {{shop.name}}
 {% endblock title %}
 {% block headEnd %}
-    <style>
-
-    label {
-        padding: 5px;
-    }
-
-    #shops-table_wrapper{
-        padding:5px;
-    }
-
-    </style>
 {% endblock %}
 
 
@@ -80,8 +69,8 @@
             <i class="fas fa-table"></i>
             Όλα τα προϊόντα του {{ shop.name }}
         </div>
-        <div class="card-body">
-            <table id='table_1' class="data-table display">
+        <div class="card-body overflow-auto">
+            <table id="table_1" class="data-table display">
                 <thead>
                     <tr class="bg-light">
                         <th >Φωτογραφία</th>
@@ -149,7 +138,7 @@
             <i class="fas fa-table"></i>
             Τελευταίες τιμές όλων των ενεργών προϊόντων του {{ shop.name }}
         </div>
-        <div class="card-body">
+        <div class="card-body overflow-auto">
             <table id="table_2" class="data-table display">
                 <thead>
                     <tr class="bg-light">

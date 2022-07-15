@@ -43,8 +43,8 @@
                     <i class="fas fa-table me-1 MB-4"></i>
                     Όλα τα προϊόντα στην κατηγορία <b>{{ category.name }}</b>
                 </div>
-                <div class="card-body">
-                      <table id='table_1' class="data-table display">
+                <div class="card-body overflow-auto">
+                      <table id="table_1" class="data-table display">
                         <thead>
                             <tr class="bg-light">
                                 <th>Φωτογραφία</th>
@@ -135,7 +135,7 @@
                         <i class="fas fa-table me-1 MB-4"></i>
                        Όλα τα <b>ενεργά</b> προϊόντα στην κατηγορία  <b>{{ category.name }}</b>
                 </div>
-                <div class="card-body">
+                <div class="card-body overflow-auto">
                       <table id="table_2" class="data-table display">
                         <!--data-search-highlight use for highlight individual column search-->
                         <thead>
@@ -645,9 +645,9 @@ $(document).ready(function() {
   }
   //initialise data table
 {% if not seller_flag %}
-    date_column_sort = 11;
-{% else%}
     date_column_sort = 12;
+{% else%}
+    date_column_sort = 11;
 {% endif %}
     table_2 = $('#table_2').DataTable({
         order: [[date_column_sort, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],
