@@ -145,6 +145,8 @@
                                 <th>Τιμή MAP</th>
                                 <th>Διαφ.</th>
                                 <th>Διαφ. %</th>
+                                <th class="select-filter">Πηγή</th>
+                                <th class="select-filter">Key Account</th>
                                 <th class="select-filter">Επ. Μεταπωλ.</th>
                                 {% if not seller_flag %}
                                     <th class="select-filter">Πωλητής</th>
@@ -163,6 +165,8 @@
                                 <th class="no-filter">Τιμή MAP</th>
                                 <th class="no-filter">Διαφ.</th>
                                 <th class="no-filter">Διαφ. %</th>
+                                <th class="select">Πηγή</th>
+                                <th class="select">Key Account</th>
                                 <th class="select">Επ. Μεταπωλ.</th>
                                 {% if not seller_flag %}
                                     <th class="select">Πωλητής</th>
@@ -236,12 +240,18 @@
                                         {% endif %}
                                     </td>
                                     <td>
+                                        {{retail_price.source}}
+                                    </td>
+                                    <td>
+                                        {{retail_price.shop.is_key_account}}
+                                    </td>
+                                    <td>
                                         {{ retail_price.is_shop_official_reseller }}
                                     </td>
                                     {% if not seller_flag %}
                                     <td>{{ retail_price.shop.seller.last_name }}</td>
                                     {% endif %}
-                                    <td>{{retail_price.timestamp|date:"d/m/Y, H:m"}}</td>
+                                    <td>{{retail_price.timestamp|date:"d/m/Y, H:i"}}</td>
                                 </tr>
                             {% endif %}
                         {% endfor %}
@@ -575,7 +585,7 @@ $(document).ready(function() {
 } );
 
 
-//TABLE_2 STUFF STARTS
+//TABLE_2 STUFF STARTS ***********************************************************************************
 $(document).ready(function() {
     //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
     $('#table_2 tr.head-filters th').each( function (i) {
@@ -598,9 +608,9 @@ $(document).ready(function() {
   }
   //initialise data table
 {% if not seller_flag %}
-    date_column_sort = 12;
+    date_column_sort = 14;
 {% else%}
-    date_column_sort = 11;
+    date_column_sort = 13;
 {% endif %}
     table_2 = $('#table_2').DataTable({
         order: [[date_column_sort, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],
@@ -793,7 +803,7 @@ $(document).ready(function() {
                     cells = api.cells('.danger-text', {search:'applied'});
                     $(window.document.body).css('webkit-print-color-adjust', 'exact');
                     $(window.document.body).css('print-color-adjust', 'exact');
-                    table = $(window.document.body).find('table');
+                    table = $(window.document.body).find('table_2');
                     table_head = table.find('thead');
                     table_head.css('background-color', '#F8F9FA');
                     table_body = table.find('tbody');
@@ -850,7 +860,7 @@ $(document).ready(function() {
     // Filter event handler
     //if table is undefined, refresh the page.
     $( table_2.table().container() ).on( 'keyup', 'thead input', function () {
-        table.column( $(this).data('index') ).search( this.value ).draw();
+        table_2.column( $(this).data('index') ).search( this.value ).draw();
     } );
 
 /*DATERANGEPICKER START*/
