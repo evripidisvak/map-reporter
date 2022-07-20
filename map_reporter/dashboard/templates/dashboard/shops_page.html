@@ -47,6 +47,7 @@
                                     {% if not seller_flag %}
                                     <th class="select-filter">Πωλητής</th>
                                     {% endif %}
+                                    <th class="select-filter">Key Account</th>
                                     <th># Προϊόντων</th>
                                     <th># Προϊόντων κάτω</th>
                                     <th># Προϊόντων ίσα</th>
@@ -57,6 +58,7 @@
                                     {% if not seller_flag %}
                                     <th class="select">Πωλητής</th>
                                     {% endif %}
+                                    <th class="select">Key Account</th>
                                     <th class="no-filter"># Προϊόντων</th>
                                     <th class="no-filter"># Προϊόντων κάτω</th>
                                     <th class="no-filter"># Προϊόντων ίσα</th>
@@ -76,6 +78,9 @@
                                             {{shop.seller.last_name}}
                                         </td>
                                         {% endif %}
+                                        <td>
+                                            {{shop.is_key_account}}
+                                        </td>
                                         <td>
                                             {{shop.prod_count}}
                                         </td>
