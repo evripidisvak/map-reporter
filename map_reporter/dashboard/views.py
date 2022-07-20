@@ -312,7 +312,7 @@ class AllProducts(TemplateView):
                         .timestamp
                     )
                     tmp = RetailPrice.objects.filter(
-                        timestamp=product_latest_timestamp,
+                        timestamp__range=(product_latest_timestamp - datetime.timedelta(hours=1), product_latest_timestamp),
                         product=product,
                         shop__seller=user,
                     )
@@ -323,7 +323,8 @@ class AllProducts(TemplateView):
                         .timestamp
                     )
                     tmp = RetailPrice.objects.filter(
-                        timestamp=product_latest_timestamp, product=product
+                        timestamp__range=(product_latest_timestamp - datetime.timedelta(hours=1), product_latest_timestamp),
+                        product=product,
                     )
                 this_products_below = 0
                 this_products_equal = 0
@@ -613,7 +614,8 @@ class CategoryInfo(TemplateView):
                     )
                     ltst_pr_rec = RetailPrice.objects.filter(
                         product=product,
-                        timestamp=product_latest_timestamp,
+                        timestamp__range=(product_latest_timestamp - datetime.timedelta(minutes=30), product_latest_timestamp),
+                        # timestamp=product_latest_timestamp,
                         shop__seller=user,
                     )
                 else:
@@ -623,7 +625,9 @@ class CategoryInfo(TemplateView):
                         .timestamp
                     )
                     ltst_pr_rec = RetailPrice.objects.filter(
-                        product=product, timestamp=product_latest_timestamp
+                        product=product,
+                        timestamp__range=(product_latest_timestamp - datetime.timedelta(minutes=30), product_latest_timestamp),
+                        # timestamp=product_latest_timestamp
                     )
 
                 products_below_increased = False
@@ -644,7 +648,7 @@ class CategoryInfo(TemplateView):
             product.shops_below = shops_below
             product.shops_equal = shops_equal
             product.shops_above = shops_above
-            product.shops_count = shops_below + shops_equal + shops_above
+            product.shop_count = shops_below + shops_equal + shops_above
             category.products_below = products_below
             category.products_count = products_count
             category.products_ok = products_count - products_below

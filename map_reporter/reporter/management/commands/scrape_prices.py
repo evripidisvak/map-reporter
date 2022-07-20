@@ -23,6 +23,7 @@ from Proxy_List_Scrapper import Scrapper
 from reporter.models import *
 from selenium import webdriver
 from selenium.webdriver.firefox.options import Options
+from selenium.webdriver.firefox.service import Service
 
 startTime = datetime.now()
 
@@ -94,14 +95,17 @@ def parse_urls(page_list_item):
         try:
             proxy_tmp = random.choice(my_proxies)
             proxy = proxy_tmp
-            print('+++ +++ Selecting new proxy: ', proxy)
-            print('+++ Proxies left: ', len(my_proxies))
-            print('+++ Proxy used: ', proxy)
-            print('+++ URL: ', url)
+            # print('+++ +++ Selecting new proxy: ', proxy)
+            # print('+++ Proxies left: ', len(my_proxies))
+            # print('+++ Proxy used: ', proxy)
+            # print('+++ URL: ', url)
             options = Options()
             options.headless = True
 
-            driver = webdriver.Firefox(options=options)
+            path = ('/usr/local/bin/geckodriver')
+            s = Service(path)
+
+            driver = webdriver.Firefox(options=options, service=s)
             driver.set_page_load_timeout(30)
             # this_user_agent = driver.execute_script("return navigator.userAgent;")
             # print(this_user_agent)
@@ -257,6 +261,7 @@ def parse_urls(page_list_item):
             # save_prices(price, product_id, shop, off_seller, source_id)
     
     elif source_id == 4: #Kotsovolos
+        soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select(".prDetail .priceWithVat .simplePrice")
         pricear_sale = soup.select(".prDetail .priceWithVat .price")
         shop = 'Kotsovolos'
@@ -275,6 +280,7 @@ def parse_urls(page_list_item):
             # save_prices(price, product_id, shop, off_seller, source_id)
 
     elif source_id == 5: #Public
+        soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select(
             "div.product__price.product__price--xlarge.text-primary")
         if pricear and pricear != '' and '\n' not in pricear[0].text:
@@ -286,6 +292,7 @@ def parse_urls(page_list_item):
             # save_prices(price, product_id, shop, off_seller, source_id)
 
     elif source_id == 6: #You
+        soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select("div.price.new-price span.final-price")
         shop = 'You'
         if pricear:
@@ -296,6 +303,7 @@ def parse_urls(page_list_item):
             off_seller = ['1']
     
     elif source_id == 7: #Media Markt
+        soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select("div.article__price.ng-star-inserted")
         if pricear:
             price = pricear[0].text.replace(',', '.')
@@ -305,6 +313,7 @@ def parse_urls(page_list_item):
             off_seller = ['1']
 
     elif source_id == 8: #Germanos
+        soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select("div.product-price span.price")
         pricear_sale = soup.select("div.product-price span.special-price")
         if pricear:
@@ -317,6 +326,7 @@ def parse_urls(page_list_item):
             off_seller = ['1']
     
     elif source_id == 9: #Electronet
+        soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select(
             "td.commerce-price-savings-formatter-price span.price-amount")
         if pricear:
@@ -355,14 +365,15 @@ def save_prices(price_list, product_id, shop, official_reseller, source_id):
     source_obj = Source.objects.get(id=source_id)
     for index in range(len(price_list)):
         thisShop = Shop.objects.get_or_create(
-            name=shop[index], source=source_obj)[0]
+            name=shop[index])[0]
         rp = RetailPrice(
             price=float(price_list[index]),
             timestamp=timenow,
             product=product_obj,
             shop=thisShop,
             official_reseller=official_reseller[index],
-            curr_target_price=product_obj.map_price
+            curr_target_price=product_obj.map_price,
+            source=source_obj
             )
         rp.save()
 
@@ -393,8 +404,10 @@ def send_mail(send_to, subject, text, files, isTls=True):
     port = 25
     username = 'e.vakalis@soundstar.gr'
     password = 'Ilk4b31@'
+    current_folder = os.getcwd()
+
     for a_file in files:
-        attachment = open('Reports/' + a_file, 'rb')
+        attachment = open(current_folder + '/reports/' + a_file, 'rb')
         file_name = a_file
         # file_name = os.path.basename(a_file)
         part = MIMEBase('application', 'octet-stream')
@@ -490,22 +503,24 @@ def create_files_and_send_emails(records):
     recordsDf = pd.DataFrame.from_records(records)
     recordsDf.columns = ['URL', 'SKR_Title','SKR_Shop', 'SKR_Price', 'Official_Seller']
 
-    writer = pd.ExcelWriter("Reports/recordsDf.xlsx", engine='xlsxwriter')
+    current_folder = os.getcwd()
+
+    writer = pd.ExcelWriter(current_folder + '/reports/recordsDf.xlsx', engine='xlsxwriter')
     autofit_and_save(writer, recordsDf)
 
-    webSkrList = pd.read_csv("Reports/map-products.csv")
+    webSkrList = pd.read_csv(current_folder + '/reports/map-products.csv')
     webSkrList['MAP'] = webSkrList['MAP'].astype(float)
 
     mergedData = xplode(recordsDf, ['SKR_Shop', 'SKR_Price', 'Official_Seller'])
     mergedData = pd.merge(mergedData, webSkrList, on='URL', how='inner')
 
     # Update sellers file
-    sellers = pd.read_excel('Reports/stores-sellers.xlsx')
+    sellers = pd.read_excel(current_folder + '/reports/stores-sellers.xlsx')
     sellers_upd = pd.DataFrame(mergedData['SKR_Shop'].drop_duplicates())
     sellers_upd.rename(columns={'SKR_Shop': 'Κατάστημα'}, inplace=True)
     sellers_upd = pd.merge(sellers_upd, sellers,on='Κατάστημα', how='outer')
     writer = pd.ExcelWriter(
-        "Reports/stores-sellers.xlsx", engine='xlsxwriter')
+        current_folder + '/reports/stores-sellers.xlsx', engine='xlsxwriter')
     autofit_and_save(writer, sellers_upd)
     sellers = sellers[['Κατάστημα', 'Επωνυμία', 'Πωλητής']]
     sellers.rename(columns={'Κατάστημα': 'SKR_Shop'}, inplace=True)
@@ -524,50 +539,50 @@ def create_files_and_send_emails(records):
     mergedDataChris = mergedData[
         ['Κατηγορία', 'SKU', 'Προϊόν', 'Κατάστημα', 'Επωνυμία', 'Τιμή', 'MAP', 'Diff', 'Diff%', 'Επίσημος Μεταπωλητής','Πωλητής']]
     mergedDataChris.sort_values(by=['Κατηγορία', 'Προϊόν', 'Τιμή'], inplace=True)
-    writer = pd.ExcelWriter("Reports/MAP-Report-SKU.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP-Report-SKU.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, mergedDataChris)
 
     mergedData = mergedData[
         ['Κατηγορία', 'Προϊόν', 'Κατάστημα', 'Επωνυμία', 'Τιμή', 'MAP', 'Diff', 'Diff%', 'Επίσημος Μεταπωλητής','Πωλητής']]
     mergedData.sort_values(by=['Κατηγορία', 'Προϊόν', 'Τιμή'], inplace=True)
-    writer = pd.ExcelWriter("Reports/MAP-Report.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP-Report.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, mergedData)
 
     only_below = mergedData.loc[mergedData['Diff'] < 0]
     only_below.sort_values(by=['Κατάστημα', 'Κατηγορία', 'Προϊόν'], inplace=True)
-    writer = pd.ExcelWriter("Reports/MAP_only_below.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_only_below.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, only_below)
 
     foutsitzis = only_below.loc[only_below['Πωλητής'] == 'Φουτσιτζής']
-    writer = pd.ExcelWriter("Reports/MAP_Foutsitzis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Foutsitzis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, foutsitzis)
 
     a_Chatz = only_below.loc[only_below['Πωλητής'] == 'Α. Χατζηκυριακίδης']
-    writer = pd.ExcelWriter("Reports/MAP_A_Chatz.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_A_Chatz.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, a_Chatz)
 
     xorianopoulos = only_below.loc[only_below['Πωλητής'] == 'Χωριανόπουλος']
-    writer = pd.ExcelWriter("Reports/MAP_Xorianopoulos.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Xorianopoulos.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, xorianopoulos)
 
     kolomvos = only_below.loc[only_below['Πωλητής'] == 'Κολόμβος']
-    writer = pd.ExcelWriter("Reports/MAP_Kolomvos.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Kolomvos.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, kolomvos)
 
     vasiliadis = only_below.loc[only_below['Πωλητής'] == 'Βασιλειάδης']
-    writer = pd.ExcelWriter("Reports/MAP_Vasiliadis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Vasiliadis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, vasiliadis)
 
     sttoulis = only_below.loc[only_below['Πωλητής'] == 'Σ. Τουλής']
-    writer = pd.ExcelWriter("Reports/MAP_St_Toulis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_St_Toulis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, sttoulis)
 
     ctoulis = only_below.loc[only_below['Πωλητής'] == 'Χ. Τουλής']
-    writer = pd.ExcelWriter("Reports/MAP_C_Toulis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_C_Toulis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, ctoulis)
 
     hatzikiriakidis = only_below.loc[only_below['Πωλητής'] == 'Χατζηκυριακίδης']
-    writer = pd.ExcelWriter("Reports/MAP_Hatzikiriakidis.xlsx", engine='xlsxwriter')
+    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Hatzikiriakidis.xlsx", engine='xlsxwriter')
     autofit_colour_and_save(writer, hatzikiriakidis)
 
     fileNames_Admin = ['MAP-Report.xlsx', 'MAP_only_below.xlsx']

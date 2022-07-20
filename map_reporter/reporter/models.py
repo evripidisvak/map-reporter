@@ -155,9 +155,9 @@ class Shop(models.Model):
         null=True,
         limit_choices_to={"groups__name__in": ["Sales_Dep", "Seller"]},
     )
-    source = models.ForeignKey(
-        Source, on_delete=models.CASCADE, default=None, blank=False, null=False
-    )
+    # source = models.ForeignKey(
+    #     Source, on_delete=models.CASCADE, default=None, blank=False, null=False
+    # )
     products = models.ManyToManyField(
         Product,
         through="RetailPrice",
@@ -169,8 +169,6 @@ class Shop(models.Model):
     # phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
     phone_number = models.CharField(validators=[phone_regex], blank=True, max_length=10)
     address = models.CharField(max_length=100, default=None, blank=True, null=True)
-
-    # TODO Add Seller user
 
     def __str__(self):
         return self.name
@@ -217,6 +215,9 @@ class RetailPrice(models.Model):
     official_reseller = models.BooleanField(default=False)
     curr_target_price = models.DecimalField(
         max_digits=6, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
+    )
+    source = models.ForeignKey(
+        Source, on_delete=models.CASCADE, default=None, blank=False, null=False
     )
 
     def get_shop_products(shop_id):

@@ -97,13 +97,13 @@ class MapPriceView(admin.ModelAdmin):
 
 
 class RetailPriceView(admin.ModelAdmin):
-    list_display = ("product", "price", "shop", "official_reseller", "timestamp")
+    list_display = ("product", "price", "shop", "official_reseller", "source", "timestamp")
     list_filter = ["product", "shop"]
 
 
 class ShopAdminView(admin.ModelAdmin):
-    list_display = ("name", "key_account", "seller_last_name", "source")
-    list_filter = ["key_account", "seller__last_name"]
+    list_display = ("name", "key_account", "seller_last_name")
+    list_filter = ["key_account", "seller__last_name", ("seller", admin.EmptyFieldListFilter)]
     search_fields = ["name"]
 
     def seller_last_name(self, obj):
