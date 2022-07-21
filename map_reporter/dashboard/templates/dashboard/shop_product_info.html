@@ -184,6 +184,7 @@
                         <th>Τιμή MAP</th>
                         <th>Διαφ.</th>
                         <th>Διαφ. %</th>
+                        <th class="select-filter">Πηγή</th>
                         <th class="select-filter">Επ. Μεταπωλ.</th>
                         <th>Ημερομηνία</th>
                     </tr>
@@ -193,44 +194,48 @@
                         <th class="no-filter">Τιμή MAP</th>
                         <th class="no-filter">Διαφ.</th>
                         <th class="no-filter">Διαφ. %</th>
+                        <th class="select">Πηγή</th>
                         <th class="select">Επ. Μεταπωλ.</th>
                         <th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for retailprice in retailprices %}
+                    {% for retail_price in table_retailprices %}
                     <tr>
                         <td>
-                            {{retailprice.price}} €
+                            {{retail_price.price}} €
                         </td>
                         <td>
-                            {{retailprice.curr_target_price}} €
+                            {{retail_price.curr_target_price}} €
                         </td>
                         <td>
-                            {% if retailprice.price|sub:retailprice.curr_target_price < 0 %}
-                                <p class="text-danger">{{retailprice.price|sub:retailprice.curr_target_price}} €</p>
-                            {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
-                                <p class="text-success">{{retailprice.price|sub:retailprice.curr_target_price}} €</p>
+                            {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
+                                <p class="text-danger">{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
+                            {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
+                                <p class="text-success">{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
                             {% else %}
-                                <p class="text-black">{{retailprice.price|sub:retailprice.curr_target_price}} €</p>
+                                <p class="text-black">{{retail_price.price|sub:retail_price.curr_target_price}} €</p>
                             {% endif %}
                         </td>
                         <td>
-                            {% if retailprice.price|ch_sub:retailprice.curr_target_price < 0 %}
-                                <p class="text-danger">{{retailprice.price|ch_sub:retailprice.curr_target_price}} %</p>
-                            {% elif retailprice.price|sub:retailprice.curr_target_price > 0 %}
-                                <p class="text-success">{{retailprice.price|ch_sub:retailprice.curr_target_price}} %</p>
+                            {% if retail_price.price|ch_sub:retail_price.curr_target_price < 0 %}
+                                <p class="text-danger">{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
+                            {% elif retail_price.price|sub:retail_price.curr_target_price > 0 %}
+                                <p class="text-success">{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
                             {% else %}
-                                <p class="text-black">{{retailprice.price|ch_sub:retailprice.curr_target_price}} %</p>
+                                <p class="text-black">{{retail_price.price|ch_sub:retail_price.curr_target_price}} %</p>
                             {% endif %}
                         </td>
-                        <td>{% if retailprice.official_reseller == False %}
+                        <td>
+                            {{retail_price.source.domain}}
+                        </td>
+                        <td>{% if retail_price.official_reseller == False %}
                                 <p class="text-danger">Όχι</p>
                             {% else %}
                                 <p class="text-success">Ναι</p>
                             {% endif %}
                         </td>
-                        <td>{{retailprice.timestamp|date:"d/m/Y, H:m"}}</td>
+                        <td>{{retail_price.timestamp|date:"d/m/Y, H:i"}}</td>
                     </tr>
                     {% endfor %}
                     
@@ -245,9 +250,9 @@
     timestamps = [];
     prices = [];
     min_price = 0;
-    {% for retailprice in retailprices %}
-        prices.push(parseFloat({{retailprice.price}}));
-        timestamps.push({{retailprice.timestamps|date:"d/m/Y, H:m"}});
+    {% for retail_price in retailprices %}
+        prices.push(parseFloat({{retail_price.price}}));
+        timestamps.push({{retail_price.timestamps|date:"d/m/Y, H:m"}});
     {% endfor %}
     // Area Chart
     var ctx = document.getElementById("MinPriceChart");
@@ -360,7 +365,7 @@ $(document).ready(function() {
 
   //initialise data table
     table_1 = $('#table_1').DataTable({
-        order: [[5, 'desc']],
+        order: [[6, 'desc']],
         dom: 'Bfplrtipl',
         info:true,
         searching: true,

@@ -197,7 +197,7 @@
                         <tr>
                     {% endif %}
                             <td>
-                                <a href="{% url 'product_info' retail_price.product.id %}">
+                                <a href="{% url 'shop_product_info' shop.id retail_price.product.id %}">
                                 {% thumbnail retail_price.product.image table_image_size as im %}
                                     <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
                                 {% endthumbnail %}
@@ -205,7 +205,7 @@
                                 
                             </td>
                             <td>
-                                <a href="{% url 'product_info' retail_price.product.id %}" class="link-dark">
+                                <a href="{% url 'shop_product_info' shop.id retail_price.product.id %}" class="link-dark">
                                     {{retail_price.product.model}}
                                 </a>
                             </td>

@@ -176,15 +176,14 @@ class ShopProductInfo(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(ShopProductInfo, self).get_context_data(**kwargs)
-
-        # product = Product.objects.get(id=kwargs['pk_product'])
         product = get_object_or_404(Product, id=kwargs["pk_product"])
-        # urls = Page.objects.filter(product_id=kwargs['pk_product'])
         urls = get_list_or_404(Page, product_id=kwargs["pk_product"])
-        # shop = Shop.objects.get(id=kwargs['pk_shop'])
         shop = get_object_or_404(Shop, id=kwargs["pk_shop"])
         user = self.request.user
         seller_flag = is_seller(user)
+        sources = Source.objects.all()
+        table_retailprices = RetailPrice.objects.none()
+
         if seller_flag and not shop.seller == user:
             raise Http404("Δεν έχετε πρόσβαση σε αυτό το κατάστημα.")
 
@@ -210,11 +209,24 @@ class ShopProductInfo(TemplateView):
             min_retailprice = min_retailprice_list.aggregate(Min("min_price"))
             max_retailprice = min_retailprice_list.aggregate(Max("min_price"))
 
-        # mapprices = MapPrice.objects.filter(product=kwargs['pk_product'])
-        mapprices = get_list_or_404(MapPrice, product=kwargs["pk_product"])
-        # keyaccprices = KeyAccPrice.objects.filter(product=kwargs['pk_product'])
-        keyaccprices = get_list_or_404(KeyAccPrice, product=kwargs["pk_product"])
+        for source in sources:
+            try:
+                if RetailPrice.objects.filter(product=product,source=source, shop=shop):
+                    tmp_timestamp = RetailPrice.objects.filter(
+                            product=product,
+                            source=source,
+                            shop=shop
+                        ).latest("timestamp").timestamp
 
+                    table_retailprices = table_retailprices | RetailPrice.objects.filter(
+                            product=product,
+                            source=source,
+                            shop=shop,
+                            timestamp=tmp_timestamp,
+                        )
+            except:
+                pass
+            
         prices_below = 0
         prices_equal = 0
         prices_above = 0
@@ -234,10 +246,9 @@ class ShopProductInfo(TemplateView):
                 "product": product,
                 "urls": urls,
                 "retailprices": retailprices,
+                "table_retailprices":table_retailprices,
                 "min_retailprice": min_retailprice,
                 "max_retailprice": max_retailprice,
-                "mapprices": mapprices,
-                "keyaccprices": keyaccprices,
                 "min_retailprice_list": min_retailprice_list,
                 "prices_below": prices_below,
                 "prices_equal": prices_equal,
@@ -480,7 +491,7 @@ class ShopInfo(TemplateView):
             min_price_record = retail_prices_tmp[0]
             for retail_price in retail_prices_tmp:
                 if min_price_record.price > retail_price.price:
-                    min_price = retail_price
+                    min_price_record = retail_price
             retail_prices_min.append(min_price_record)
 
         for retail_price in retail_prices_min:
@@ -599,16 +610,14 @@ class CategoryInfo(TemplateView):
         shops_below = 0
         shops_equal = 0
         shops_above = 0
+        products_count = 0
 
         for child in category_descendants:
             children_id_list.append(child.id)
 
-        # category = Category.objects.get(id=kwargs['pk'])
         category = get_object_or_404(Category, id=kwargs["pk"])
-        # products = Product.objects.filter(main_category__in=children_id_list)
         products = get_list_or_404(Product, main_category__in=children_id_list)
-        # products_count = products.count()
-        products_count = len(products)
+        #products_count = len(products)
         latest_timestamp = (
             RetailPrice.objects.filter(product__main_category__in=children_id_list)
             .latest("timestamp")
@@ -616,73 +625,100 @@ class CategoryInfo(TemplateView):
         )
         if not latest_timestamp:
             raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
-        retail_prices = []
+        # retail_prices = []
+        retailprices = RetailPrice.objects.none()
 
         sources = Source.objects.all()
 
         for product in products:
-            shops_below = 0
-            shops_equal = 0
-            shops_above = 0
-            for source in sources:
-                source_found = False
-                try:
-                    if seller_flag:
-                        if RetailPrice.objects.filter(product=product, source=source):
-                            product_latest_timestamp = (
-                                RetailPrice.objects.filter(
-                                    product=product, shop__seller=user
+            if product.active:
+                products_count += 1
+                latest_price_records = RetailPrice.objects.none()
+                shops_below = 0
+                shops_equal = 0
+                shops_above = 0
+                for source in sources:
+                    # source_found = False
+                    try:
+                        if seller_flag:
+                            if RetailPrice.objects.filter(product=product, source=source, shop__seller=user):
+                                product_latest_timestamp = (
+                                    RetailPrice.objects.filter(
+                                        product=product, shop__seller=user, source=source
+                                    )
+                                    .latest("timestamp")
+                                    .timestamp
                                 )
-                                .latest("timestamp")
-                                .timestamp
-                            )
-                            latest_price_records.append(
-                                RetailPrice.objects.filter(
+                                latest_price_records.append(
+                                    RetailPrice.objects.filter(
+                                        product=product,
+                                        timestamp=product_latest_timestamp,
+                                        shop__seller=user,
+                                        source=source
+                                    )
+                                )
+                        else:
+                            if RetailPrice.objects.filter(product=product, source=source):
+                                product_latest_timestamp = (
+                                    RetailPrice.objects.filter(
+                                        product=product, source=source
+                                    )
+                                    .latest("timestamp")
+                                    .timestamp
+                                )
+                                latest_price_records = latest_price_records | RetailPrice.objects.filter(
                                     product=product,
                                     timestamp=product_latest_timestamp,
-                                    shop__seller=user,
+                                    source=source,
                                 )
-                            )
-                            source_found = True
+                                
+                    except:
+                        pass
+                retailprices = retailprices | latest_price_records
+                    
+                for retail_price in latest_price_records:
+                    if retail_price.price < retail_price.curr_target_price:
+                        products_below += 1
+                        break
+                    
+                unique_shops_min = {}
+                for retail_price in latest_price_records:
+                    if retail_price.shop.id in unique_shops_min:
+                        if unique_shops_min[retail_price.shop.id]['price'] < retail_price.price:
+                            unique_shops_min[retail_price.shop.id] = {'price': retail_price.price, 'target': retail_price.curr_target_price}
                     else:
-                        if RetailPrice.objects.filter(product=product, source=source):
-                            product_latest_timestamp = (
-                                RetailPrice.objects.filter(
-                                    product=product, source=source
-                                )
-                                .latest("timestamp")
-                                .timestamp
-                            )
-                            latest_price_records = RetailPrice.objects.filter(
-                                product=product,
-                                timestamp=product_latest_timestamp,
-                                source=source,
-                            )
-                            source_found = True
+                        unique_shops_min[retail_price.shop.id] = {'price': retail_price.price, 'target': retail_price.curr_target_price}
+            
+                for unique_shop in unique_shops_min:
+                    if unique_shops_min[unique_shop]['price'] < unique_shops_min[unique_shop]['target']:
+                        shops_below += 1    
+                    if unique_shops_min[unique_shop]['price'] == unique_shops_min[unique_shop]['target']:
+                        shops_equal += 1    
+                    if unique_shops_min[unique_shop]['price'] > unique_shops_min[unique_shop]['target']:
+                        shops_above += 1    
+                # products_below_increased = False
+                # if source_found:
+                #     for retail_price in latest_price_records:
+                #         if retail_price.product.active:
+                #             retail_prices.append(retail_price)
+                #         if retail_price.price < retail_price.curr_target_price:
+                #             if not products_below_increased:
+                #                 products_below += 1
+                #                 products_below_increased = True
+                #             shops_below += 1
+                #         elif retail_price.price == retail_price.curr_target_price:
+                #             shops_equal += 1
+                #         elif retail_price.price > retail_price.curr_target_price:
+                #             shops_above += 1
+                    
+                product.shops_below = shops_below
+                product.shops_equal = shops_equal
+                product.shops_above = shops_above
+                product.shop_count = shops_below + shops_equal + shops_above
 
-                    products_below_increased = False
-                    if source_found:
-                        for retail_price in latest_price_records:
-                            if retail_price.product.active:
-                                retail_prices.append(retail_price)
-                            if retail_price.price < retail_price.curr_target_price:
-                                if not products_below_increased:
-                                    products_below += 1
-                                    products_below_increased = True
-                                shops_below += 1
-                            elif retail_price.price == retail_price.curr_target_price:
-                                shops_equal += 1
-                            elif retail_price.price > retail_price.curr_target_price:
-                                shops_above += 1
-                except:
-                    pass
-            product.shops_below = shops_below
-            product.shops_equal = shops_equal
-            product.shops_above = shops_above
-            product.shop_count = shops_below + shops_equal + shops_above
-            category.products_below = products_below
-            category.products_count = products_count
-            category.products_ok = products_count - products_below
+        category.products_below = products_below
+        category.products_count = products_count
+        category.products_ok = products_count - products_below
 
         local_dt = timezone.localtime(latest_timestamp)
         latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
@@ -690,7 +726,7 @@ class CategoryInfo(TemplateView):
             {
                 "category": category,
                 "products": products,
-                "retail_prices": retail_prices,
+                "retail_prices": retailprices,
                 "table_image_size": table_image_size,
                 "latest_timestamp": latest_timestamp,
                 "seller_flag": seller_flag,
@@ -779,17 +815,14 @@ class ManufacturerInfo(TemplateView):
         seller_flag = is_seller(user)
         table_image_size = "80x80"
         products_below = 0
-        products_ok = 0
         shops_below = 0
         shops_equal = 0
         shops_above = 0
+        products_count = 0
+        sources = Source.objects.all()
 
-        # manufacturer = Manufacturer.objects.get(id=kwargs['pk'])
         manufacturer = get_object_or_404(Manufacturer, id=kwargs["pk"])
-        # products = Product.objects.filter(manufacturer=kwargs['pk'])
         products = get_list_or_404(Product, manufacturer=kwargs["pk"])
-        # products_count = products.count()
-        products_count = len(products)
         if seller_flag:
             latest_timestamp = (
                 RetailPrice.objects.filter(
@@ -804,55 +837,74 @@ class ManufacturerInfo(TemplateView):
                 .latest("timestamp")
                 .timestamp
             )
-        retailprices = []
+        retailprices = RetailPrice.objects.none()
 
         for product in products:
-            shops_below = 0
-            shops_equal = 0
-            shops_above = 0
-            try:
-                if seller_flag:
-                    product_latest_timestamp = (
-                        RetailPrice.objects.filter(product=product, shop__seller=user)
-                        .latest("timestamp")
-                        .timestamp
-                    )
-                    latest_price_records = RetailPrice.objects.filter(
-                        product=product,
-                        timestamp=product_latest_timestamp,
-                        shop__seller=user,
-                    )
-                else:
-                    product_latest_timestamp = (
-                        RetailPrice.objects.filter(product=product)
-                        .latest("timestamp")
-                        .timestamp
-                    )
-                    latest_price_records = RetailPrice.objects.filter(
-                        product=product, timestamp=product_latest_timestamp
-                    )
-                products_below_increased = False
+            if product.active:
+                products_count += 1
+                latest_price_records = RetailPrice.objects.none()
+                shops_below = 0
+                shops_equal = 0
+                shops_above = 0
+                for source in sources:
+                    try:
+                        if seller_flag:
+                            if RetailPrice.objects.filter(product=product, shop__seller=user, source=source):
+                                product_latest_timestamp = (
+                                    RetailPrice.objects.filter(product=product, shop__seller=user, source=source)
+                                    .latest("timestamp")
+                                    .timestamp
+                                )
+                                latest_price_records = latest_price_records | RetailPrice.objects.filter(
+                                    product=product,
+                                    timestamp=product_latest_timestamp,
+                                    source=source,
+                                    shop__seller=user,
+                                )
+                        else:
+                            if RetailPrice.objects.filter(product=product, source=source):
+                                product_latest_timestamp = (
+                                    RetailPrice.objects.filter(product=product, source=source)
+                                    .latest("timestamp")
+                                    .timestamp
+                                )
+                                latest_price_records = latest_price_records | RetailPrice.objects.filter(
+                                    product=product, source=source, timestamp=product_latest_timestamp
+                                )
+                
+                    except:
+                        pass
+                retailprices = retailprices | latest_price_records
+                
                 for retail_price in latest_price_records:
-                    if retail_price.product.active:
-                        retailprices.append(retail_price)
                     if retail_price.price < retail_price.curr_target_price:
-                        if not products_below_increased:
-                            products_below += 1
-                            products_below_increased = True
-                        shops_below += 1
-                    elif retail_price.price == retail_price.curr_target_price:
-                        shops_equal += 1
-                    elif retail_price.price > retail_price.curr_target_price:
-                        shops_above += 1
-            except:
-                pass
+                        products_below += 1
+                        break
+                
+                unique_shops_min = {}
+                for retail_price in latest_price_records:
+                    if retail_price.shop.id in unique_shops_min:
+                        if unique_shops_min[retail_price.shop.id]['price'] < retail_price.price:
+                            unique_shops_min[retail_price.shop.id] = {'price': retail_price.price, 'target': retail_price.curr_target_price}
+                    else:
+                        unique_shops_min[retail_price.shop.id] = {'price': retail_price.price, 'target': retail_price.curr_target_price}
+                
+                for unique_shop in unique_shops_min:
+                    if unique_shops_min[unique_shop]['price'] < unique_shops_min[unique_shop]['target']:
+                        shops_below += 1    
+                    if unique_shops_min[unique_shop]['price'] == unique_shops_min[unique_shop]['target']:
+                        shops_equal += 1    
+                    if unique_shops_min[unique_shop]['price'] > unique_shops_min[unique_shop]['target']:
+                        shops_above += 1    
+
             product.shops_below = shops_below
             product.shops_equal = shops_equal
             product.shops_above = shops_above
             product.shops_count = shops_below + shops_equal + shops_above
-            manufacturer.products_below = products_below
-            manufacturer.products_count = products_count
-            manufacturer.products_ok = products_count - products_below
+            
+        manufacturer.products_below = products_below
+        manufacturer.products_count = products_count
+        manufacturer.products_ok = products_count - products_below
 
         local_dt = timezone.localtime(latest_timestamp)
         latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
