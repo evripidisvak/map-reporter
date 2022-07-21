@@ -48,9 +48,10 @@
                                 <th class="text-filter">SKU</th>
                                 <th class="select-filter">Κατηγορία</th>
                                 <th>Τιμή MAP</th>
-                                <th># Καταστημάτων</th>
+                                <th>Καταστήματα</th>
                                 <th>Κατ. Κάτω</th>
-                                <th>Κατ. OK</th>
+                                <th>Κατ. Ίσα</th>
+                                <th>Κατ. Πάνω</th>
                             </tr>
                             <tr class="bg-light head-filters">
                                 <th class="no-filter">Φωτογραφία</th>
@@ -59,9 +60,10 @@
                                 <th class="text">SKU</th>
                                 <th class="select">Κατηγορία</th>
                                 <th class="no-filter">Τιμή MAP</th>
-                                <th class="no-filter"># Καταστημάτων</th>
+                                <th class="no-filter">Καταστήματα</th>
                                 <th class="no-filter">Κατ. Κάτω</th>
-                                <th class="no-filter">Κατ. OK</th>
+                                <th class="no-filter">Κατ. Ίσα</th>
+                                <th class="no-filter">Κατ. Πάνω</th>
                             </tr>
                         </thead>
                           <tbody>
@@ -101,6 +103,9 @@
                                   </td>
                                   <td>
                                   {{product.shops_equal}}
+                                  </td>
+                                  <td>
+                                  {{product.shops_above}}
                                   </td>
                               </tr>
                               {% endfor %}
@@ -219,7 +224,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        {{retail_price.source}}
+                                        {{retail_price.source.domain}}
                                     </td>
                                     <td>
                                         {{retail_price.shop.is_key_account}}
