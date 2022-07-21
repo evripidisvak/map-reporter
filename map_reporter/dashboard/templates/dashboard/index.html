@@ -525,7 +525,7 @@
         // Filter event handler
         //if table is undefined, refresh the page.
         $( table_1.table().container() ).on( 'keyup', 'thead input', function () {
-            table.column( $(this).data('index') ).search( this.value ).draw();
+            table_1.column( $(this).data('index') ).search( this.value ).draw();
         } );
 
     /*DATERANGEPICKER START*/
