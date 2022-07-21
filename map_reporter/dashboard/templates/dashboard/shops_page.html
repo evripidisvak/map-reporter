@@ -198,30 +198,28 @@
                     customize: function(doc){
                         doc.content[1].table.dontBreakRows = true; 
                         doc.pageMargins = [ 1,1,1,1 ];
-                        doc.content[1].table.dontBreakRows = true;
-                        doc.styles.title = {
+                        doc.styles.tableHeader = {
                             alignment: "center",
-                            fontSize: 12,
-                            noWrap: true,
+                            bold: true,
+                            color: "white",
+                            fillColor: "#2d4154",
+                            fontSize: 8,
                         };
                         doc.styles.redcelleven = {
                             color: '#dc3545',
                             fillColor: '#fceaec',
-                            alignment: "center",
                         };
                         doc.styles.redcellodd = {
                             color: '#dc3545',
                             fillColor: '#e2d2d4',
-                            alignment: "center",
                         };
                         doc.styles.redroweven = {
                             fillColor: '#fceaec',
-                            alignment: "center",
                         };
                         doc.styles.redrowodd = {
                             fillColor: '#e2d2d4',
-                            alignment: "center",
                         };
+                        doc.defaultStyle.fontSize = 8;
                     },
                 },
                 {
