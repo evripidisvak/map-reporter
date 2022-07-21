@@ -218,7 +218,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for retail_price in retailprices %}
+                    {% for retail_price in table_retailprices %}
                     {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
                         <tr class="bg-danger" style="--bs-bg-opacity: .1;">
                     {% else %}
