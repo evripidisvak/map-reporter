@@ -7,13 +7,10 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.Index.as_view(), name='index'),
-    # path('login/', views.Login.as_view(), name='login'),
     path('accounts/', include('django.contrib.auth.urls')),
     path('logout/', views.logout_view, name='log_out'),
     path('all_products/', views.AllProducts.as_view(), name='all_products'),
-    path('data_tables/', views.DataTables.as_view(), name='data_tables'),
     path('product_info/<int:pk>/', views.ProductInfo.as_view(), name='product_info'),
-    # path('product_analysis/<int:pk>/', views.ProductAnalysis.as_view(), name='product_analysis'),
     path('shops/', views.ShopsPage.as_view(), name='shops_page'),
     path('shop/<int:pk>/', views.ShopInfo.as_view(), name='shop_info'),
     path('shop/<int:pk_shop>/product/<int:pk_product>/', views.ShopProductInfo.as_view(), name='shop_product_info'),

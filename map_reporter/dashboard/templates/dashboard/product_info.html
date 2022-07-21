@@ -214,7 +214,8 @@
                         {% if not seller_flag %}
                             <th class="select">Πωλητής</th>
                         {% endif %}
-                        <th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th>
+                        <th class="no-filter">Ημερομηνία</th>
+                        {% comment %} <th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th> {% endcomment %}
                     </tr>
                 </thead>
                 <tbody>
@@ -463,10 +464,17 @@
             };
             myLineChart.data = new_mixed_data;
             myLineChart.update();
+
+            // Update the table
             table_1.destroy();
             table = $('#table_1');
-
             table.html(my_response.table);
+            {% if not seller_flag %}
+                date_column_sort = 9;
+            {% else%}
+                date_column_sort = 8;
+            {% endif %}
+            config.order = [[date_column_sort, 'desc'], [1, 'asc'],];
             table_1 = $('#table_1').DataTable(config);
             config_the_table();
             table_1.draw();
@@ -526,7 +534,7 @@ $(document).ready(function() {
     } );
 
 /*DATERANGEPICKER START*/
-$(function() {
+/*$(function() {
     var start = moment("2022-01-01 12:34:16");
     var the_end = '{{daterange_timestamp}}';
     var end = moment(the_end);
@@ -587,18 +595,18 @@ $(function() {
 
 table_1.draw();
   $.fn.dataTable.ext.search.pop();
-});
+});*/
 } //config the table ends
 
 
   //initialise data table
-{% if not seller_flag %}
+/*{% if not seller_flag %}
   date_column_sort = 9;
 {% else%}
   date_column_sort = 8;
-{% endif %}
+{% endif %}*/
     config = {
-        order: [[date_column_sort, 'desc'],[1, 'asc']],
+        order: [[1, 'asc'],],
         dom: 'Bfplrtipl',
         info:true,
         searching: true,
@@ -650,11 +658,14 @@ table_1.draw();
                     },
                 },
                 customize: function(doc){
-                    doc.content[1].table.dontBreakRows = true;
-                    doc.styles.title = {
+                    doc.content[1].table.dontBreakRows = true; 
+                    doc.pageMargins = [ 1,1,1,1 ];
+                    doc.styles.tableHeader = {
                         alignment: "center",
-                        fontSize: 12,
-                        noWrap: true,
+                        bold: true,
+                        color: "white",
+                        fillColor: "#2d4154",
+                        fontSize: 8,
                     };
                     doc.styles.redcelleven = {
                         color: '#dc3545',
@@ -670,6 +681,7 @@ table_1.draw();
                     doc.styles.redrowodd = {
                         fillColor: '#e2d2d4',
                     };
+                    doc.defaultStyle.fontSize = 8;
                     for(j = 1; j < doc.content[1].table.body.length; j++){
                         red_row = false;
                         red_cell = false;
