@@ -26,7 +26,6 @@ from django.db.models import Q
 from dashboard.templatetags import dashboard_tags
 from sorl.thumbnail import get_thumbnail
 from django.conf import settings
-from .tables import ProductTable
 
 
 def is_seller(user):
