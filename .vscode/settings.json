@@ -1,3 +1,17 @@
 {
-    "python.formatting.provider": "black"
+    "atomKeymap.promptV3Features": true,
+    "editor.multiCursorModifier": "ctrlCmd",
+    "workbench.editor.enablePreview": false,
+    "editor.unicodeHighlight.ambiguousCharacters": false,
+    "diffEditor.wordWrap": "on",
+    "html.format.wrapLineLength": 100,
+    "editor.wordWrap": "on",
+    "editor.wordWrapColumn": 100,
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    },
+    "git.branchPrefix": "evr_",
+    "git.branchRandomName.enable": true,
+    "python.formatting.provider": "black",
+    "bookmarks.navigateThroughAllFiles": false,
 }
