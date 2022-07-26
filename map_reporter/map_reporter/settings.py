@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import os
 
+# test
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +28,7 @@ SECRET_KEY = 'django-insecure-=k1n2g+*x6xi-ja0k^u)xg3ce^)pyu6unxs9$+o2=v65g57t72
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.localhost', '127.0.0.1', '[::1]']
+ALLOWED_HOSTS = ['10.1.1.19', '.localhost', '127.0.0.1', '[::1]']
 
 
 # Application definition
@@ -84,12 +86,23 @@ WSGI_APPLICATION = 'map_reporter.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
+#DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.db.backends.sqlite3',
+#        'NAME': BASE_DIR / 'db.sqlite3',
+#    }
+#}
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'map_reporter',
+        'USER': 'map_reporter_usr',
+        'PASSWORD': 'd4m4pdb@!!@',
+        'HOST': 'localhost',
+        'PORT': '',
     }
 }
+
 
 
 # Password validation
@@ -136,10 +149,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Ours
 
+import os
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
+
+
 THUMBNAIL_DEBUG = True
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'uploads')
 MEDIA_URL = '/uploads/'
 # LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
-
