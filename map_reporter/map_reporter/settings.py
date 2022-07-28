@@ -28,7 +28,8 @@ SECRET_KEY = 'django-insecure-=k1n2g+*x6xi-ja0k^u)xg3ce^)pyu6unxs9$+o2=v65g57t72
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['meerkat.soundstar.gr', '10.1.1.19', '.localhost', '127.0.0.1', '[::1]']
+# ALLOWED_HOSTS = ['meerkat.soundstar.gr', '10.1.1.19', '.localhost', '127.0.0.1', '[::1]']
+ALLOWED_HOSTS = ['.localhost', '127.0.0.1', '[::1]']
 
 
 # Application definition
@@ -92,17 +93,26 @@ WSGI_APPLICATION = 'map_reporter.wsgi.application'
 #        'NAME': BASE_DIR / 'db.sqlite3',
 #    }
 # }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'map_reporter',
+#         'USER': 'map_reporter_usr',
+#         'PASSWORD': 'd4m4pdb@!!@',
+#         'HOST': 'localhost',
+#         'PORT': '',
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'map_reporter',
-        'USER': 'map_reporter_usr',
-        'PASSWORD': 'd4m4pdb@!!@',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'dev_map_reporter',
+        'USER': 'dev_usr',
+        'PASSWORD': 'devDB@!!@',
         'HOST': 'localhost',
         'PORT': '',
     }
 }
-
 
 
 # Password validation

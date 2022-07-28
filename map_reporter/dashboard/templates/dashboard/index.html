@@ -105,7 +105,7 @@
                             {% endif %}
                             <th>Ημερομηνία</th>
                         </tr>
-                    
+
                         <tr class="bg-light head-filters">
                             <th class="no-filter">Φωτογραφία</th>
                             <th class="text">Μοντέλο</th>
@@ -142,7 +142,7 @@
                                         <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
                                     {% endthumbnail %}
                                     </a>
-                                    
+
                                 </td>
                                 <td>
                                     <a href="{% url 'product_info' retail_price.product.id %}" class="link-dark">
@@ -232,7 +232,7 @@
         maintainAspectRatio: false,
     }
     });
-    
+
     // Pie Chart for shops
     var ctx = document.getElementById('PieChartShops');
     var myPieChart = new Chart(ctx, {
@@ -270,7 +270,7 @@
             export_cols.push(i);
         }
       }
-    
+
     {% if not seller_flag %}
         date_column_sort = 14;
     {% else %}
@@ -342,7 +342,7 @@
                         },
                     },
                     customize: function(doc){
-                        doc.content[1].table.dontBreakRows = true; 
+                        doc.content[1].table.dontBreakRows = true;
                         doc.pageMargins = [ 1,1,1,1 ];
                         doc.styles.tableHeader = {
                             alignment: "center",
@@ -419,7 +419,7 @@
                         columns: export_cols,
                         stripHtml: true,
                         },
-                }, 
+                },
                 {
                     extend:'csv',
                     className: 'btn btn-secondary',
@@ -451,13 +451,13 @@
                                 }
                                 else if (item.nodeName == 'STRONG'){
                                     result += item.outerHTML;
-                                } 
-                                else if (item.nodeName == 'A'){                                       
+                                }
+                                else if (item.nodeName == 'A'){
                                     result += item.outerHTML;
                                 }
                                 else {
                                     result += item.innerText;
-                                } 
+                                }
                               });
                               return result;
                             }
@@ -465,7 +465,7 @@
                         },
                         //customise print output
                         //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
-                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
                     customize: function(window, print_btn_object, api){
                         rows = api.rows({search:'applied'}).nodes();
                         columns = api.columns({search:'applied'}).nodes();
@@ -523,9 +523,9 @@
                     });
                 },
         });
-     
-      
-     
+
+
+
         // Filter event handler
         //if table is undefined, refresh the page.
         $( table_1.table().container() ).on( 'keyup', 'thead input', function () {
@@ -537,11 +537,11 @@
         var start = moment("2022-01-01 12:34:16");
         var the_end = '{{daterange_timestamp}}';
         var end = moment(the_end);
-    
+
         function cb() {
           $('#reportrange span').html('Επιλέξτε ημερομηνία');
         }
-    
+
         $('#reportrange').daterangepicker({
           startDate: moment().subtract(6, 'days'),
           endDate: moment(),
@@ -558,12 +558,12 @@
               format:"D/M/YYYY",
           },
         }, cb);
-    
+
         cb();
-    
+
       });
-     
-    
+
+
       $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
        var start = picker.startDate;
        var end = picker.endDate;
@@ -575,7 +575,7 @@
             var max = end;
             //dynamically find date column(must be the last column of the table)
             var startDate = moment(data[date_column], 'D/M/YYYY');
-            
+
             if (min == null && max == null) {
               return true;
             }
@@ -596,6 +596,6 @@
       $.fn.dataTable.ext.search.pop();
     });*/
     } );
-    
+
 </script>
 {% endblock %}
