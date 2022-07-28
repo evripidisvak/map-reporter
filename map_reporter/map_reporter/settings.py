@@ -86,22 +86,22 @@ WSGI_APPLICATION = 'map_reporter.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
 
-#DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.db.backends.sqlite3',
-#        'NAME': BASE_DIR / 'db.sqlite3',
-#    }
-#}
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'map_reporter',
-        'USER': 'map_reporter_usr',
-        'PASSWORD': 'd4m4pdb@!!@',
-        'HOST': 'localhost',
-        'PORT': '',
-    }
+   'default': {
+       'ENGINE': 'django.db.backends.sqlite3',
+       'NAME': BASE_DIR / 'db.sqlite3',
+   }
 }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'map_reporter',
+#         'USER': 'map_reporter_usr',
+#         'PASSWORD': 'd4m4pdb@!!@',
+#         'HOST': 'localhost',
+#         'PORT': '',
+#     }
+# }
 
 
 

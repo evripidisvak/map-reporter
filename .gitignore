@@ -44,3 +44,4 @@ sftp-config.json
 map_reporter/db (copy).sqlite3
 map_reporter/src/django-bootstrap-daterangepicker
 map_reporter/src/django-bootstrap-daterangepicker
+map_reporter/uploads
