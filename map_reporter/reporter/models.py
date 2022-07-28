@@ -71,13 +71,12 @@ class Product(models.Model):
         super().__init__(*args, **kwargs)
         self.__original_map_price = self.map_price
         # self.__original_key_acc_price = self.key_acc_price
-    
+
     def clean(self):
         new_map_price = self.map_price
-        # TODO What happens if the product does not exist?        
         update_woocommerce(self, new_map_price)
         super(Product, self).clean()
-    
+
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
         if not self.is_cleaned:
             self.full_clean()
@@ -87,7 +86,7 @@ class Product(models.Model):
         new_map_price = self.map_price
         super().save(force_insert, force_update, *args, **kwargs)
 
-        # TODO What happens if the product does not exist?        
+        # TODO What happens if the product does not exist?
         if new_map_price != old_map_price:
             MapPrice.objects.create(
                 price=new_map_price, timestamp=timezone.now(), product=self
@@ -123,7 +122,7 @@ class Product(models.Model):
                 sys.getsizeof(output),
                 None,
             )
-        
+
         super(Product, self).save()
 
     def is_active(self):
@@ -261,20 +260,12 @@ class RetailPrice(models.Model):
             return "Όχι"
 
 
-class KeyAccPrice(models.Model):
-    price = models.DecimalField(
-        max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
-    )
-    timestamp = models.DateTimeField()
-    product = models.ForeignKey(
-        Product, on_delete=models.CASCADE, blank=False, null=False, default=None
-    )
-
-    def __str__(self):
-        return self.price
-
-
 def update_woocommerce(self, new_map_price):
+    if new_map_price <= 0 or self.active == False:
+        new_map_price = ''
+    else:
+        new_map_price = str(new_map_price)
+
     try:
         wcapi = API(
             url="https://soundstar.gr/",
@@ -289,14 +280,14 @@ def update_woocommerce(self, new_map_price):
         meta_data = product[0]['meta_data']
         for data in meta_data:
             if data['key'] == '_b_price':
-                data['value'] = str(new_map_price)
+                data['value'] = new_map_price
                 found_meta = True
                 break
-        
+
         if not found_meta:
             meta_data.append({
                 'key': '_b_price',
-                'value': str(new_map_price)
+                'value': new_map_price
             })
 
         data = {
