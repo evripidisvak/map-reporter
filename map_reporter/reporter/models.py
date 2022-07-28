@@ -1,7 +1,10 @@
+from distutils.command.clean import clean
 from enum import unique
 import re
+from typing import List
 from django.db import models
 from decimal import Decimal
+from django.forms import ValidationError
 from django.utils import timezone
 from mptt.models import MPTTModel, TreeForeignKey
 from django.core.validators import RegexValidator
@@ -13,6 +16,9 @@ from io import BytesIO
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.contrib.auth.models import User, Group
+from woocommerce import API
+
+
 
 
 class Category(MPTTModel):
@@ -59,29 +65,33 @@ class Product(models.Model):
     )
     image_url = models.URLField(null=True, blank=True)
 
+    is_cleaned = False
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__original_map_price = self.map_price
         # self.__original_key_acc_price = self.key_acc_price
-
+    
+    def clean(self):
+        new_map_price = self.map_price
+        # TODO What happens if the product does not exist?        
+        update_woocommerce(self, new_map_price)
+        super(Product, self).clean()
+    
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
-        # Create new MapPrice and KeyAccPrice objects when these prices change
+        if not self.is_cleaned:
+            self.full_clean()
+
+        # Create new MapPrice objects when these prices change
         old_map_price = self.__original_map_price
         new_map_price = self.map_price
-
-        # old_key_acc_price = self.__original_key_acc_price
-        # new_key_acc_price = self.key_acc_price
         super().save(force_insert, force_update, *args, **kwargs)
 
+        # TODO What happens if the product does not exist?        
         if new_map_price != old_map_price:
             MapPrice.objects.create(
                 price=new_map_price, timestamp=timezone.now(), product=self
             )
-
-        # if new_key_acc_price != old_key_acc_price:
-        #     KeyAccPrice.objects.create(
-        #         price=new_key_acc_price, timestamp=timezone.now(), product=self
-        #     )
 
         # Save the image from the image_url field
         if self.image_url:
@@ -113,6 +123,7 @@ class Product(models.Model):
                 sys.getsizeof(output),
                 None,
             )
+        
         super(Product, self).save()
 
     def is_active(self):
@@ -261,3 +272,36 @@ class KeyAccPrice(models.Model):
 
     def __str__(self):
         return self.price
+
+
+def update_woocommerce(self, new_map_price):
+    try:
+        wcapi = API(
+            url="https://soundstar.gr/",
+            consumer_key="ck_80837502abc4a1151d99d09292234a859034a3ad",
+            consumer_secret="cs_a7b8eefeeb54db775fc651e6dab141d9e5b7f0b5",
+            timeout=50
+        )
+
+        product = wcapi.get('products/?sku='+self.sku).json()
+        found_meta = False
+        product_id = str(product[0]['id'])
+        meta_data = product[0]['meta_data']
+        for data in meta_data:
+            if data['key'] == '_b_price':
+                data['value'] = str(new_map_price)
+                found_meta = True
+                break
+        
+        if not found_meta:
+            meta_data.append({
+                'key': '_b_price',
+                'value': str(new_map_price)
+            })
+
+        data = {
+            'meta_data' : meta_data,
+        }
+        wcapi.put('products/'+product_id, data).json()
+    except:
+        raise ValidationError('Αυτό το SKU δεν αντιστοιχεί σε κάποιο προϊόν')
