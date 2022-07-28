@@ -72,7 +72,7 @@ class Command(BaseCommand):
             # check whether the process name matches
             # if geckodriver_proc in proc.name() or chromedriver_proc in proc.name():
             #     proc.kill()
-        create_files_and_send_emails(records)
+        # create_files_and_send_emails(records)
 
         print('Time to complete: ', time_needed)
         print('*************OK*******************')
@@ -259,7 +259,7 @@ def parse_urls(page_list_item):
             shop = ['Praktiker']
             off_seller = ['1']
             # save_prices(price, product_id, shop, off_seller, source_id)
-    
+
     elif source_id == 4: #Kotsovolos
         soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select(".prDetail .priceWithVat .simplePrice")
@@ -301,7 +301,7 @@ def parse_urls(page_list_item):
             price = [price]
             shop = ['You']
             off_seller = ['1']
-    
+
     elif source_id == 7: #Media Markt
         soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select("div.article__price.ng-star-inserted")
@@ -324,7 +324,7 @@ def parse_urls(page_list_item):
             price = [price]
             shop = ['Germanos']
             off_seller = ['1']
-    
+
     elif source_id == 9: #Electronet
         soup = BeautifulSoup(driver.page_source, 'lxml')
         pricear = soup.select(
