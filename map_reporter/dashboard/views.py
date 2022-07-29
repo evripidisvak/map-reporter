@@ -1004,14 +1004,14 @@ class ProductInfo(TemplateView):
                             source=source,
                             shop__seller=user
                         ).latest("timestamp").timestamp
-
-                        table_retailprices = table_retailprices | RetailPrice.objects.filter(
+                        tmp_retailprices = RetailPrice.objects.filter(
                             product=kwargs["pk"],
                             source=source,
                             timestamp=tmp_timestamp,
                             shop__seller=user
                         )
-                        for price in table_retailprices:
+                        table_retailprices = table_retailprices | tmp_retailprices
+                        for price in tmp_retailprices:
                             if price.price < price.curr_target_price:
                                 shops_below += 1
                             elif price.price == price.curr_target_price:
@@ -1037,13 +1037,13 @@ class ProductInfo(TemplateView):
                             product=kwargs["pk"],
                             source=source,
                         ).latest("timestamp").timestamp
-
-                        table_retailprices = table_retailprices | RetailPrice.objects.filter(
+                        tmp_retailprices = RetailPrice.objects.filter(
                             product=kwargs["pk"],
                             source=source,
                             timestamp=tmp_timestamp,
                         )
-                        for price in table_retailprices:
+                        table_retailprices = table_retailprices | tmp_retailprices
+                        for price in tmp_retailprices:
                             if price.price < price.curr_target_price:
                                 shops_below += 1
                             elif price.price == price.curr_target_price:
