@@ -55,9 +55,6 @@ class Product(models.Model):
     map_price = models.DecimalField(
         max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     )
-    # key_acc_price = models.DecimalField(
-    #     max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
-    # )
     main_category = models.ForeignKey(Category, models.SET_NULL, blank=True, null=True)
     upload_path = "product_images"
     image = models.ImageField(
@@ -74,7 +71,7 @@ class Product(models.Model):
 
     def clean(self):
         new_map_price = self.map_price
-        update_woocommerce(self, new_map_price)
+        # update_woocommerce(self, new_map_price)
         super(Product, self).clean()
 
     def save(self, force_insert=False, force_update=False, *args, **kwargs):
