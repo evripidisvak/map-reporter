@@ -47,3 +47,4 @@ map_reporter/src/django-bootstrap-daterangepicker
 map_reporter/uploads
 map_reporter/reports
 map_reporter/map_reporter/settings.py
+map_reporter/reporter/wc_api.py
