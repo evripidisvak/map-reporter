@@ -20,6 +20,7 @@ urlpatterns = [
     path('manufacturer/<int:pk>/', views.ManufacturerInfo.as_view(), name='manufacturer_info'),
     path('search_results/<str:term>', views.SearchResults.as_view(), name='search_results'),
     path('topbar_seach/', views.topbar_search, name='topbar_search'),
+    # path('__debug__/', include('debug_toolbar.urls')),
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
