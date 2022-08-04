@@ -40,3 +40,4 @@ woocommerce==3.0.0
 openpyxl==3.0.10
 lxml==4.9.1
 XlsxWriter==3.0.3
+# django_debug_toolbar==3.5.0

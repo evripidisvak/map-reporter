@@ -22,7 +22,7 @@ import datetime
 from datetime import timedelta
 from django.core import serializers
 from django.contrib.auth.views import *
-from django.db.models import Q
+from django.db.models import Q, F
 from dashboard.templatetags import dashboard_tags
 from sorl.thumbnail import get_thumbnail
 from django.conf import settings
@@ -293,15 +293,17 @@ class ShopsPage(TemplateView):
         latest_timestamp = RetailPrice.objects.latest("timestamp").timestamp
         if not latest_timestamp:
             raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
-        # products = Product.objects.filter(active=True)
-        products = get_list_or_404(Product, active=True)
+        products = Product.objects.filter(active=True).select_related()
+        # products = get_list_or_404(Product, active=True)
+
+        prefetch = Prefetch('products', queryset=Product.objects.distinct())
 
         if seller_flag:
-            # shops = Shop.objects.filter(seller=user)
-            shops = get_list_or_404(Shop, seller=user)
+            shops = Shop.objects.filter(seller=user).prefetch_related(prefetch)
+            # shops = get_list_or_404(Shop, seller=user)
         else:
-            # shops = Shop.objects.all()
-            shops = get_list_or_404(Shop)
+            shops = Shop.objects.all().prefetch_related(prefetch)
+            # shops = get_list_or_404(Shop)
 
         this_shop_below = 0
         this_shop_equal = 0
@@ -310,21 +312,29 @@ class ShopsPage(TemplateView):
         shops_below = 0
         shops_ok = 0
 
+        retailprices = RetailPrice.objects.filter(shop__in=shops, product__in=products).select_related()
+
         for shop in shops:
             this_shop_below = 0
             this_shop_equal = 0
             this_shop_above = 0
-            for product in products:
+            for product in shop.products.all():
+                looped = False
+                for price in retailprices:
+                    if price.shop==shop and price.product==product:
+                        if not looped:
+                            latest_price_records = price
+                            looped = True
+                        if latest_price_records.timestamp > price.timestamp:
+                            latest_price_records = price
                 try:
-                    latest_price_records = RetailPrice.objects.filter(
-                        shop=shop, product=product
-                    ).latest("timestamp")
-                    if latest_price_records.price < latest_price_records.curr_target_price:
-                        this_shop_below += 1
-                    elif latest_price_records.price == latest_price_records.curr_target_price:
-                        this_shop_equal += 1
-                    elif latest_price_records.price > latest_price_records.curr_target_price:
-                        this_shop_above += 1
+                    if latest_price_records:
+                        if latest_price_records.price < latest_price_records.curr_target_price:
+                            this_shop_below += 1
+                        elif latest_price_records.price == latest_price_records.curr_target_price:
+                            this_shop_equal += 1
+                        elif latest_price_records.price > latest_price_records.curr_target_price:
+                            this_shop_above += 1
                 except:
                     pass
             shop.this_shop_below = this_shop_below

@@ -68,10 +68,10 @@ class Command(BaseCommand):
                             print('Key account page scraped: ', url)
         geckodriver_proc = "geckodriver"  # or chromedriver or IEDriverServer
         chromedriver_proc = "chromedriver"  # or geckodriver or IEDriverServer
-        # for proc in psutil.process_iter():
-            # check whether the process name matches
-            # if geckodriver_proc in proc.name() or chromedriver_proc in proc.name():
-            #     proc.kill()
+        for proc in psutil.process_iter():
+            #     check whether the process name matches
+            if geckodriver_proc in proc.name() or chromedriver_proc in proc.name():
+                proc.kill()
         # create_files_and_send_emails(records)
 
         print('Time to complete: ', time_needed)
