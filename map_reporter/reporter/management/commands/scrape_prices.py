@@ -1,6 +1,6 @@
 import concurrent.futures
 import logging.handlers
-import os
+import os, subprocess
 import random
 import smtplib
 import sys
@@ -119,7 +119,12 @@ def parse_urls(page_list_item):
             options = Options()
             options.headless = True
 
-            path = "/usr/local/bin/geckodriver"
+            path = (
+                subprocess.run(["which", "geckodriver"], capture_output=True)
+                .stdout.strip()
+                .decode("utf-8")
+            )
+
             s = Service(path)
 
             driver = webdriver.Firefox(options=options, service=s)
