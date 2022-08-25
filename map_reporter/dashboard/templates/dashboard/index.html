@@ -79,7 +79,7 @@
         <div class='card mb-4'>
             <div class='card-header mb-4'>
                 <i class='fas fa-table me-1'></i>
-                Τελευταίες τιμές όλων των ενεργών προϊόντων με πρόβλημα
+                Τελευταίες χαμηλότερες τιμές όλων των ενεργών προϊόντων με πρόβλημα
             </div>
             <div class="card-body overflow-auto">
 
@@ -117,8 +117,8 @@
                             <th class="no-filter">Τιμή MAP</th>
                             <th class="no-filter">Διαφ.</th>
                             <th class="no-filter">Διαφ. %</th>
+                            <th class="select">Πηγή</th>
                             <th class="select">Key Account</th>
-                            <th class="select">Επ. Μεταπωλ.</th>
                             <th class="select">Επ. Μεταπωλ.</th>
 
                             {% if not seller_flag %}
@@ -130,40 +130,32 @@
                     </thead>
                     <tbody>
                     {% for retail_price in retail_prices %}
-                        {% if retail_price.product.active %}
-                        {% if retail_price.price|sub:retail_price.curr_target_price < 0 %}
                             <tr class="bg-danger" style="--bs-bg-opacity: .1;">
-                        {% else %}
-                            <tr>
-                        {% endif %}
                                 <td>
-                                    <a href="{% url 'product_info' retail_price.product.id %}">
-                                    {% thumbnail retail_price.product.image table_image_size as im %}
-                                        <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
-                                    {% endthumbnail %}
-                                    </a>
-
-                                </td>
-                                <td>
-                                    <a href="{% url 'product_info' retail_price.product.id %}" class="link-dark">
-                                        {{retail_price.product.model}}
+                                    <a href="{% url 'product_info' retail_price.product_id %}" class="link-dark">
+                                        <img src="{{retail_price.product_image}}" aria-src="{{ retail_price.product_image|datalize }}" alt="{{retail_price.product}}" loading="lazy" class="product_image">
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'manufacturer_info' retail_price.product.manufacturer.id %}" class="link-dark">
-                                        {{retail_price.product.manufacturer}}
+                                    <a href="{% url 'product_info' retail_price.product_id %}" class="link-dark">
+                                        {{retail_price.product_model}}
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'category_info' retail_price.product.main_category.id %}" class="link-dark">
-                                        {{retail_price.product.main_category}}
+                                    <a href="{% url 'manufacturer_info' retail_price.product_manufacturer_id %}" class="link-dark">
+                                        {{retail_price.product_manufacturer}}
                                     </a>
                                 </td>
                                 <td>
-                                    {{retail_price.product.sku}}
+                                    <a href="{% url 'category_info' retail_price.product_category_id %}" class="link-dark">
+                                        {{retail_price.product_category}}
+                                    </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'shop_info' retail_price.shop.id %}" class="link-dark">{{retail_price.shop}}</a>
+                                    {{retail_price.product_sku}}
+                                </td>
+                                <td>
+                                    <a href="{% url 'shop_info' retail_price.shop_id %}" class="link-dark">{{retail_price.shop}}</a>
                                 </td>
                                 <td>
                                     {{retail_price.price}} €
@@ -194,7 +186,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {{retail_price.source.domain}}
+                                    {{retail_price.source_domain}}
                                 </td>
                                 <td>
                                     {{retail_price.shop.is_key_account}}
@@ -203,11 +195,16 @@
                                     {{ retail_price.is_shop_official_reseller }}
                                 </td>
                                 {% if not seller_flag %}
-                                <td>{{ retail_price.shop.seller.last_name }}</td>
+                                <td>{% if retail_price.shop.seller.last_name %}
+                                        {{retail_price.shop.seller.last_name}}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
                                 {% endif %}
                                 <td>{{retail_price.timestamp|date:"d/m/Y, H:i"}}</td>
                             </tr>
-                        {% endif %}
+                        {% comment %} {% endif %} {% endcomment %}
                     {% endfor %}
                     </tbody>
                 </table>

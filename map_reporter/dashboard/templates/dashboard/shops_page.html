@@ -28,9 +28,9 @@
             </div>
         </div>
         <div class="col col-6">
-        </div> 
-    </div>    
-</div>    
+        </div>
+    </div>
+</div>
     <div class="container-fluid mb-5">
         <div class="row">
             <div class="col">
@@ -75,7 +75,11 @@
                                         </td>
                                         {% if not seller_flag %}
                                         <td>
-                                            {{shop.seller.last_name}}
+                                            {% if shop.seller.last_name %}
+                                                {{shop.seller.last_name}}
+                                            {% else %}
+                                                -
+                                            {% endif %}
                                         </td>
                                         {% endif %}
                                         <td>
@@ -102,7 +106,7 @@
             </div>
         </div>
     </div>
-    
+
   <script>
     {% comment %} Chart.defaults.global.defaultFontFamily = '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
     Chart.defaults.global.defaultFontColor = '#292b2c'; {% endcomment %}
@@ -196,7 +200,7 @@
                         },
                     },
                     customize: function(doc){
-                        doc.content[1].table.dontBreakRows = true; 
+                        doc.content[1].table.dontBreakRows = true;
                         doc.pageMargins = [ 1,1,1,1 ];
                         doc.styles.tableHeader = {
                             alignment: "center",
@@ -229,7 +233,7 @@
                     exportOptions: {
                         stripHtml: true,
                         },
-                }, 
+                },
                 {
                     extend:'csv',
                     className: 'btn btn-secondary',
@@ -260,13 +264,13 @@
                                 }
                                 else if (item.nodeName == 'STRONG'){
                                     result += item.outerHTML;
-                                } 
-                                else if (item.nodeName == 'A'){                                       
+                                }
+                                else if (item.nodeName == 'A'){
                                     result += item.outerHTML;
                                 }
                                 else {
                                     result += item.innerText;
-                                } 
+                                }
                               });
                               return result;
                             }
@@ -274,7 +278,7 @@
                         },
                         //customise print output
                         //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
-                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
                     customize: function(window, print_btn_object, api){
                         rows = api.rows({search:'applied'}).nodes();
                         columns = api.columns({search:'applied'}).nodes();
@@ -332,9 +336,9 @@
                     });
                 },
         });
-     
-      
-     
+
+
+
         // Filter event handler
         //if table is undefined, refresh the page.
         $( table_1.table().container() ).on( 'keyup', 'thead input', function () {

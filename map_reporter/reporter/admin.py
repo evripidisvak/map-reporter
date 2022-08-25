@@ -44,6 +44,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = (
         ("main_category", TreeRelatedFieldListFilter),
         "active",
+        ("page", admin.EmptyFieldListFilter),
     )
     list_select_related = ("main_category",)
     formfield_overrides = {
@@ -97,13 +98,24 @@ class MapPriceView(admin.ModelAdmin):
 
 
 class RetailPriceView(admin.ModelAdmin):
-    list_display = ("product", "price", "shop", "official_reseller", "source", "timestamp")
+    list_display = (
+        "product",
+        "price",
+        "shop",
+        "official_reseller",
+        "source",
+        "timestamp",
+    )
     list_filter = ["product", "shop"]
 
 
 class ShopAdminView(admin.ModelAdmin):
     list_display = ("name", "key_account", "seller_last_name")
-    list_filter = ["key_account", "seller__last_name", ("seller", admin.EmptyFieldListFilter)]
+    list_filter = [
+        "key_account",
+        "seller__last_name",
+        ("seller", admin.EmptyFieldListFilter),
+    ]
     search_fields = ["name"]
 
     def seller_last_name(self, obj):
@@ -118,11 +130,21 @@ class ManufacturerView(admin.ModelAdmin):
     search_fields = ["name"]
 
 
+class PageAdminView(admin.ModelAdmin):
+    search_fields = [
+        "url",
+        "product__model",
+        "product__sku",
+        "product__manufacturer__name",
+    ]
+    list_filter = ["valid", "source"]
+
+
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(Product, ProductAdmin)
 admin.site.register(Manufacturer, ManufacturerView)
 admin.site.register(Source)
-admin.site.register(Page)
+admin.site.register(Page, PageAdminView)
 admin.site.register(Shop, ShopAdminView)
 admin.site.register(RetailPrice, RetailPriceView)
 admin.site.register(MapPrice, MapPriceView)
