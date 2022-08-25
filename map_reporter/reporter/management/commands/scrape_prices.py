@@ -1,6 +1,6 @@
 import concurrent.futures
 import logging.handlers
-import os
+import os, subprocess
 import random
 import smtplib
 import sys
@@ -29,7 +29,7 @@ startTime = datetime.now()
 
 
 class Command(BaseCommand):
-    help = 'Runs the scraper'
+    help = "Runs the scraper"
 
     # if __name__ == '__main__':
 
@@ -38,13 +38,14 @@ class Command(BaseCommand):
         global my_proxies
         my_proxies = []
         records = []
-        page_list = Page.objects.all()
+        page_list = Page.objects.filter(valid=True)
         failedRecords = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             # Start the load operations and mark each future with its URL
             while len(page_list) > 0:
-                future_to_url = {executor.submit(
-                    parse_urls, url): url for url in page_list}
+                future_to_url = {
+                    executor.submit(parse_urls, url): url for url in page_list
+                }
                 page_list = []
                 for future in concurrent.futures.as_completed(future_to_url):
                     url = future_to_url[future]
@@ -52,20 +53,36 @@ class Command(BaseCommand):
                     try:
                         data = future.result()
                     except Exception as exc:
-                        print('%r generated an exception: %s' %
-                              (url, traceback.format_exc()))
+                        print(
+                            "%r generated an exception: %s"
+                            % (url, traceback.format_exc())
+                        )
                         # print('%r generated an exception: %s' % (url, exc))
-                        page_list.append(url)
+                        if not hasattr(url, "retries") or url.retries < 3:
+                            if hasattr(url, "retries"):
+                                url.retries += 1
+                            else:
+                                url.retries = 1
+                            page_list.append(url)
+                        else:
+                            page = Page.objects.get(id=url.id)
+                            page.valid = False
+                            page.save()
+
                     else:
-                        if data != 'Key Account':
+                        if data != "Key Account":
                             records.append(data)
-                            todayDate = datetime.today().strftime('%d-%m-%Y')
+                            todayDate = datetime.today().strftime("%d-%m-%Y")
                             time_needed = datetime.now() - startTime
                             time_needed = str(time_needed)
-                            print('*** *** *** Processed URLs: ' +
-                                format(len(records)) + ' in ' + format(time_needed))
+                            print(
+                                "*** *** *** Processed URLs: "
+                                + format(len(records))
+                                + " in "
+                                + format(time_needed)
+                            )
                         else:
-                            print('Key account page scraped: ', url)
+                            print("Key account page scraped: ", url)
         geckodriver_proc = "geckodriver"  # or chromedriver or IEDriverServer
         chromedriver_proc = "chromedriver"  # or geckodriver or IEDriverServer
         for proc in psutil.process_iter():
@@ -74,8 +91,8 @@ class Command(BaseCommand):
                 proc.kill()
         # create_files_and_send_emails(records)
 
-        print('Time to complete: ', time_needed)
-        print('*************OK*******************')
+        print("Time to complete: ", time_needed)
+        print("*************OK*******************")
         # sys.exit()
 
 
@@ -102,7 +119,12 @@ def parse_urls(page_list_item):
             options = Options()
             options.headless = True
 
-            path = ('/usr/local/bin/geckodriver')
+            path = (
+                subprocess.run(["which", "geckodriver"], capture_output=True)
+                .stdout.strip()
+                .decode("utf-8")
+            )
+
             s = Service(path)
 
             driver = webdriver.Firefox(options=options, service=s)
@@ -123,222 +145,262 @@ def parse_urls(page_list_item):
                 my_proxies.remove(proxy)
                 print("*** Proxy Removed *** ", len(my_proxies))
             if len(my_proxies) <= 50:
-                print('&&& Remaining my_proxies: ', len(
-                    my_proxies), '. Trying to find new my_proxies')
+                print(
+                    "&&& Remaining my_proxies: ",
+                    len(my_proxies),
+                    ". Trying to find new my_proxies",
+                )
                 my_proxies = get_new_proxies()
 
     # sleep for random amount of time
     secs = random.random() + 1
     time.sleep(secs)
 
-    if source_id == 1: #Skroutz
-    # execute script to scroll down the page
-        try:
-            len_of_page = driver.execute_script(
-                "var len_of_page=document.body.scrollHeight;return len_of_page;")
-        except:
-            # driver.quit()
-            raise ValueError('Page has no length')
-        current_height = 0
-        while current_height < len_of_page:
-            scroll_height = random.randint(250, 350)
-            driver.execute_script(
-                "window.scrollBy({top: " + str(scroll_height) + ", left: 0, behavior: 'smooth'});")
-            time.sleep(random.random() + 0.5)
-            current_height = current_height + scroll_height
+    try:
+        if source_id == 1:  # Skroutz
+            # execute script to scroll down the page
+            try:
+                len_of_page = driver.execute_script(
+                    "var len_of_page=document.body.scrollHeight;return len_of_page;"
+                )
+            except:
+                # driver.quit()
+                raise ValueError("Page has no length")
+            current_height = 0
+            while current_height < len_of_page:
+                scroll_height = random.randint(250, 350)
+                driver.execute_script(
+                    "window.scrollBy({top: "
+                    + str(scroll_height)
+                    + ", left: 0, behavior: 'smooth'});"
+                )
+                time.sleep(random.random() + 0.5)
+                current_height = current_height + scroll_height
 
-        # sleep for random amount of time
-        time.sleep(random.random() + 0.3)
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        driver.quit()
-        # if product does not have a dedicated page
-        if soup.find("h1", class_="page-title"):
-            h1 = soup.find("h1", class_="page-title")
-            print(h1)
-        else:
-            print("NO PROPER H1 FOUND")
-        if soup.find("a", class_="closable-tag"):
-            title = soup.find("a", class_="closable-tag")
-            if title:
-                title = title.text
-            shop = soup.findAll("button", class_="js-shop-info-link")
-            for s in shop:
-                if s and len(s) > 0:
-                    shop[shop.index(s)] = s.text
-                else:
-                    shop[shop.index(s)] = 'NAN'
-            price = soup.findAll("a", class_="js-sku-link product-link")
-            for pri in price:
-                if pri and len(pri) > 0:
-                    for span in pri.findAll('span'):
-                        span.decompose()
-                    price[price.index(pri)] = pri.text.strip(
-                        ' €').replace('.', '').replace(',', '.')
-                else:
-                    price[price.index(pri)] = '9999'
-            off_seller = soup.findAll("span", class_="payment-options")
-            for os in off_seller:
-                if 'Επίσημος μεταπωλητής' in os.text:
-                    off_seller[off_seller.index(os)] = 'Επίσημος μεταπωλητής'
-                else:
-                    off_seller[off_seller.index(os)] = ''
-        else:
-            # if product has a dedicated product page
-            title = soup.find("h1", class_="page-title")
-            if title:
-                title = title.text
-            shop = soup.findAll("p", class_="shop-name")
-            if soup.find("span", class_="obsolete-sku") or soup.find("div", class_="obsolete-sku") or soup.find("div", class_="unavailable-sku"):
-                shop = 'Μ/Δ'
-                price = '9999'
-                off_seller = 'Μ/Δ'
+            # sleep for random amount of time
+            time.sleep(random.random() + 0.3)
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            # driver.quit()
+            # if product does not have a dedicated page
+            if soup.find("h1", class_="page-title"):
+                h1 = soup.find("h1", class_="page-title")
+                print(h1)
             else:
-                if len(shop) < 1:
-                    raise ValueError
-                price = soup.findAll("strong", class_="dominant-price")
-                off_seller = soup.findAll("div", class_="shop-info-row")
-                # Clean data
-                if title and len(title) > 0:
-                    title = title.strip()
-                else:
-                    # title = 'NAN'
-                    raise TypeError
+                print("NO PROPER H1 FOUND")
+            if soup.find("a", class_="closable-tag"):
+                title = soup.find("a", class_="closable-tag")
+                if title:
+                    title = title.text
+                shop = soup.findAll("button", class_="js-shop-info-link")
                 for s in shop:
                     if s and len(s) > 0:
                         shop[shop.index(s)] = s.text
                     else:
-                        shop[shop.index(s)] = 'NAN'
+                        shop[shop.index(s)] = "NAN"
+                price = soup.findAll("a", class_="js-sku-link product-link")
                 for pri in price:
                     if pri and len(pri) > 0:
-                        if pri.find('span', 'vatfree-price'):
-                            pri.find('span', 'vatfree-price').decompose()
-                        price[price.index(pri)] = pri.text.strip(
-                            ' €').replace('.', '').replace(',', '.')
+                        for span in pri.findAll("span"):
+                            span.decompose()
+                        price[price.index(pri)] = (
+                            pri.text.strip(" €").replace(".", "").replace(",", ".")
+                        )
                     else:
-                        price[price.index(pri)] = '9999'
+                        price[price.index(pri)] = "9999"
+                off_seller = soup.findAll("span", class_="payment-options")
                 for os in off_seller:
-                    if 'Επίσημος μεταπωλητής' in os.text:
-                        off_seller[off_seller.index(os)] = 1
+                    if "Επίσημος μεταπωλητής" in os.text:
+                        off_seller[off_seller.index(os)] = "Επίσημος μεταπωλητής"
                     else:
-                        off_seller[off_seller.index(os)] = 0
-        info.append(url)
-        info.append(title)
-        info.append(shop)
-        info.append(price)
-        info.append(off_seller)
-        # info.append(page_id)
-        # save_prices(price, product_id, shop, off_seller, source_id)
-
-    elif source_id == 2: #Plaisio
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        if soup.find('body', class_="neterror") or soup.find('h1').text == 'Access Denied':
-            print('*** Network Error ***')
-            raise ValueError('Network Error')
-        pricear = soup.select(".pdp-price-container .pdp-price-container__price .product-price .price")
-        if pricear:
-            price = pricear[0].text.strip(' €').strip().replace(',', '.')
-            price = [price]
-            shop = ['Plaisio']
-            off_seller = ['1']
+                        off_seller[off_seller.index(os)] = ""
+            else:
+                # if product has a dedicated product page
+                title = soup.find("h1", class_="page-title")
+                if title:
+                    title = title.text
+                shop = soup.findAll("p", class_="shop-name")
+                if (
+                    soup.find("span", class_="obsolete-sku")
+                    or soup.find("div", class_="obsolete-sku")
+                    or soup.find("div", class_="unavailable-sku")
+                ):
+                    shop = "Μ/Δ"
+                    price = "9999"
+                    off_seller = "Μ/Δ"
+                else:
+                    if len(shop) < 1:
+                        raise ValueError
+                    price = soup.findAll("strong", class_="dominant-price")
+                    off_seller = soup.findAll("div", class_="shop-info-row")
+                    # Clean data
+                    if title and len(title) > 0:
+                        title = title.strip()
+                    else:
+                        # title = 'NAN'
+                        raise TypeError
+                    for s in shop:
+                        if s and len(s) > 0:
+                            shop[shop.index(s)] = s.text
+                        else:
+                            shop[shop.index(s)] = "NAN"
+                    for pri in price:
+                        if pri and len(pri) > 0:
+                            if pri.find("span", "vatfree-price"):
+                                pri.find("span", "vatfree-price").decompose()
+                            price[price.index(pri)] = (
+                                pri.text.strip(" €").replace(".", "").replace(",", ".")
+                            )
+                        else:
+                            price[price.index(pri)] = "9999"
+                    for os in off_seller:
+                        if "Επίσημος μεταπωλητής" in os.text:
+                            off_seller[off_seller.index(os)] = 1
+                        else:
+                            off_seller[off_seller.index(os)] = 0
+            info.append(url)
+            info.append(title)
+            info.append(shop)
+            info.append(price)
+            info.append(off_seller)
+            # info.append(page_id)
             # save_prices(price, product_id, shop, off_seller, source_id)
 
-    elif source_id == 3: #Praktiker
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        if soup.find('body', class_="neterror") or soup.find('h1').text == 'Access Denied':
-            print('*** Network Error ***')
-            raise ValueError('Network Error')
-        pricear = soup.select("span.product__price.product__price--main")
-        pricear_sale = soup.select("span.product__price.product__price--main.product__price--discounted")
-        shop = 'Praktiker'
-        if pricear:
-            price = pricear[0].text.strip().replace(',', '.').rstrip().strip('€')
-        elif pricear_sale:
-            price = pricear_sale[0].text.strip().replace(',', '.').rstrip().strip('€')
-        if price is not None:
-            price = [price]
-            shop = ['Praktiker']
-            off_seller = ['1']
-            # save_prices(price, product_id, shop, off_seller, source_id)
+        elif source_id == 2:  # Plaisio
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            if (
+                soup.find("body", class_="neterror")
+                or soup.find("h1").text == "Access Denied"
+            ):
+                print("*** Network Error ***")
+                raise ValueError("Network Error")
+            pricear = soup.select(
+                ".pdp-price-container .pdp-price-container__price .product-price .price"
+            )
+            if pricear:
+                price = pricear[0].text.strip(" €").strip().replace(",", ".")
+                price = [price]
+                shop = ["Plaisio"]
+                off_seller = ["1"]
+                # save_prices(price, product_id, shop, off_seller, source_id)
 
-    elif source_id == 4: #Kotsovolos
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        pricear = soup.select(".prDetail .priceWithVat .simplePrice")
-        pricear_sale = soup.select(".prDetail .priceWithVat .price")
-        shop = 'Kotsovolos'
-        if pricear:
-            pricear[0].find('span', 'main-price').decompose()
-            price = pricear[0].text.strip().replace(',', '.')
-        elif pricear_sale:
-            for elem in pricear_sale:
-                if elem.find('span', 'main-price'):
-                    elem.find('span', 'main-price').decompose()
-                    price = elem.text.strip().replace(',', '.')
-        if price is not None:
-            price = [price]
-            shop = ['Kotsovolos']
-            off_seller = ['1']
-            # save_prices(price, product_id, shop, off_seller, source_id)
+        elif source_id == 3:  # Praktiker
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            if (
+                soup.find("body", class_="neterror")
+                or soup.find("h1").text == "Access Denied"
+            ):
+                print("*** Network Error ***")
+                raise ValueError("Network Error")
+            pricear = soup.select("span.product__price.product__price--main")
+            pricear_sale = soup.select(
+                "span.product__price.product__price--main.product__price--discounted"
+            )
+            shop = "Praktiker"
+            if pricear:
+                price = pricear[0].text.strip().replace(",", ".").rstrip().strip("€")
+            elif pricear_sale:
+                price = (
+                    pricear_sale[0].text.strip().replace(",", ".").rstrip().strip("€")
+                )
+            if price is not None:
+                price = [price]
+                shop = ["Praktiker"]
+                off_seller = ["1"]
+                # save_prices(price, product_id, shop, off_seller, source_id)
 
-    elif source_id == 5: #Public
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        pricear = soup.select(
-            "div.product__price.product__price--xlarge.text-primary")
-        if pricear and pricear != '' and '\n' not in pricear[0].text:
-            price = pricear[0].text.strip(' €').replace(',', '.')
-        if price is not None:
-            price = [price]
-            shop = ['Public']
-            off_seller = ['1']
-            # save_prices(price, product_id, shop, off_seller, source_id)
+        elif source_id == 4:  # Kotsovolos
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            pricear = soup.select(".prDetail .priceWithVat .simplePrice")
+            pricear_sale = soup.select(".prDetail .priceWithVat .price")
+            shop = "Kotsovolos"
+            if pricear:
+                pricear[0].find("span", "main-price").decompose()
+                price = pricear[0].text.strip().replace(",", ".")
+            elif pricear_sale:
+                for elem in pricear_sale:
+                    if elem.find("span", "main-price"):
+                        elem.find("span", "main-price").decompose()
+                        price = elem.text.strip().replace(",", ".")
+            if price is not None:
+                price = [price]
+                shop = ["Kotsovolos"]
+                off_seller = ["1"]
+                # save_prices(price, product_id, shop, off_seller, source_id)
 
-    elif source_id == 6: #You
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        pricear = soup.select("div.price.new-price span.final-price")
-        shop = 'You'
-        if pricear:
-            price = pricear[0].text.strip(' €').replace(',', '.')
-        if price is not None:
-            price = [price]
-            shop = ['You']
-            off_seller = ['1']
+        elif source_id == 5:  # Public
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            pricear = soup.select(
+                "div.product__price.product__price--xlarge.text-primary"
+            )
+            if pricear and pricear != "" and "\n" not in pricear[0].text:
+                price = pricear[0].text.strip(" €").replace(",", ".")
+            if price is not None:
+                price = [price]
+                shop = ["Public"]
+                off_seller = ["1"]
+                # save_prices(price, product_id, shop, off_seller, source_id)
 
-    elif source_id == 7: #Media Markt
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        pricear = soup.select("div.article__price.ng-star-inserted")
-        if pricear:
-            price = pricear[0].text.replace(',', '.')
-        if price is not None:
-            price = [price]
-            shop = ['Media Markt']
-            off_seller = ['1']
+        elif source_id == 6:  # You
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            pricear = soup.select("div.price.new-price span.final-price")
+            shop = "You"
+            if pricear:
+                price = pricear[0].text.strip(" €").replace(",", ".")
+            if price is not None:
+                price = [price]
+                shop = ["You"]
+                off_seller = ["1"]
 
-    elif source_id == 8: #Germanos
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        pricear = soup.select("div.product-price span.price")
-        pricear_sale = soup.select("div.product-price span.special-price")
-        if pricear:
-            price = pricear[0].text.strip().replace(',', '.').rstrip().strip('€')
-        elif pricear_sale:
-            price = pricear_sale[0].text.strip().replace(',', '.').rstrip().strip('€')
-        if price is not None:
-            price = [price]
-            shop = ['Germanos']
-            off_seller = ['1']
+        elif source_id == 7:  # Media Markt
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            pricear = soup.select("div.article__price.ng-star-inserted")
+            if pricear:
+                price = pricear[0].text.replace(",", ".")
+            if price is not None:
+                price = [price]
+                shop = ["Media Markt"]
+                off_seller = ["1"]
 
-    elif source_id == 9: #Electronet
-        soup = BeautifulSoup(driver.page_source, 'lxml')
-        pricear = soup.select(
-            "td.commerce-price-savings-formatter-price span.price-amount")
-        if pricear:
-            price = pricear[0].text.strip().replace(',', '.').rstrip().strip('€').strip()
-        if price is not None:
-            price = [price]
-            shop = ['Electronet']
-            off_seller = ['1']
+        elif source_id == 8:  # Germanos
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            pricear = soup.select("div.product-price span.price")
+            pricear_sale = soup.select("div.product-price span.special-price")
+            if pricear:
+                price = pricear[0].text.strip().replace(",", ".").rstrip().strip("€")
+            elif pricear_sale:
+                price = (
+                    pricear_sale[0].text.strip().replace(",", ".").rstrip().strip("€")
+                )
+            if price is not None:
+                price = [price]
+                shop = ["Germanos"]
+                off_seller = ["1"]
 
-    else:
-        print('A scraper for this source does not exist')
-        return True
+        elif source_id == 9:  # Electronet
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            pricear = soup.select(
+                "td.commerce-price-savings-formatter-price span.price-amount"
+            )
+            if pricear:
+                price = (
+                    pricear[0]
+                    .text.strip()
+                    .replace(",", ".")
+                    .rstrip()
+                    .strip("€")
+                    .strip()
+                )
+            if price is not None:
+                price = [price]
+                shop = ["Electronet"]
+                off_seller = ["1"]
+
+        else:
+            print("A scraper for this source does not exist")
+            return True
+    except:
+        driver.quit()
+        raise ValueError()
 
     # info.append(url)
     # info.append(title)
@@ -347,6 +409,8 @@ def parse_urls(page_list_item):
     # info.append(off_seller)
     # info.append(page_id)
     # save_prices(price, product_id, shop, off_seller)
+    driver.quit()
+    print("DRIVER MURDERED - THIS IS AN EX DRIVER")
     try:
         save_prices(price, product_id, shop, off_seller, source_id)
     except Exception as e:
@@ -355,7 +419,7 @@ def parse_urls(page_list_item):
     if source_id == 1:
         return info
     else:
-        return 'Key Account'
+        return "Key Account"
 
 
 def save_prices(price_list, product_id, shop, official_reseller, source_id):
@@ -364,8 +428,7 @@ def save_prices(price_list, product_id, shop, official_reseller, source_id):
     product_obj = Product.objects.get(id=product_id)
     source_obj = Source.objects.get(id=source_id)
     for index in range(len(price_list)):
-        thisShop = Shop.objects.get_or_create(
-            name=shop[index])[0]
+        thisShop = Shop.objects.get_or_create(name=shop[index])[0]
         rp = RetailPrice(
             price=float(price_list[index]),
             timestamp=timenow,
@@ -373,16 +436,17 @@ def save_prices(price_list, product_id, shop, official_reseller, source_id):
             shop=thisShop,
             official_reseller=official_reseller[index],
             curr_target_price=product_obj.map_price,
-            source=source_obj
-            )
+            source=source_obj,
+        )
         rp.save()
+
 
 # ~ Get my_proxies
 
 
 def get_new_proxies():
     proxies_list = []
-    scrapper = Scrapper(category='ALL', print_err_trace=False)
+    scrapper = Scrapper(category="ALL", print_err_trace=False)
     proxies_obj = scrapper.getProxies()
 
     for item in proxies_obj.proxies:
@@ -390,30 +454,30 @@ def get_new_proxies():
 
     return proxies_list
 
+
 # Send the emails
 
 
 def send_mail(send_to, subject, text, files, isTls=True):
     msg = MIMEMultipart()
-    msg['From'] = 'e.vakalis@soundstar.gr'
-    msg['To'] = send_to
-    msg['Date'] = formatdate(localtime=True)
-    msg['Subject'] = subject
+    msg["From"] = "e.vakalis@soundstar.gr"
+    msg["To"] = send_to
+    msg["Date"] = formatdate(localtime=True)
+    msg["Subject"] = subject
     msg.attach(MIMEText(text))
-    server = 'mail.soundstar.gr'
+    server = "mail.soundstar.gr"
     port = 25
-    username = 'e.vakalis@soundstar.gr'
-    password = 'Ilk4b31@'
+    username = "e.vakalis@soundstar.gr"
+    password = "Ilk4b31@"
     current_folder = os.getcwd()
 
     for a_file in files:
-        attachment = open(current_folder + '/reports/' + a_file, 'rb')
+        attachment = open(current_folder + "/reports/" + a_file, "rb")
         file_name = a_file
         # file_name = os.path.basename(a_file)
-        part = MIMEBase('application', 'octet-stream')
+        part = MIMEBase("application", "octet-stream")
         part.set_payload(attachment.read())
-        part.add_header('Content-Disposition',
-                        'attachment', filename=file_name)
+        part.add_header("Content-Disposition", "attachment", filename=file_name)
         encoders.encode_base64(part)
         msg.attach(part)
     # part = MIMEBase('application', "octet-stream")
@@ -441,15 +505,19 @@ def send_mail(send_to, subject, text, files, isTls=True):
             smtp.sendmail(username, send_to, msg.as_string())
             smtp.quit()
         except:
-            logging.exception('Email sending error:')
+            logging.exception("Email sending error:")
 
 
 def get_col_widths(dataframe):
     # First we find the maximum length of the index column
-    idx_max = max([len(str(s)) for s in dataframe.index.values] +
-                  [len(str(dataframe.index.name))])
+    idx_max = max(
+        [len(str(s)) for s in dataframe.index.values] + [len(str(dataframe.index.name))]
+    )
     # Then, we concatenate this to the max of the lengths of column name and its values for each column, left to right
-    return [idx_max] + [max([len(str(s)) for s in dataframe[col].values] + [len(col)]) for col in dataframe.columns]
+    return [idx_max] + [
+        max([len(str(s)) for s in dataframe[col].values] + [len(col)])
+        for col in dataframe.columns
+    ]
 
 
 def color_negative_red(val):
@@ -458,29 +526,32 @@ def color_negative_red(val):
     the css property `'color: red'` for negative
     strings, black otherwise.
     """
-    color = 'red' if val < 0 else 'black'
-    return 'color: %s' % color
+    color = "red" if val < 0 else "black"
+    return "color: %s" % color
+
 
 # Create an xls file, adjust column widths and save it
 
 
 def autofit_and_save(writer, dataframeaf):
-    dataframeaf.to_excel(writer, sheet_name='Sheet1', index=False)
+    dataframeaf.to_excel(writer, sheet_name="Sheet1", index=False)
     # workbook = writer.book
-    worksheet = writer.sheets['Sheet1']
+    worksheet = writer.sheets["Sheet1"]
     for i, width in enumerate(get_col_widths(dataframeaf)[1:]):
         worksheet.set_column(i, i, width * 1.05)
     writer.save()
+
 
 # Create an xls file, adjust column widths, colour negative Diffs red and save it
 
 
 def autofit_colour_and_save(writer, dataframeaf):
-    dataframeaf.to_excel(writer, sheet_name='Sheet1', index=False)
-    dataframeaf.style.applymap(color_negative_red, subset=['Diff', 'Diff%']).to_excel(
-        writer, sheet_name='Sheet1', index=False)
+    dataframeaf.to_excel(writer, sheet_name="Sheet1", index=False)
+    dataframeaf.style.applymap(color_negative_red, subset=["Diff", "Diff%"]).to_excel(
+        writer, sheet_name="Sheet1", index=False
+    )
     # workbook = writer.book
-    worksheet = writer.sheets['Sheet1']
+    worksheet = writer.sheets["Sheet1"]
     for i, width in enumerate(get_col_widths(dataframeaf)[1:]):
         worksheet.set_column(i, i, width * 1.05)
     writer.save()
@@ -492,120 +563,207 @@ def xplode(df, explode, zipped=True):
     rest = {*df} - {*explode}
 
     zipped = zip(zip(*map(df.get, rest)), zip(*map(df.get, explode)))
-    tups = [tup + exploded
-            for tup, pre in zipped
-            for exploded in method(*pre)]
+    tups = [tup + exploded for tup, pre in zipped for exploded in method(*pre)]
 
     return pd.DataFrame(tups, columns=[*rest, *explode])[[*df]]
 
 
 def create_files_and_send_emails(records):
     recordsDf = pd.DataFrame.from_records(records)
-    recordsDf.columns = ['URL', 'SKR_Title','SKR_Shop', 'SKR_Price', 'Official_Seller']
+    recordsDf.columns = ["URL", "SKR_Title", "SKR_Shop", "SKR_Price", "Official_Seller"]
 
     current_folder = os.getcwd()
 
-    writer = pd.ExcelWriter(current_folder + '/reports/recordsDf.xlsx', engine='xlsxwriter')
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/recordsDf.xlsx", engine="xlsxwriter"
+    )
     autofit_and_save(writer, recordsDf)
 
-    webSkrList = pd.read_csv(current_folder + '/reports/map-products.csv')
-    webSkrList['MAP'] = webSkrList['MAP'].astype(float)
+    webSkrList = pd.read_csv(current_folder + "/reports/map-products.csv")
+    webSkrList["MAP"] = webSkrList["MAP"].astype(float)
 
-    mergedData = xplode(recordsDf, ['SKR_Shop', 'SKR_Price', 'Official_Seller'])
-    mergedData = pd.merge(mergedData, webSkrList, on='URL', how='inner')
+    mergedData = xplode(recordsDf, ["SKR_Shop", "SKR_Price", "Official_Seller"])
+    mergedData = pd.merge(mergedData, webSkrList, on="URL", how="inner")
 
     # Update sellers file
-    sellers = pd.read_excel(current_folder + '/reports/stores-sellers.xlsx')
-    sellers_upd = pd.DataFrame(mergedData['SKR_Shop'].drop_duplicates())
-    sellers_upd.rename(columns={'SKR_Shop': 'Κατάστημα'}, inplace=True)
-    sellers_upd = pd.merge(sellers_upd, sellers,on='Κατάστημα', how='outer')
+    sellers = pd.read_excel(current_folder + "/reports/stores-sellers.xlsx")
+    sellers_upd = pd.DataFrame(mergedData["SKR_Shop"].drop_duplicates())
+    sellers_upd.rename(columns={"SKR_Shop": "Κατάστημα"}, inplace=True)
+    sellers_upd = pd.merge(sellers_upd, sellers, on="Κατάστημα", how="outer")
     writer = pd.ExcelWriter(
-        current_folder + '/reports/stores-sellers.xlsx', engine='xlsxwriter')
+        current_folder + "/reports/stores-sellers.xlsx", engine="xlsxwriter"
+    )
     autofit_and_save(writer, sellers_upd)
-    sellers = sellers[['Κατάστημα', 'Επωνυμία', 'Πωλητής']]
-    sellers.rename(columns={'Κατάστημα': 'SKR_Shop'}, inplace=True)
+    sellers = sellers[["Κατάστημα", "Επωνυμία", "Πωλητής"]]
+    sellers.rename(columns={"Κατάστημα": "SKR_Shop"}, inplace=True)
 
     # Create basic MAP Report table
-    mergedData = pd.merge(mergedData, sellers, on='SKR_Shop', how='outer')
-    mergedData.drop(['SKR_Title', 'URL'], axis=1, inplace=True)
-    mergedData['SKR_Price'] = mergedData['SKR_Price'].astype(float)
-    mergedData['Diff'] = mergedData.apply(lambda row: (
-        row.loc['SKR_Price'] - row.loc['MAP']), axis=1).round(2)
-    mergedData['Diff%'] = mergedData.apply(
-        lambda row: (row.loc['SKR_Price'] - row.loc['MAP']) / row.loc['SKR_Price'] * 100, axis=1).round(1)
-    mergedData.rename(columns={'SKR_Price': 'Τιμή', 'SKR_Shop': 'Κατάστημα', 'Official_Seller': 'Επίσημος Μεταπωλητής','Product': 'Προϊόν', 'Category': 'Κατηγορία'}, inplace=True)
+    mergedData = pd.merge(mergedData, sellers, on="SKR_Shop", how="outer")
+    mergedData.drop(["SKR_Title", "URL"], axis=1, inplace=True)
+    mergedData["SKR_Price"] = mergedData["SKR_Price"].astype(float)
+    mergedData["Diff"] = mergedData.apply(
+        lambda row: (row.loc["SKR_Price"] - row.loc["MAP"]), axis=1
+    ).round(2)
+    mergedData["Diff%"] = mergedData.apply(
+        lambda row: (row.loc["SKR_Price"] - row.loc["MAP"])
+        / row.loc["SKR_Price"]
+        * 100,
+        axis=1,
+    ).round(1)
+    mergedData.rename(
+        columns={
+            "SKR_Price": "Τιμή",
+            "SKR_Shop": "Κατάστημα",
+            "Official_Seller": "Επίσημος Μεταπωλητής",
+            "Product": "Προϊόν",
+            "Category": "Κατηγορία",
+        },
+        inplace=True,
+    )
 
     # Create the files
     mergedDataChris = mergedData[
-        ['Κατηγορία', 'SKU', 'Προϊόν', 'Κατάστημα', 'Επωνυμία', 'Τιμή', 'MAP', 'Diff', 'Diff%', 'Επίσημος Μεταπωλητής','Πωλητής']]
-    mergedDataChris.sort_values(by=['Κατηγορία', 'Προϊόν', 'Τιμή'], inplace=True)
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP-Report-SKU.xlsx", engine='xlsxwriter')
+        [
+            "Κατηγορία",
+            "SKU",
+            "Προϊόν",
+            "Κατάστημα",
+            "Επωνυμία",
+            "Τιμή",
+            "MAP",
+            "Diff",
+            "Diff%",
+            "Επίσημος Μεταπωλητής",
+            "Πωλητής",
+        ]
+    ]
+    mergedDataChris.sort_values(by=["Κατηγορία", "Προϊόν", "Τιμή"], inplace=True)
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP-Report-SKU.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, mergedDataChris)
 
     mergedData = mergedData[
-        ['Κατηγορία', 'Προϊόν', 'Κατάστημα', 'Επωνυμία', 'Τιμή', 'MAP', 'Diff', 'Diff%', 'Επίσημος Μεταπωλητής','Πωλητής']]
-    mergedData.sort_values(by=['Κατηγορία', 'Προϊόν', 'Τιμή'], inplace=True)
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP-Report.xlsx", engine='xlsxwriter')
+        [
+            "Κατηγορία",
+            "Προϊόν",
+            "Κατάστημα",
+            "Επωνυμία",
+            "Τιμή",
+            "MAP",
+            "Diff",
+            "Diff%",
+            "Επίσημος Μεταπωλητής",
+            "Πωλητής",
+        ]
+    ]
+    mergedData.sort_values(by=["Κατηγορία", "Προϊόν", "Τιμή"], inplace=True)
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP-Report.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, mergedData)
 
-    only_below = mergedData.loc[mergedData['Diff'] < 0]
-    only_below.sort_values(by=['Κατάστημα', 'Κατηγορία', 'Προϊόν'], inplace=True)
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_only_below.xlsx", engine='xlsxwriter')
+    only_below = mergedData.loc[mergedData["Diff"] < 0]
+    only_below.sort_values(by=["Κατάστημα", "Κατηγορία", "Προϊόν"], inplace=True)
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_only_below.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, only_below)
 
-    foutsitzis = only_below.loc[only_below['Πωλητής'] == 'Φουτσιτζής']
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Foutsitzis.xlsx", engine='xlsxwriter')
+    foutsitzis = only_below.loc[only_below["Πωλητής"] == "Φουτσιτζής"]
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_Foutsitzis.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, foutsitzis)
 
-    a_Chatz = only_below.loc[only_below['Πωλητής'] == 'Α. Χατζηκυριακίδης']
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_A_Chatz.xlsx", engine='xlsxwriter')
+    a_Chatz = only_below.loc[only_below["Πωλητής"] == "Α. Χατζηκυριακίδης"]
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_A_Chatz.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, a_Chatz)
 
-    xorianopoulos = only_below.loc[only_below['Πωλητής'] == 'Χωριανόπουλος']
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Xorianopoulos.xlsx", engine='xlsxwriter')
+    xorianopoulos = only_below.loc[only_below["Πωλητής"] == "Χωριανόπουλος"]
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_Xorianopoulos.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, xorianopoulos)
 
-    kolomvos = only_below.loc[only_below['Πωλητής'] == 'Κολόμβος']
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Kolomvos.xlsx", engine='xlsxwriter')
+    kolomvos = only_below.loc[only_below["Πωλητής"] == "Κολόμβος"]
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_Kolomvos.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, kolomvos)
 
-    vasiliadis = only_below.loc[only_below['Πωλητής'] == 'Βασιλειάδης']
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Vasiliadis.xlsx", engine='xlsxwriter')
+    vasiliadis = only_below.loc[only_below["Πωλητής"] == "Βασιλειάδης"]
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_Vasiliadis.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, vasiliadis)
 
-    sttoulis = only_below.loc[only_below['Πωλητής'] == 'Σ. Τουλής']
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_St_Toulis.xlsx", engine='xlsxwriter')
+    sttoulis = only_below.loc[only_below["Πωλητής"] == "Σ. Τουλής"]
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_St_Toulis.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, sttoulis)
 
-    ctoulis = only_below.loc[only_below['Πωλητής'] == 'Χ. Τουλής']
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_C_Toulis.xlsx", engine='xlsxwriter')
+    ctoulis = only_below.loc[only_below["Πωλητής"] == "Χ. Τουλής"]
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_C_Toulis.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, ctoulis)
 
-    hatzikiriakidis = only_below.loc[only_below['Πωλητής'] == 'Χατζηκυριακίδης']
-    writer = pd.ExcelWriter(current_folder + "/reports/MAP_Hatzikiriakidis.xlsx", engine='xlsxwriter')
+    hatzikiriakidis = only_below.loc[only_below["Πωλητής"] == "Χατζηκυριακίδης"]
+    writer = pd.ExcelWriter(
+        current_folder + "/reports/MAP_Hatzikiriakidis.xlsx", engine="xlsxwriter"
+    )
     autofit_colour_and_save(writer, hatzikiriakidis)
 
-    fileNames_Admin = ['MAP-Report.xlsx', 'MAP_only_below.xlsx']
+    fileNames_Admin = ["MAP-Report.xlsx", "MAP_only_below.xlsx"]
     # fileNames_Admin = ['MAP-Report.xlsx', 'MAP_only_below.xlsx', 'debug.log']
-    fileNames_Christoforos = ['MAP-Report-SKU.xlsx', 'MAP-products.xlsx']
-    fileNames_Michou = ['MAP-Report.xlsx', 'MAP_only_below.xlsx', 'MAP-products.xlsx', 'MAP-Report-SKU.xlsx']
-    fileNames_Alexandridou = ['MAP-Report.xlsx', 'MAP_only_below.xlsx']
-    fileNames_Foutsitzis = ['MAP-Report.xlsx', 'MAP_Foutsitzis.xlsx']
-    fileNames_A_Chatz = ['MAP-Report.xlsx', 'MAP_A_Chatz.xlsx']
-    fileNames_Xorianopoulos = ['MAP-Report.xlsx', 'MAP_Xorianopoulos.xlsx']
-    fileNames_Kolomvos = ['MAP-Report.xlsx', 'MAP_Kolomvos.xlsx']
-    fileNames_Vasiliadis = ['MAP-Report.xlsx', 'MAP_Vasiliadis.xlsx']
-    fileNames_St_Toulis = ['MAP-Report.xlsx', 'MAP_St_Toulis.xlsx', 'MAP_only_below.xlsx', 'MAP-products.xlsx']
-    fileNames_C_Toulis = ['MAP-Report.xlsx','MAP_C_Toulis.xlsx', 'MAP_only_below.xlsx']
-    fileNames_Hatzikiriakidis = ['MAP-Report.xlsx', 'MAP_Hatzikiriakidis.xlsx', 'MAP_C_Toulis.xlsx', 'MAP_St_Toulis.xlsx', 'MAP_Vasiliadis.xlsx', 'MAP_Kolomvos.xlsx', 'MAP_Xorianopoulos.xlsx', 'MAP_A_Chatz.xlsx', 'MAP_Foutsitzis.xlsx', 'MAP_only_below.xlsx']
-    fileNames_Xristina = ['MAP-Report.xlsx', 'MAP_only_below.xlsx']
+    fileNames_Christoforos = ["MAP-Report-SKU.xlsx", "MAP-products.xlsx"]
+    fileNames_Michou = [
+        "MAP-Report.xlsx",
+        "MAP_only_below.xlsx",
+        "MAP-products.xlsx",
+        "MAP-Report-SKU.xlsx",
+    ]
+    fileNames_Alexandridou = ["MAP-Report.xlsx", "MAP_only_below.xlsx"]
+    fileNames_Foutsitzis = ["MAP-Report.xlsx", "MAP_Foutsitzis.xlsx"]
+    fileNames_A_Chatz = ["MAP-Report.xlsx", "MAP_A_Chatz.xlsx"]
+    fileNames_Xorianopoulos = ["MAP-Report.xlsx", "MAP_Xorianopoulos.xlsx"]
+    fileNames_Kolomvos = ["MAP-Report.xlsx", "MAP_Kolomvos.xlsx"]
+    fileNames_Vasiliadis = ["MAP-Report.xlsx", "MAP_Vasiliadis.xlsx"]
+    fileNames_St_Toulis = [
+        "MAP-Report.xlsx",
+        "MAP_St_Toulis.xlsx",
+        "MAP_only_below.xlsx",
+        "MAP-products.xlsx",
+    ]
+    fileNames_C_Toulis = ["MAP-Report.xlsx", "MAP_C_Toulis.xlsx", "MAP_only_below.xlsx"]
+    fileNames_Hatzikiriakidis = [
+        "MAP-Report.xlsx",
+        "MAP_Hatzikiriakidis.xlsx",
+        "MAP_C_Toulis.xlsx",
+        "MAP_St_Toulis.xlsx",
+        "MAP_Vasiliadis.xlsx",
+        "MAP_Kolomvos.xlsx",
+        "MAP_Xorianopoulos.xlsx",
+        "MAP_A_Chatz.xlsx",
+        "MAP_Foutsitzis.xlsx",
+        "MAP_only_below.xlsx",
+    ]
+    fileNames_Xristina = ["MAP-Report.xlsx", "MAP_only_below.xlsx"]
 
-    todayDate = datetime.today().strftime('%d-%m-%Y')
+    todayDate = datetime.today().strftime("%d-%m-%Y")
     time_needed = datetime.now() - startTime
     time_needed = str(time_needed)
 
-    send_mail('e.vakalis@soundstar.gr', 'STAGING Skroutz MAP Report ' + todayDate,
-                'Skroutz price report for our MAP products. Time to complete: ' + time_needed, fileNames_Admin)
+    send_mail(
+        "e.vakalis@soundstar.gr",
+        "STAGING Skroutz MAP Report " + todayDate,
+        "Skroutz price report for our MAP products. Time to complete: " + time_needed,
+        fileNames_Admin,
+    )
     # send_mail('sales@soundstar.gr', 'Skroutz MAP Report ' + todayDate, 'Skroutz price report for our MAP products', fileNames_Christoforos)
     # send_mail('a.michou@soundstar.gr', 'Skroutz MAP Report ' + todayDate, 'Skroutz price report for our MAP products', fileNames_Michou)
     # send_mail('m.alexandridou@soundstar.gr', 'Skroutz MAP Report ' + todayDate, 'Skroutz price report for our MAP products', fileNames_Alexandridou)

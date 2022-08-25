@@ -67,11 +67,14 @@
                         {% for product in products %}
                         <tr>
                             <td>
-                                <a href="{% url 'product_info' product.id %}">
+                                {% comment %} <a href="{% url 'product_info' product.id %}">
                                 {% thumbnail product.image table_image_size as im %}
-                                    <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.name}}" class="prod-img">
+                                    <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{product.model}}" class="prod-img">
+                                    {% endthumbnail %}
+                                </a> {% endcomment %}
+                                <a href="{% url 'product_info' product.id %}">
+                                    <img src="{{product.product_image}}" aria-src="{{ product.product_image|datalize }}" alt="{{product.model}}" loading="lazy" class="product_image">
                                 </a>
-                                {% endthumbnail %}
                             </td>
                             <td>
                                 {{product.is_active}}
@@ -82,13 +85,13 @@
                                 </a>
                             </td>
                             <td>
-                                <a href="{% url 'manufacturer_info' product.manufacturer.id %}" class="link-dark">
-                                    {{product.manufacturer}}
+                                <a href="{% url 'manufacturer_info' product.manufacturer_id %}" class="link-dark">
+                                    {{product.manufacturer.name}}
                                 </a>
                             </td>
                             <td>
-                                <a href="{% url 'category_info' product.main_category.id %}" class="link-dark">
-                                    {{product.main_category}}
+                                <a href="{% url 'category_info' product.main_category_id %}" class="link-dark">
+                                    {{product.main_category.name}}
                                 </a>
                             </td>
                             <td>
@@ -146,7 +149,7 @@
                             {% endif %}
                             <th>Ημερομηνία</th>
                         </tr>
-                    
+
                         <tr class="bg-light head-filters">
                             <th class="no-filter">Φωτογραφία</th>
                             <th class="text">Μοντέλο</th>
@@ -177,33 +180,31 @@
                             <tr>
                         {% endif %}
                                 <td>
-                                    <a href="{% url 'product_info' retail_price.product.id %}">
-                                    {% thumbnail retail_price.product.image table_image_size as im %}
-                                        <img src="{{ im.url }}" aria-src="{{ im.url|datalize }}" width="{{ im.width }}" height="{{ im.height }}" alt="{{retail_price.product.name}}" class="prod-img">
-                                    {% endthumbnail %}
+                                    <a href="{% url 'product_info' retail_price.product_id %}">
+                                        <img src="{{retail_price.product_image}}" aria-src="{{ retail_price.product_image|datalize }}" alt="{{retail_price.product}}" loading="lazy" class="product_image">
                                     </a>
-                                    
+
                                 </td>
                                 <td>
-                                    <a href="{% url 'product_info' retail_price.product.id %}" class="link-dark">
-                                        {{retail_price.product.model}}
+                                    <a href="{% url 'product_info' retail_price.product_id %}" class="link-dark">
+                                        {{retail_price.product_model}}
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'manufacturer_info' retail_price.product.manufacturer.id %}" class="link-dark">
-                                        {{retail_price.product.manufacturer}}
+                                    <a href="{% url 'manufacturer_info' retail_price.product.manufacturer_id %}" class="link-dark">
+                                        {{retail_price.product_manufacturer}}
                                     </a>
                                 </td>
                                 <td>
-                                    <a href="{% url 'category_info' retail_price.product.main_category.id %}" class="link-dark">
-                                        {{retail_price.product.main_category}}
+                                    <a href="{% url 'category_info' retail_price.product.main_category_id %}" class="link-dark">
+                                        {{retail_price.product_category}}
                                     </a>
                                 </td>
                                 <td>
-                                    {{retail_price.product.sku}}
+                                    {{retail_price.product_sku}}
                                 </td>
                                 <td>
-                                    <a href="{% url 'shop_info' retail_price.shop.id %}" class="link-dark">{{retail_price.shop}}</a>
+                                    <a href="{% url 'shop_info' retail_price.shop_id %}" class="link-dark">{{retail_price.shop_name}}</a>
                                 </td>
                                 <td>
                                     {{retail_price.price}} €
@@ -234,7 +235,7 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {{retail_price.source.domain}}
+                                    {{retail_price.source_domain}}
                                 </td>
                                 <td>
                                     {{retail_price.shop.is_key_account}}
@@ -243,7 +244,12 @@
                                     {{ retail_price.is_shop_official_reseller }}
                                 </td>
                                 {% if not seller_flag %}
-                                <td>{{ retail_price.shop.seller.last_name }}</td>
+                                <td>{% if retail_price.shop.seller.last_name %}
+                                        {{retail_price.shop.seller.last_name}}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
                                 {% endif %}
                                 <td>{{retail_price.timestamp|date:"d/m/Y, H:i"}}</td>
                             </tr>
@@ -272,7 +278,7 @@
             maintainAspectRatio: false,
         }
         });
-                                            //TABLE 1        
+                                            //TABLE 1
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 $(document).ready(function() {
     //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
@@ -359,7 +365,7 @@ $(document).ready(function() {
                     },
                 },
                 customize: function(doc){
-                    doc.content[1].table.dontBreakRows = true; 
+                    doc.content[1].table.dontBreakRows = true;
                     doc.pageMargins = [ 1,1,1,1 ];
                     doc.styles.tableHeader = {
                         alignment: "center",
@@ -436,7 +442,7 @@ $(document).ready(function() {
                     columns: export_cols,
                     stripHtml: true,
                     },
-            }, 
+            },
             {
                 extend:'csv',
                 className: 'btn btn-secondary',
@@ -468,13 +474,13 @@ $(document).ready(function() {
                             }
                             else if (item.nodeName == 'STRONG'){
                                 result += item.outerHTML;
-                            } 
-                            else if (item.nodeName == 'A'){                                       
+                            }
+                            else if (item.nodeName == 'A'){
                                 result += item.outerHTML;
                             }
                             else {
                                 result += item.innerText;
-                            } 
+                            }
                           });
                           return result;
                         }
@@ -482,7 +488,7 @@ $(document).ready(function() {
                     },
                     //customise print output
                     //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
-                    //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                    //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
                 customize: function(window, print_btn_object, api){
                     rows = api.rows({search:'applied'}).nodes();
                     columns = api.columns({search:'applied'}).nodes();
@@ -540,9 +546,9 @@ $(document).ready(function() {
                 });
             },
     });
- 
-  
- 
+
+
+
     // Filter event handler
     //if table is undefined, refresh the page.
     $( table_1.table().container() ).on( 'keyup', 'thead input', function () {
@@ -674,7 +680,7 @@ $(document).ready(function() {
                             },
                         },
                         customize: function(doc){
-                            doc.content[1].table.dontBreakRows = true; 
+                            doc.content[1].table.dontBreakRows = true;
                             doc.pageMargins = [ 1,1,1,1 ];
                             doc.styles.title = {
                                 alignment: "center",
@@ -748,7 +754,7 @@ $(document).ready(function() {
                             columns: export_cols,
                             stripHtml: true,
                             },
-                    }, 
+                    },
                     {
                         extend:'csv',
                         className: 'btn btn-secondary',
@@ -780,13 +786,13 @@ $(document).ready(function() {
                                     }
                                     else if (item.nodeName == 'STRONG'){
                                         result += item.outerHTML;
-                                    } 
-                                    else if (item.nodeName == 'A'){                                       
+                                    }
+                                    else if (item.nodeName == 'A'){
                                         result += item.outerHTML;
                                     }
                                     else {
                                         result += item.innerText;
-                                    } 
+                                    }
                                   });
                                   return result;
                                 }
@@ -794,7 +800,7 @@ $(document).ready(function() {
                             },
                             //customise print output
                             //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
-                            //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                            //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
                         customize: function(window, print_btn_object, api){
                             rows = api.rows({search:'applied'}).nodes();
                             columns = api.columns({search:'applied'}).nodes();
@@ -852,9 +858,9 @@ $(document).ready(function() {
                         });
                     },
             });
-         
-          
-         
+
+
+
             // Filter event handler
             //if table is undefined, refresh the page.
             $( table_2.table().container() ).on( 'keyup', 'thead input', function () {
@@ -866,11 +872,11 @@ $(document).ready(function() {
             var start = moment("2022-01-01 12:34:16");
             var the_end = '{{daterange_timestamp}}';
             var end = moment(the_end);
-        
+
             function cb() {
               $('#reportrange span').html('Επιλέξτε ημερομηνία');
             }
-        
+
             $('#reportrange').daterangepicker({
               startDate: moment().subtract(6, 'days'),
               endDate: moment(),
@@ -887,12 +893,12 @@ $(document).ready(function() {
                   format:"D/M/YYYY",
               },
             }, cb);
-        
+
             cb();
-        
+
           });
-         
-        
+
+
           $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
            var start = picker.startDate;
            var end = picker.endDate;
@@ -904,7 +910,7 @@ $(document).ready(function() {
                 var max = end;
                 //dynamically find date column(must be the last column of the table)
                 var startDate = moment(data[date_column], 'D/M/YYYY');
-                
+
                 if (min == null && max == null) {
                   return true;
                 }

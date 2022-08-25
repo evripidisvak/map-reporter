@@ -59,12 +59,14 @@ class Product(models.Model):
         upload_to="product_images", default="product_images/placeholder_img.png"
     )
     image_url = models.URLField(null=True, blank=True)
+    # name = models.CharField(blank=True, max_length=200)
 
     is_cleaned = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__original_map_price = self.map_price
+        # self.name = self.manufacturer.name + " " + self.model
         # self.__original_key_acc_price = self.key_acc_price
 
     def clean(self):
@@ -127,10 +129,12 @@ class Product(models.Model):
             return "Οχι"
 
     def name(self):
-        return str(self.manufacturer.name + " " + self.model)
+        return str(self.model)
+        # return str(self.manufacturer.name + " " + self.model)
 
     def __str__(self):
-        return str(self.manufacturer.name + " " + self.model)
+        # return str(self.manufacturer.name + " " + self.model)
+        return self.model
 
     @property
     def image_preview(self):
@@ -174,6 +178,7 @@ class Shop(models.Model):
     # phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$', message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
     phone_number = models.CharField(validators=[phone_regex], blank=True, max_length=10)
     address = models.CharField(max_length=100, default=None, blank=True, null=True)
+    website = models.CharField(blank=True, max_length=100)
 
     def __str__(self):
         return self.name
@@ -192,6 +197,7 @@ class Page(models.Model):
     source = models.ForeignKey(
         Source, on_delete=models.CASCADE, default=None, blank=False, null=False
     )
+    valid = models.BooleanField(default=True)
 
     def __str__(self):
         return self.url

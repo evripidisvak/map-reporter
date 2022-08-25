@@ -107,7 +107,7 @@
             </div>
             </div>
         </div>
-    
+
         <div class="container-fluid mt-5">
             <div class="row">
                 <form name="date_range" id="date-picker-form" hx-post="/update_date/{{product.id}}" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
@@ -178,7 +178,7 @@
                 <div class="latest_timestamp card-footer small text-muted">Τελευταία ενημέρωση {{ latest_timestamp}}</div>
             </div>
         </div>
-        
+
         <div class="card mb-4 mt-4">
         <div class="card-header">
             <i class="fas fa-table me-1"></i>
@@ -201,7 +201,7 @@
                         {% endif %}
                         <th>Ημερομηνία</th>
                     </tr>
-                    
+
                     <tr class="bg-light head-filters">
                         <th class="text">Κατάστημα</th>
                         <th class="no-filter">Τιμή</th>
@@ -225,7 +225,7 @@
                     {% else %}
                         <tr>
                     {% endif %}
-                        <td><a href="{% url 'shop_info' retail_price.shop.id %}" class="link-dark">{{retail_price.shop}}</a></td>
+                        <td><a href="{% url 'shop_info' retail_price.shop_id %}" class="link-dark">{{retail_price.shop_name}}</a></td>
                         <td>
                             {{retail_price.price}} €
                         </td>
@@ -251,7 +251,7 @@
                             {% endif %}
                         </td>
                         <td>
-                            {{retail_price.source.domain}}
+                            {{retail_price.source_domain}}
                         </td>
                         <td>
                             {{retail_price.shop.is_key_account}}
@@ -260,12 +260,18 @@
                             {{ retail_price.is_shop_official_reseller }}
                         </td>
                         {% if not seller_flag %}
-                            <td>{{ retail_price.shop.seller.last_name }}</td>
+                        <td>
+                            {% if shop.seller.last_name %}
+                                {{shop.seller.last_name}}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         {% endif %}
                         <td>{{retail_price.timestamp|date:"d/m/Y, H:i"}}</td>
                     </tr>
                     {% endfor %}
-                    
+
                 </tbody>
             </table>
         </div>
@@ -297,7 +303,7 @@
             pointBorderWidth: 2,
             data: [
                 {% for min_retailprice in min_retailprice_list %}
-                    '{{min_retailprice.min_price}}',
+                    '{{min_retailprice.price}}',
                 {% endfor %}
             ],
         },
@@ -337,8 +343,8 @@
         },
         yAxes: {
             ticks: {
-            min: {{min_retailprice.min_price__min|per_sub:"10"}},
-            max: {{max_retailprice.min_price__max|per_add:"10"}},
+            min: {{min_retailprice|per_sub:"10"}},
+            max: {{max_retailprice|per_add:"10"}},
             maxTicksLimit: 5
             },
             gridLines: {
@@ -363,7 +369,7 @@
         }
         return "rgb(" + r + "," + g + "," + b ;
      };
-        
+
     // Pie Chart Example
     var ctx = document.getElementById("myPieChart");
     var myPieChart = new Chart(ctx, {
@@ -371,7 +377,7 @@
     data: {
         labels: ["Κάτω", "Ακριβώς", "Πάνω"],
         datasets: [{
-        data: [{{shops_below}}, {{shops_equal}}, {{shops_above}}],
+        data: [{{prices_below}}, {{prices_equal}}, {{prices_above}}],
         backgroundColor: ['#dc3545', '#28a745', '#007bff'],
         }],
     },
@@ -380,7 +386,7 @@
         maintainAspectRatio: false,
     }
     });
-        
+
         //stop dropdown from closing on click, so we can select multiple shops
         $('body').on('click', function(e){
         dropdown_elem = $('#ShopSelectDropdown');
@@ -394,12 +400,12 @@
                 checkboxes.each(function(i, element){
                     $(this).prop('checked', true);
                 });
-            } 
+            }
             else if (target_element.prop('checked') == false ){
                 checkboxes.each(function(i, element){
                     $(this).prop('checked', false);
                 });
-            } 
+            }
     }
     });
 
@@ -568,7 +574,7 @@ $(document).ready(function() {
     cb();
 
   });
- 
+
 
   $('#reportrange').on('apply.daterangepicker', function(ev, picker) {
    var start = picker.startDate;
@@ -581,7 +587,7 @@ $(document).ready(function() {
         var max = end;
         //dynamically find date column(must be the last column of the table)
         var startDate = moment(data[date_column], 'D/M/YYYY');
-        
+
         if (min == null && max == null) {
           return true;
         }
@@ -663,7 +669,7 @@ table_1.draw();
                     },
                 },
                 customize: function(doc){
-                    doc.content[1].table.dontBreakRows = true; 
+                    doc.content[1].table.dontBreakRows = true;
                     doc.pageMargins = [ 1,1,1,1 ];
                     doc.styles.tableHeader = {
                         alignment: "center",
@@ -726,7 +732,7 @@ table_1.draw();
                 exportOptions: {
                     stripHtml: true,
                     },
-            }, 
+            },
             {
                 extend:'csv',
                 className: 'btn btn-secondary',
@@ -755,13 +761,13 @@ table_1.draw();
                             }
                             else if (item.nodeName == 'STRONG'){
                                 result += item.outerHTML;
-                            } 
-                            else if (item.nodeName == 'A'){                                       
+                            }
+                            else if (item.nodeName == 'A'){
                                 result += item.outerHTML;
                             }
                             else {
                                 result += item.innerText;
-                            } 
+                            }
                           });
                           return result;
                         }
@@ -769,7 +775,7 @@ table_1.draw();
                     },
                     //customise print output
                     //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
-                    //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                    //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
                 customize: function(window, print_btn_object, api){
                     rows = api.rows({search:'applied'}).nodes();
                     columns = api.columns({search:'applied'}).nodes();
@@ -828,7 +834,7 @@ table_1.draw();
             },
     };
     table_1 = $('#table_1').DataTable(config);
-    config_the_table();   
+    config_the_table();
 } );
 //TABLE_1 STUFF ENDS
 </script>
