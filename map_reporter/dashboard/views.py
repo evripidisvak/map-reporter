@@ -1758,8 +1758,8 @@ def topbar_search(request):
                 products = Product.objects.filter(
                     Q(model__icontains=term) | Q(sku__contains=term)
                 )[:6]
-                categories = Category.objects.filter(Q(name__icontains=term))[:6]
-                shops = Shop.objects.filter(Q(name__icontains=term))[:6]
+                categories = Category.objects.filter(Q(name__unaccent__icontains=term))[:6]
+                shops = Shop.objects.filter(Q(name__unaccent__icontains=term))[:6]
                 manufacturers = Manufacturer.objects.filter(Q(name__icontains=term))[:6]
                 div_id = "mini_search_results"
                 col_class = "col-lg-12"
