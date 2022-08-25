@@ -1450,9 +1450,12 @@ def update_table(filtered_retail_prices, seller_flag):
     if not seller_flag:
         updated_table += """<th class="select">Πωλητής</th>"""
 
-    updated_table += """<th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th>
+    updated_table += """<th class="no-filter">Ημερομηνία</th>
                     </tr>
                 </thead>"""
+    # updated_table += """<th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th>
+    #                 </tr>
+    #             </thead>"""
 
     for retailprice in filtered_retail_prices:
         is_shop_official_reseller = retailprice.is_shop_official_reseller()
@@ -1758,8 +1761,8 @@ def topbar_search(request):
                 products = Product.objects.filter(
                     Q(model__icontains=term) | Q(sku__contains=term)
                 )[:6]
-                categories = Category.objects.filter(Q(name__icontains=term))[:6]
-                shops = Shop.objects.filter(Q(name__icontains=term))[:6]
+                categories = Category.objects.filter(Q(name__unaccent__icontains=term))[:6]
+                shops = Shop.objects.filter(Q(name__unaccent__icontains=term))[:6]
                 manufacturers = Manufacturer.objects.filter(Q(name__icontains=term))[:6]
                 div_id = "mini_search_results"
                 col_class = "col-lg-12"
