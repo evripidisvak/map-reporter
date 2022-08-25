@@ -12,19 +12,28 @@
 
         <!--CSS-->
         <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/styles.css' %}"><!--bootstrap 5 downloaded locally-->
-        <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/custom-styles.css' %}"> 
-        <link rel="icon" type="image/x-icon" href="{% static '/meerkat-icon.ico' %}">
-        <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script>
-        <script src="{% static '/map_reporter/js/scripts.js' %}"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-        {% comment %} Date Range Picker {% endcomment %}
-        <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
-        <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
-        <script src="https://unpkg.com/htmx.org@1.7.0" integrity="sha384-EzBXYPt0/T6gxNp0nuPtLkmRpmDBbjg6WmCUZRLXBBwYYmwAUxzlSGej0ARHX0Bo" crossorigin="anonymous"></script>
+        <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/custom-styles.css'%}">
+        <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/bootstrap-icons.css'%}">
         <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/daterangepicker.css' %}">
         <link rel="stylesheet" href="{% static '/map_reporter/css/jquery.dataTables.css' %}">
+        {% comment %} Pass a custom attribute, time in seconds of last modifications, in case we need to make sure this file gets updated correctly <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/custom-styles.css'%}?{{last_mod}}"> {% endcomment %}
+        <link rel="icon" type="image/x-icon" href="{% static '/meerkat-logo.png' %}">
+        <script src="{% static '/map_reporter/js/fontawesome-6.1.0-all.js' %}"></script>
+        <script src="{% static '/map_reporter/js/jquery-3.6.0.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/chart.js' %}"></script>
+        <script src="{% static '/map_reporter/js/scripts.js' %}"></script>
+        <script src="{% static '/map_reporter/js/moment.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/daterangepicker.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/htmx.min.js' %}"></script>
+
+        {% comment %} <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script> {% endcomment %}
+        {% comment %} <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script> {% endcomment %}
+        {% comment %} <script src="https://cdn.jsdelivr.net/npm/chart.js" crossorigin="anonymous"></script> {% endcomment %}
+        {% comment %} <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css"> {% endcomment %}
+        {% comment %} Date Range Picker {% endcomment %}
+        {% comment %} <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script> {% endcomment %}
+        {% comment %} <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script> {% endcomment %}
+        {% comment %} <script src="https://unpkg.com/htmx.org@1.7.0" integrity="sha384-EzBXYPt0/T6gxNp0nuPtLkmRpmDBbjg6WmCUZRLXBBwYYmwAUxzlSGej0ARHX0Bo" crossorigin="anonymous"></script> {% endcomment %}
         {% block headEnd %}
         {% endblock %}
     </head>
@@ -32,14 +41,14 @@
     <body class="sb-nav-fixed" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
         <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
             <!-- Navbar Brand-->
-            <a class="navbar-brand ps-3" href="{% url 'index' %}">Meerkat</a>
+            <a class="navbar-brand ps-3" href="{% url 'index' %}"><img src="{% static '/meerkat-logo.png' %}" alt="Meerkat Logo" width="40" height="40" class="d-inline-block align-middle me-2"> Meerkat</a>
             <!-- Sidebar Toggle-->
             <button class="btn btn-link btn-sm order-1 order-lg-0 me-4 me-lg-0" id="sidebarToggle" href="#!"><i class="fas fa-bars"></i></button>
             <!-- Navbar Search-->
-            <form class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0" action="{% url 'topbar_search' %}" method="post">
+            <form class="d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0" action="{% url 'topbar_search' %}" method="post">
                 {% csrf_token %}
                 <div class="input-group">
-                    <input class="form-control" type="text" placeholder="Search for..." aria-label="Search for..." name="top-search" id="top-search" 
+                    <input class="form-control" type="text" placeholder="Αναζήτηση..." aria-label="Αναζήτηση..." name="top-search" id="top-search"
                     hx-post="{% url 'topbar_search' %}" hx-trigger="submit, keyup changed delay:500ms" hx-target="#search-results" autocomplete="off" />
                     <div id="search-results"></div>
                     <button class="btn btn-primary" id="btnNavbarSearch" type="button"><i class="fas fa-search"></i></button>
@@ -111,7 +120,7 @@
                 <main>
                     <div class="container-fluid px-4 mt-4">
                     {% block main %}
-                    
+
                     {% endblock %}
                     </div>
                 </main>
@@ -134,13 +143,22 @@
         </script>
 
         {% comment %} TODO Check imports and fins best liks / download them localy {% endcomment %}
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-        <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
-        <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.print.min.js"></script>
+        {% comment %} <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script> {% endcomment %}
+        {% comment %} <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script> {% endcomment %}
+        {% comment %} <script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script> {% endcomment %}
+        {% comment %} <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script> {% endcomment %}
+        {% comment %} <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script> {% endcomment %}
+        {% comment %} <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script> {% endcomment %}
+        {% comment %} <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script> {% endcomment %}
+        {% comment %} <script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.print.min.js"></script> {% endcomment %}
+        <script src="{% static '/map_reporter/js/bootstrap.bundle.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/jquery.dataTables.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/dataTables.buttons.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/jszip.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/pdfmake.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/vfs_fonts.js' %}"></script>
+        <script src="{% static '/map_reporter/js/buttons.html5.min.js' %}"></script>
+        <script src="{% static '/map_reporter/js/buttons.print.min.js' %}"></script>
+
     </body>
 </html>

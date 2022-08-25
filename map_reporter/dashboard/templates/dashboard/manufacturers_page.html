@@ -24,9 +24,9 @@
             </div>
         </div>
         <div class="col col-6">
-        </div> 
-    </div>    
-</div>    
+        </div>
+    </div>
+</div>
     <div class="container-fluid mb-5">
         <div class="row">
             <div class="col">
@@ -40,14 +40,20 @@
                                 <thead>
                                 <tr class="bg-light">
                                     <th class="select-filter">Όνομα</th>
-                                    <th>Προϊόντα</th>
+                                    <th>Αριθμός Προϊόντων</th>
+                                    {%if seller_flag%}
+                                    <th>Προϊόντα πελατών μου</th>
+                                    {% endif %}
                                     <th>Προϊόντα κάτω</th>
                                     <th>Προϊόντα OK</th>
                                 </tr>
-                            
+
                                 <tr class="bg-light head-filters">
                                     <th class="select">Όνομα</th>
                                     <th class="no-filter">Προϊόντα</th>
+                                    {%if seller_flag%}
+                                    <th class="no-filter">Προϊόντα πελατών μου</th>
+                                    {% endif %}
                                     <th class="no-filter">Προϊόντα κάτω</th>
                                     <th class="no-filter">Προϊόντα OK</th>
                                 </tr>
@@ -63,6 +69,11 @@
                                         <td>
                                             {{manufacturer.product_count}}
                                         </td>
+                                        {%if seller_flag%}
+                                        <td>
+                                            {{manufacturer.seller_product_count}}
+                                        </td>
+                                        {% endif %}
                                         <td>
                                             {{manufacturer.products_below}}
                                         </td>
@@ -78,7 +89,7 @@
             </div>
         </div>
     </div>
-    
+
   <script>
 
     const stackedChart = $('#manufacturersStackedBarChart');
@@ -181,7 +192,7 @@
                     orientation: 'portait',
                     pageSize: 'A4',
                     customize: function(doc){
-                        doc.content[1].table.dontBreakRows = true; 
+                        doc.content[1].table.dontBreakRows = true;
                         doc.styles.title = {
                             alignment: "center",
                             fontSize: 12,
@@ -196,7 +207,7 @@
                     exportOptions: {
                         stripHtml: true,
                         },
-                }, 
+                },
                 {
                     extend:'csv',
                     className: 'btn btn-secondary',
@@ -227,13 +238,13 @@
                                 }
                                 else if (item.nodeName == 'STRONG'){
                                     result += item.outerHTML;
-                                } 
-                                else if (item.nodeName == 'A'){                                       
+                                }
+                                else if (item.nodeName == 'A'){
                                     result += item.outerHTML;
                                 }
                                 else {
                                     result += item.innerText;
-                                } 
+                                }
                               });
                               return result;
                             }
@@ -241,7 +252,7 @@
                         },
                         //customise print output
                         //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
-                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
                     customize: function(window, print_btn_object, api){
                         rows = api.rows({search:'applied'}).nodes();
                         columns = api.columns({search:'applied'}).nodes();
@@ -299,9 +310,9 @@
                     });
                 },
         });
-     
-      
-     
+
+
+
         // Filter event handler
         //if table is undefined, refresh the page.
         $( table_1.table().container() ).on( 'keyup', 'thead input', function () {
