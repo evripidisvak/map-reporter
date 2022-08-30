@@ -1685,11 +1685,11 @@ def meerkat_search(products, categories, shops, manufacturers, div_id, col_class
             results += (
                 '<a class="link-dark mt-3" style="display:block;" href="'
                 + product_url
-                + '"><div class="row align-items-center"><div class="col-3"><img src="'
+                + '"><div class="row align-items-center"><div class="col-xl-3"><img src="'
                 + im.url
                 + '" alt="'
                 + product.model
-                + '" class="product_image_search"></div><div class="col-9 align-middle">'
+                + '" class="product_image_search"></div><div class="col-xl-9 align-middle">'
                 + product.model
                 + " - "
                 + product.sku
@@ -1761,7 +1761,9 @@ def topbar_search(request):
                 products = Product.objects.filter(
                     Q(model__icontains=term) | Q(sku__contains=term)
                 )[:6]
-                categories = Category.objects.filter(Q(name__unaccent__icontains=term))[:6]
+                categories = Category.objects.filter(Q(name__unaccent__icontains=term))[
+                    :6
+                ]
                 shops = Shop.objects.filter(Q(name__unaccent__icontains=term))[:6]
                 manufacturers = Manufacturer.objects.filter(Q(name__icontains=term))[:6]
                 div_id = "mini_search_results"
