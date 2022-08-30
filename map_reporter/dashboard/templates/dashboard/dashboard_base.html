@@ -11,8 +11,8 @@
         <title>{% block title %}Πίνακας ελέγχου{%endblock%} | Meerkat</title>
 
         <!--CSS-->
-        <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/styles.css' %}"><!--bootstrap 5 downloaded locally-->
         <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/custom-styles.css'%}">
+        <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/styles.css' %}"><!--bootstrap 5 downloaded locally-->
         <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/bootstrap-icons.css'%}">
         <link rel="stylesheet" type="text/css" href="{% static '/map_reporter/css/daterangepicker.css' %}">
         <link rel="stylesheet" href="{% static '/map_reporter/css/jquery.dataTables.css' %}">
@@ -39,7 +39,7 @@
     </head>
 
     <body class="sb-nav-fixed" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-        <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark">
+        <nav class="sb-topnav navbar navbar-expand navbar-dark bg-dark gap-1">
             <!-- Navbar Brand-->
             <a class="navbar-brand ps-3" href="{% url 'index' %}"><img src="{% static '/meerkat-logo.png' %}" alt="Meerkat Logo" width="40" height="40" class="d-inline-block align-middle me-2"> Meerkat</a>
             <!-- Sidebar Toggle-->

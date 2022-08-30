@@ -170,4 +170,21 @@ tr.bg-light.head-filters th {
     #sidebarToggle {
         display: inline-block;
     }
+
+}
+
+
+.buttons-html5 {
+    margin: 0.25rem !important;
+}
+
+@media only screen and (max-width:1086px) {
+    .dataTables_info {
+        position: static !important;
+    }
+
+
+    .paginate_button {
+        margin-top: 5px !important;
+    }
 }
