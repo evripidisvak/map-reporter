@@ -14,7 +14,7 @@ P{% extends "dashboard_base.html" %}
 {% block main %}
 <h1 class="mb-4">Κατηγορίες</h1>
     <div class="row pt-lg-5">
-        <div class="col col-6">
+        <div class="col-xl-6">
             <div class="card mb-4">
                 <div class="card-header">
                     <i class="fas fa-chart-bar me-1"></i>
@@ -43,7 +43,7 @@ P{% extends "dashboard_base.html" %}
                             <th >Προϊόντα ΟΚ</th>
                             <th >Προϊόντα κάτω</th>
                         </tr>
-                        
+
                         <tr class="bg-light head-filters">
                             <th class="select">Όνομα κατηγορίας</th>
                             <th class="select">Γονική κατηγορία</th>
@@ -96,7 +96,7 @@ P{% extends "dashboard_base.html" %}
             labels: [
                     {% for category in categories %}
                     '{{category.name}} ({{category.product_count}})',
-                    {% endfor %}        
+                    {% endfor %}
             ],
                 datasets: [{
                     label: '# Προϊόντων Κάτω',
@@ -160,7 +160,7 @@ P{% extends "dashboard_base.html" %}
             }
         } );
 
-    
+
       //initialise data table
         table_1 = $('#table_1').DataTable({
            order: [[1, 'asc']],
@@ -215,7 +215,7 @@ P{% extends "dashboard_base.html" %}
                         },
                     },
                     customize: function(doc){
-                        doc.content[1].table.dontBreakRows = true; 
+                        doc.content[1].table.dontBreakRows = true;
                         doc.styles.title = {
                             alignment: "center",
                             fontSize: 12,
@@ -229,7 +229,7 @@ P{% extends "dashboard_base.html" %}
                     text:'Excel',
                     exportOptions: {
                         stripHtml: true,
-                        //function to keep images and other html tags <- does not work, set stripHTML to true. 
+                        //function to keep images and other html tags <- does not work, set stripHTML to true.
                        format: {
                             body: function ( inner, coldex, rowdex ) {
                                 if (inner.length <= 0) return inner;
@@ -253,7 +253,7 @@ P{% extends "dashboard_base.html" %}
                             }
                           },
                         },
-                }, 
+                },
                 {
                     extend:'csv',
                     className: 'btn btn-secondary',
@@ -306,13 +306,13 @@ P{% extends "dashboard_base.html" %}
                                 }
                                 else if (item.nodeName == 'STRONG'){
                                     result += item.outerHTML;
-                                } 
-                                else if (item.nodeName == 'A'){                                       
+                                }
+                                else if (item.nodeName == 'A'){
                                     result += item.outerHTML;
                                 }
                                 else {
                                     result += item.innerText;
-                                } 
+                                }
                               });
                               return result;
                             }
@@ -320,7 +320,7 @@ P{% extends "dashboard_base.html" %}
                         },
                         //customise print output
                         //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
-                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues. 
+                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
                     customize: function(window, print_btn_object, api){
                         rows = api.rows({search:'applied'}).nodes();
                         columns = api.columns({search:'applied'}).nodes();
@@ -378,9 +378,9 @@ P{% extends "dashboard_base.html" %}
                     });
                 },
         });
-     
-      
-     
+
+
+
         // Filter event handler
         //if table is undefined, refresh the page.
         $( table_1.table().container() ).on( 'keyup', 'thead input', function () {
