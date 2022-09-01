@@ -51,6 +51,16 @@ class ProductAdmin(admin.ModelAdmin):
         models.ImageField: {"widget": AdminImageWidget},
     }
 
+    @admin.action(description="Deactivate selected products")
+    def deactivate_products(self, request, queryset):
+        queryset.update(active=False)
+
+    @admin.action(description="Activate selected products")
+    def activate_products(self, request, queryset):
+        queryset.update(active=True)
+
+    actions = [deactivate_products, activate_products]
+
 
 class CategoryAdmin(DraggableMPTTAdmin):
     search_fields = ["name"]
@@ -113,7 +123,7 @@ class ShopAdminView(admin.ModelAdmin):
     list_display = ("name", "key_account", "seller_last_name")
     list_filter = [
         "key_account",
-        "seller__last_name",
+        ("seller", admin.RelatedOnlyFieldListFilter),
         ("seller", admin.EmptyFieldListFilter),
     ]
     search_fields = ["name"]
