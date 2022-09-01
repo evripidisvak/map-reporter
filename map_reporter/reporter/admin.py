@@ -55,10 +55,14 @@ class ProductAdmin(admin.ModelAdmin):
     @admin.action(description="Deactivate selected products")
     def deactivate_products(self, request, queryset):
         queryset.update(active=False)
+        for product in queryset:
+            product.save()
 
     @admin.action(description="Activate selected products")
     def activate_products(self, request, queryset):
         queryset.update(active=True)
+        for product in queryset:
+            product.save()
 
     actions = [deactivate_products, activate_products]
 
