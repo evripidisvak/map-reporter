@@ -42,9 +42,10 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ("name", "sku", "map_price", "main_category", "active")
     search_fields = ["sku", "model", "manufacturer__name"]
     list_filter = (
-        ("main_category", TreeRelatedFieldListFilter),
+        "manufacturer",
         "active",
         ("page", admin.EmptyFieldListFilter),
+        ("main_category", TreeRelatedFieldListFilter),
     )
     list_select_related = ("main_category",)
     formfield_overrides = {
