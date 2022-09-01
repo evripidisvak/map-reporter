@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.db import models
+from django.contrib import messages
+from django.utils.translation import ngettext
 from mptt.admin import MPTTModelAdmin, DraggableMPTTAdmin, TreeRelatedFieldListFilter
 from django.contrib.admin.widgets import AdminFileWidget
 from django.utils.safestring import mark_safe
@@ -54,15 +56,37 @@ class ProductAdmin(admin.ModelAdmin):
 
     @admin.action(description="Deactivate selected products")
     def deactivate_products(self, request, queryset):
-        queryset.update(active=False)
+        updated = queryset.update(active=False)
         for product in queryset:
             product.save()
 
+        self.message_user(
+            request,
+            ngettext(
+                "%d product was successfully deactivated.",
+                "%d products was successfully deactivated.",
+                updated,
+            )
+            % updated,
+            messages.SUCCESS,
+        )
+
     @admin.action(description="Activate selected products")
     def activate_products(self, request, queryset):
-        queryset.update(active=True)
+        updated = queryset.update(active=True)
         for product in queryset:
             product.save()
+
+        self.message_user(
+            request,
+            ngettext(
+                "%d product was successfully activated.",
+                "%d products was successfully activated.",
+                updated,
+            )
+            % updated,
+            messages.SUCCESS,
+        )
 
     actions = [deactivate_products, activate_products]
 
