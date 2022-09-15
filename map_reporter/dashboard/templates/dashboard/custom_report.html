@@ -1,0 +1,419 @@
+{% extends "dashboard_base.html" %}
+{% load dashboard_tags %}
+{% load static %}
+{% load thumbnail %}
+{% block title %}
+    Custom Reports
+{% endblock %}
+
+{% block headEnd %}
+
+{% endblock headEnd %}
+
+{% block main %}
+
+<div class="container-fluid mt-5">
+    <div class="row">
+        <h3>Αναφορά Key Account</h3>
+        <form name="date_range" id="category-picker-form" hx-post="/key_accounts_custom_report/" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
+            <div class="row">
+                <p>Επιλέξτε τις κατηγορίες που σας ενδιαφέρουν για να παραχθεί ο πίνακας τιμών.</p>
+                <div class="col-lg-12">
+                    <div class="m-2 d-inline-block">
+
+                    </div>
+                    <div class="dropdown m-2 d-inline-block">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="CategorySelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                          Επιλέξτε Κατηγορίες
+                        </button>
+                        <ul class="dropdown-menu overflow-auto p-0" style="max-height:300px;" aria-labelledby="CategorySelectDropdown">
+                            <div class="search sticky-top p-1 w-100 bg-white">
+                                <input type="text" class="form-control" placeholder="Αναζήτηση" id="category_search">
+                            </div>
+                            <li class="p-2 dropdown-category">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input class="select-all" name="select_all" type="checkbox" value="Επιλογή Όλων" id="CategorySelectAllCheckbox">
+                                        Επιλογή Όλων
+                                    </label>
+                                </div>
+                            </li>
+                            {% for category in categories %}
+                            <li class="p-2 dropdown-category">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input class="form-check-input" name="{{category}}" type="checkbox" value="{{category.id}}" id="CategorySelectCheckbox{{ forloop.counter0 }}">
+                                        {{category}}
+                                    </label>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <button class="btn btn-primary ms-3" type="submit" value="Submit" style="width:auto;"><i class="fa-solid fa-paper-plane"></i> Υποβολή</button>
+                    <div style="display:none;" class="mt-2 text-danger" id="error_notice"></div> <!-- errors go here -->
+                </div>
+            </div>
+            <div class="row">
+            </form>
+            </div>
+    </div>
+
+    <div class="card mb-4 mt-4" id="key_account_custom_report_card">
+        <div class="card-header">
+            <i class="fas fa-table me-1"></i>
+            Πίνακας τιμών προϊόντος
+        </div>
+        <div class="card-body overflow-auto">
+            <table id="key_account_custom_report_table" class="data-table display"></table>
+        </div>
+    </div>
+</div>
+
+<script>
+
+    function parseHTML(str) {
+        const tmp = document.implementation.createHTMLDocument('');
+        tmp.body.innerHTML = str;
+        return [...tmp.body.childNodes];
+      }
+
+
+
+    //TABLE STUFF STARTS
+$(document).ready(function() {
+        //function to enable search on the shops dropdown
+        $(document).ready(function(){
+            $("#category_search").on("keyup", function() {
+                var value = $(this).val().toLowerCase();
+                $(".dropdown-menu li").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+                });
+            });
+            });
+
+
+        config = {
+            order: [[1, 'asc'],],
+            dom: 'Bfplrtipl',
+            info:true,
+            searching: true,
+            language: {
+                search: "Αναζήτηση: ",
+                paginate:{
+                    previous: "&lt;",
+                    next: "&gt;",
+                },
+                info: "Σελίδα _PAGE_ από _PAGES_",
+                lengthMenu: "Εμφάνιση _MENU_ γραμμών",
+                infoFiltered: " - φιλτραρισμένο από _MAX_ γραμμές",
+            },
+            paging: true,
+            responsive: true,
+            buttons: [
+                {
+                    // Save as PDF button
+                    // TODO Check margins, add datetime of export, fix title in pdf, check file name
+                    extend: 'pdf',
+                    text: 'PDF',
+                    className: 'btn btn-secondary',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        format: {
+                            body: function ( inner, coldex, rowdex ) {
+                            if (inner.length <= 0) return inner;
+                            // The following is the default jQuery function, but it cannot read the numbers of the table. So we currently use a vanilla JS function to do the same thing.
+                            // var el = $.parseHTML(inner);
+                            var el = parseHTML(inner);
+                            var result='';
+                            $.each( el, function (index, item) {
+                                if (item.nodeName == '#text') {
+                                    result += item.textContent;
+                                }
+                                else if (item.nodeName == 'STRONG'){
+                                    result += item.outerHTML;
+                                }
+                                else if (item.nodeName == 'A'){
+                                    result += item.innerHTML;
+                                }
+                                else {
+                                    result += item.outerHTML;
+                                }
+                            });
+                            return result;
+                            }
+                        },
+                        modifier: {
+                        },
+                    },
+                    customize: function(doc){
+                        doc.content[1].table.dontBreakRows = true;
+                        doc.pageMargins = [ 1,1,1,1 ];
+                        doc.styles.tableHeader = {
+                            alignment: "center",
+                            bold: true,
+                            color: "white",
+                            fillColor: "#2d4154",
+                            fontSize: 8,
+                        };
+                        doc.styles.redcelleven = {
+                            color: '#dc3545',
+                            fillColor: '#fceaec',
+                        };
+                        doc.styles.redcellodd = {
+                            color: '#dc3545',
+                            fillColor: '#e2d2d4',
+                        };
+                        doc.styles.redroweven = {
+                            fillColor: '#fceaec',
+                        };
+                        doc.styles.redrowodd = {
+                            fillColor: '#e2d2d4',
+                        };
+                        doc.defaultStyle.fontSize = 8;
+                        for(j = 1; j < doc.content[1].table.body.length; j++){
+                            red_row = false;
+                            red_cell = false;
+                            for(z = 0; z < doc.content[1].table.body[j].length; z++){
+                                    if(typeof doc.content[1].table.body[j][z].text !== 'undefined' && doc.content[1].table.body[j][z].text != 'undefined'){
+                                        if(doc.content[1].table.body[j][z].text.includes('text-danger')){
+                                            red_row = true;
+                                            if(j % 2 == 0){
+                                                doc.content[1].table.body[j][z].style = 'redcelleven';
+                                            } else {
+                                                doc.content[1].table.body[j][z].style = 'redcellodd';
+                                            }
+                                        }
+                                        let reg = /<\/?.+?\/?>/g;
+                                        new_value = doc.content[1].table.body[j][z].text.replace(reg, '').trim();
+                                        doc.content[1].table.body[j][z].text = new_value;
+                                    }
+                            }
+                            if(red_row){
+                                for(z = 0; z < doc.content[1].table.body[j].length; z++){
+                                    if(doc.content[1].table.body[j][z].style != 'redcellodd' && doc.content[1].table.body[j][z].style != 'redcelleven' ){
+                                        if(j % 2 == 0){
+                                            doc.content[1].table.body[j][z].style = 'redroweven';
+                                        }else {
+                                            doc.content[1].table.body[j][z].style = 'redrowodd';
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                },
+                {
+                    extend:'excel',
+                    className: 'btn btn-secondary',
+                    text:'Excel',
+                    exportOptions: {
+                        stripHtml: true,
+                        },
+                },
+                {
+                    extend:'csv',
+                    className: 'btn btn-secondary',
+                },
+                //customise print button
+                {
+                    extend: 'print',
+                    text: 'Εκτύπωση',
+                    className: 'btn btn-secondary',
+                    orientation: 'landscape',
+                    exportOptions: {
+                        stripHtml: false,
+                        //function to keep images and other html tags
+                        format: {
+                            body: function ( inner, coldex, rowdex ) {
+                                if (inner.length <= 0) return inner;
+                                // The following is the default jQuery function, but it cannot read the numbers of the table. So we currently use a vanilla JS function to do the same thing.
+                                // var el = $.parseHTML(inner);
+                                var el = parseHTML(inner);
+                                console.log(el);
+                                var result='';
+                                $.each( el, function (index, item) {
+                                    if (item.nodeName == '#text') {
+                                        if (item.textContent !== 'undefined'){
+                                            result += item.textContent;
+                                        } else {
+                                            result += item.nextSibling.innerText;
+                                        }
+                                    }
+                                    else if (item.nodeName == 'STRONG'){
+                                        result += item.outerHTML;
+                                    }
+                                    else if (item.nodeName == 'A'){
+                                        result += item.outerHTML;
+                                    }
+                                    else {
+                                        result += item.innerText;
+                                    }
+                                });
+                                return result;
+                            }
+                        },
+                        },
+                        //customise print output
+                        //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
+                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
+                    customize: function(window, print_btn_object, api){
+                        rows = api.rows({search:'applied'}).nodes();
+                        columns = api.columns({search:'applied'}).nodes();
+                        cells = api.cells('.danger-text', {search:'applied'});
+                        $(window.document.body).css('webkit-print-color-adjust', 'exact');
+                        $(window.document.body).css('print-color-adjust', 'exact');
+                        table = $(window.document.body).find('table');
+                        table_head = table.find('thead');
+                        table_head.css('background-color', '#F8F9FA');
+                        table_body = table.find('tbody');
+                        trs = table_body.find('tr');
+                        tds = table_body.find('td');
+                        table.find('th').css('white-space', 'nowrap');
+                        $.each(rows, function(index, item){
+                            if (item.classList.contains('bg-danger')){
+                                $(trs[index]).css('background-color', '#FCEAEC');
+                            }
+                            $.each(item.cells, function(indx, td){
+                                if (td.classList.contains('danger-text')){
+                                    $(trs[index].cells[indx]).css('color', '#ff0000');
+                                } else if (td.classList.contains('success-text')){
+                                    $(trs[index].cells[indx]).css('color', '#198754');
+                                }
+                            });
+                        });
+                    },
+                },
+                {
+                    extend:'copy',
+                    className: 'btn btn-secondary',
+                    text: 'Αντιγραφή',
+                },
+            ],
+            orderCellsTop: true,
+            fixedColumns:   true,
+            //add select filters where we have select-filter class on the first th row of the thead.
+            initComplete: function(){
+                this.api()
+                .columns('.select-filter')
+                .every(function () {
+                        var column = this;
+                        var select = $('<select class="form-select"><option value=""></option></select>').appendTo($("#table_1 thead tr:eq(1) th").eq(column.index()).empty()).on('change', function () {
+                                var val = $(this).val();
+                                column.search(val ? val : '', false, true).draw();
+                            });
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                let reg = /<\/?.+?\/?>/g;
+                                new_value = d.replace(reg, '').trim();
+                                select.append('<option value="' + new_value + '">' + new_value + '</option>');
+                            });
+                    });
+                },
+    };
+
+});
+    // TABLE CONFIG ENDS
+
+    //stop dropdown from closing on click, so we can select multiple categories
+    $('body').on('click', function(e){
+        dropdown_elem = $('#CategorySelectDropdown');
+        target_element = $(e.target);
+        if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check') || target_element.hasClass('dropdown-menu show') || target_element.hasClass('dropdown-category') ){
+            e.stopPropagation();
+        }
+        if (target_element.attr('id') == 'CategorySelectAllCheckbox'){
+            checkboxes = $('.form-check-input');
+            if (target_element.prop('checked') == true ){
+                checkboxes.each(function(i, element){
+                    $(this).prop('checked', true);
+                });
+            }
+            else if (target_element.prop('checked') == false ){
+                checkboxes.each(function(i, element){
+                    $(this).prop('checked', false);
+                });
+            }
+    }
+    });
+
+    document.body.addEventListener('htmx:beforeRequest', function (evt) {
+        const targetError = evt.target.attributes.getNamedItem('hx-target-error')
+        if (targetError) {
+          document.getElementById(targetError.value).style.display = "none";
+        }
+      });
+
+    // Get all checked items from the dropdown and add them in the request parameters
+    document.body.addEventListener('htmx:configRequest', function(evt) {
+    if (evt.target.id == 'category-picker-form'){
+        checkboxes = $('.form-check-input');
+        category_list = '';
+        checkboxes.each(
+            function(i,elem) {
+                if($(this).prop('checked') == true){
+                    category_list += $(this).val() + ' ';
+                }
+            }
+            );
+            if(category_list == ''){
+                error_elem = document.getElementById('error_notice');
+                error_elem.innerHTML = 'Παρακαλώ επιλέξτε τουλάχιστον μια κατηγορία.';
+                error_elem.style.display = "block";
+                evt.preventDefault();
+            } else {
+                error_elem = document.getElementById('error_notice')
+                error_elem.innerHTML = '';
+                error_elem.style.display = "none";
+            }
+        }
+        evt.detail.parameters['categories_list'] = category_list; // add a new parameter into the mix
+    });
+
+    // What should i do with the response from the server?
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+        const targetError = evt.target.attributes.getNamedItem('hx-target-error');
+        if (evt.detail.failed && targetError) {
+            // We got an error
+            error_elem = document.getElementById(targetError.value);
+            error_elem.innerHTML = "Δεν υπάρχουν τιμές για τις επιλεγμένες κατηγορίες.";
+            error_elem.style.display = "block";
+        } else {
+            // Create the table
+            const my_response_text = evt.detail.xhr.response;
+            my_response = JSON.parse(my_response_text);
+            if ("error" in my_response){
+                error_elem = document.getElementById('error_notice');
+                error_elem.innerHTML = 'Υπήρξε κάποιο σφάλμα. Προσπαθήστε ξανά. Εάν το σφάλμα συνεχιστεί επικοινωνήστε με το τμήμα Internet.';
+                error_elem.style.display = "block";
+            } else {
+                config.columns = my_response.columns;
+                config.data = my_response.data_set;
+                rows_below = my_response.rows_below;
+
+                document.getElementById("key_account_custom_report_card").style.display = 'block';
+
+                if ( $.fn.dataTable.isDataTable( '#key_account_custom_report_table') ) {
+                    key_account_custom_report_table.destroy();
+                    key_account_custom_report_table = $('#key_account_custom_report_table').DataTable(config);
+                }
+                else {
+                    key_account_custom_report_table = $('#key_account_custom_report_table').DataTable(config);
+                }
+
+                document.querySelectorAll('#key_account_custom_report_table thead tr')[0].classList.add('bg-light', 'head-filters');
+
+                for(var i=0; i < rows_below.length; i++){
+                    key_account_custom_report_table.row(rows_below[i]).node().classList.add('bg-danger', 'bg-opacity-10');
+                }
+            }
+        }
+    });
+
+</script>
+
+{% endblock main %}

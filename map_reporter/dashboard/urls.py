@@ -33,6 +33,7 @@ urlpatterns = [
         name="search_results",
     ),
     path("topbar_seach/", views.topbar_search, name="topbar_search"),
+    path("custom_report/", views.CustomReport.as_view(), name="custom_report"),
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
 
@@ -41,6 +42,11 @@ urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 htmx_urlpatterns = [
     path("update_date/<int:product_id>", views.update_date, name="update_date"),
+    path(
+        "key_accounts_custom_report/",
+        views.key_accounts_custom_report,
+        name="key_accounts_custom_report",
+    ),
 ]
 
 urlpatterns += htmx_urlpatterns
