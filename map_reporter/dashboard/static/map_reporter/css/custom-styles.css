@@ -188,3 +188,7 @@ tr.bg-light.head-filters th {
         margin-top: 5px !important;
     }
 }
+
+#key_account_custom_report_card {
+    display: none;
+}

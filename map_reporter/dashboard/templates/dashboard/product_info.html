@@ -432,7 +432,6 @@
             // Update the charts
             const my_response_text = evt.detail.xhr.response;
             my_response = JSON.parse(my_response_text);
-            console.log(my_response);
             new_timestamp = "Τελευταία ενημέρωση " + my_response.date_to;
             $('.latest_timestamp').each(function(i, e){
                 $(e).text(new_timestamp);
