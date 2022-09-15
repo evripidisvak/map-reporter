@@ -231,7 +231,6 @@ $(document).ready(function() {
                                 // The following is the default jQuery function, but it cannot read the numbers of the table. So we currently use a vanilla JS function to do the same thing.
                                 // var el = $.parseHTML(inner);
                                 var el = parseHTML(inner);
-                                console.log(el);
                                 var result='';
                                 $.each( el, function (index, item) {
                                     if (item.nodeName == '#text') {
@@ -399,6 +398,7 @@ $(document).ready(function() {
 
                 if ( $.fn.dataTable.isDataTable( '#key_account_custom_report_table') ) {
                     $('#key_account_custom_report_table').DataTable().destroy();
+                    $('#key_account_custom_report_table').empty();
                     key_account_custom_report_table = $('#key_account_custom_report_table').DataTable(config);
                 }
                 else {
