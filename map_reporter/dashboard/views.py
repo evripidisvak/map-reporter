@@ -1844,142 +1844,146 @@ class CustomReport(TemplateView):
 
 def key_accounts_custom_report(request):
     if request.method == "POST":
-        try:
-            categories = request.POST.get("categories_list").strip()
-            categories_request = [data.strip() for data in categories.split(" ")]
+        # try:
+        categories = request.POST.get("categories_list").strip()
+        categories_request = [data.strip() for data in categories.split(" ")]
 
-            categories_list = Category.objects.filter(
-                id__in=categories_request
-            ).get_descendants(include_self=True)
+        categories_list = Category.objects.filter(
+            id__in=categories_request
+        ).get_descendants(include_self=True)
 
-            key_accounts = Shop.objects.filter(key_account=True)
+        key_accounts = Shop.objects.filter(key_account=True)
 
-            retail_prices = (
-                RetailPrice.objects.filter(
-                    shop__in=key_accounts,
-                    product__main_category__in=categories_list,
-                    product__active=True,
-                    timestamp__range=(
-                        make_aware(
-                            datetime.datetime.now() - datetime.timedelta(days=14)
-                        ),
-                        make_aware(datetime.datetime.now()),
-                    ),
-                )
-                .select_related("product")
-                .annotate(
-                    shop_name=F("shop__name"),
-                    product_category=F("product__main_category__name"),
-                    product_manufacturer=F("product__manufacturer__name"),
-                    product_model=F("product__model"),
-                    product_sku=F("product__sku"),
-                )
+        retail_prices = (
+            RetailPrice.objects.filter(
+                shop__in=key_accounts,
+                product__main_category__in=categories_list,
+                product__active=True,
+                timestamp__range=(
+                    make_aware(datetime.datetime.now() - datetime.timedelta(days=14)),
+                    make_aware(datetime.datetime.now()),
+                ),
             )
-
-            retail_prices_df = pd.DataFrame.from_records(
-                retail_prices.values_list(),
-                columns=[
-                    "id",
-                    "price",
-                    "timestamp",
-                    "product_id",
-                    "shop_id",
-                    "official_reseller",
-                    "curr_target_price",
-                    "source_id",
-                    "shop_name",
-                    "product_category",
-                    "product_manufacturer",
-                    "product_model",
-                    "product_sku",
-                ],
+            .select_related("product")
+            .annotate(
+                shop_name=F("shop__name"),
+                product_category=F("product__main_category__name"),
+                product_manufacturer=F("product__manufacturer__name"),
+                product_model=F("product__model"),
+                product_sku=F("product__sku"),
             )
+        )
 
-            grouped_retailprices = retail_prices_df.loc[
-                retail_prices_df.groupby(["product_id", "shop_name"])[
-                    "timestamp"
-                ].idxmax()
-            ].reset_index(drop=True)
+        retail_prices_df = pd.DataFrame.from_records(
+            retail_prices.values_list(),
+            columns=[
+                "id",
+                "price",
+                "timestamp",
+                "product_id",
+                "shop_id",
+                "official_reseller",
+                "curr_target_price",
+                "source_id",
+                "shop_name",
+                "product_category",
+                "product_manufacturer",
+                "product_model",
+                "product_sku",
+            ],
+        )
 
-            grouped_retailprices = grouped_retailprices.pivot(
-                index=[
-                    "product_id",
-                    "product_category",
-                    "product_manufacturer",
-                    "product_model",
-                    "product_sku",
-                    "curr_target_price",
-                ],
-                columns=["shop_name"],
-                values=["price"],
-            ).sort_values(
-                by=["product_manufacturer", "product_category", "product_sku"]
-            )
+        grouped_retailprices = retail_prices_df.loc[
+            retail_prices_df.groupby(["product_id", "shop_name"])["timestamp"].idxmax()
+        ].reset_index(drop=True)
 
-            cols = [
+        latest_timestamp = grouped_retailprices.sort_values(
+            by="timestamp", ascending=False
+        )["timestamp"].iloc[0]
+        if not latest_timestamp:
+            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+
+        latest_timestamp = latest_timestamp.to_pydatetime()
+
+        local_dt = timezone.localtime(latest_timestamp)
+        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+
+        grouped_retailprices = grouped_retailprices.pivot(
+            index=[
                 "product_id",
                 "product_category",
                 "product_manufacturer",
                 "product_model",
                 "product_sku",
                 "curr_target_price",
-            ]
-            title_cols = len(cols) - 1
+            ],
+            columns=["shop_name"],
+            values=["price"],
+        ).sort_values(by=["product_manufacturer", "product_category", "product_sku"])
 
-            key_accounts_shops = []
-            for shop in grouped_retailprices.columns:
-                key_accounts_shops.append(shop[1])
+        cols = [
+            "product_id",
+            "product_category",
+            "product_manufacturer",
+            "product_model",
+            "product_sku",
+            "curr_target_price",
+        ]
+        title_cols = len(cols) - 1
 
-            cols.extend(key_accounts_shops)
+        key_accounts_shops = []
+        for shop in grouped_retailprices.columns:
+            key_accounts_shops.append(shop[1])
 
-            grouped_retailprices.reset_index(inplace=True)
+        cols.extend(key_accounts_shops)
 
-            grouped_retailprices.columns = cols
+        grouped_retailprices.reset_index(inplace=True)
 
-            grouped_retailprices.drop("product_id", axis=1, inplace=True)
+        grouped_retailprices.columns = cols
 
-            index_table = grouped_retailprices.copy()
+        grouped_retailprices.drop("product_id", axis=1, inplace=True)
 
-            index_table["min_price"] = (
-                grouped_retailprices.iloc[:, title_cols:]
-                .min(axis=1)
-                .values.astype(float)
-            )
-            index_table["result"] = index_table.apply(
-                lambda x: True
-                if float(x["min_price"]) < float(x["curr_target_price"])
-                else False,
-                axis=1,
-            )
+        index_table = grouped_retailprices.copy()
 
-            index_table_list = index_table.index[index_table["result"] == True].tolist()
+        index_table["min_price"] = (
+            grouped_retailprices.iloc[:, title_cols:].min(axis=1).values.astype(float)
+        )
+        index_table["result"] = index_table.apply(
+            lambda x: True
+            if float(x["min_price"]) < float(x["curr_target_price"])
+            else False,
+            axis=1,
+        )
 
-            grouped_retailprices.fillna("-", inplace=True)
+        index_table_list = index_table.index[index_table["result"] == True].tolist()
 
-            columns = [
-                {"title": "Κατηγορία"},
-                {"title": "Κατασκευαστής"},
-                {"title": "Μοντέλο"},
-                {"title": "SKU"},
-                {"title": "Τιμή MAP"},
-            ]
+        grouped_retailprices.fillna("-", inplace=True)
 
-            response_data = {}
+        columns = [
+            {"title": "Κατηγορία"},
+            {"title": "Κατασκευαστής"},
+            {"title": "Μοντέλο"},
+            {"title": "SKU"},
+            {"title": "Τιμή MAP"},
+        ]
 
-            for account in key_accounts_shops:
-                columns.append({"title": account})
+        response_data = {}
 
-            parsed_df = grouped_retailprices.to_json(orient="values")
+        for account in key_accounts_shops:
+            columns.append({"title": account})
 
-            response_data["columns"] = columns
-            response_data["data_set"] = json.loads(parsed_df)
-            response_data["rows_below"] = index_table_list
-            return JsonResponse(response_data, safe=False)
+        parsed_df = grouped_retailprices.to_json(orient="values")
 
-        except:
-            response_data = {}
-            response_data["error"] = "An error occured!"
-            return JsonResponse(response_data, safe=False)
+        response_data["columns"] = columns
+        response_data["data_set"] = json.loads(parsed_df)
+        response_data["rows_below"] = index_table_list
+        response_data["latest_timestamp"] = latest_timestamp
+        return JsonResponse(response_data, safe=False)
+
+    # except:
+    #     response_data = {}
+    #     response_data["error"] = "An error occured!"
+    #     return JsonResponse(response_data, safe=False)
 
     else:
         return HttpResponse("This is not the place you are looking for")
