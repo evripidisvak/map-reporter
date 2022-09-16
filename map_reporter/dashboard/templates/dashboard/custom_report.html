@@ -14,7 +14,7 @@
 
 <div class="container-fluid mt-5">
     <div class="row">
-        <h3>Αναφορά Key Account</h3>
+        <h3 id="key_account_report_title">Αναφορά Key Account</h3>
         <form name="date_range" id="category-picker-form" hx-post="/key_accounts_custom_report/" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
             <div class="row">
                 <p>Επιλέξτε τις κατηγορίες που σας ενδιαφέρουν για να παραχθεί ο πίνακας τιμών.</p>
@@ -92,6 +92,7 @@ $(document).ready(function() {
             });
             });
 
+        title_for_page_print = document.getElementById('key_account_report_title').innerText;
 
         config = {
             order: [[1, 'asc'],],
@@ -257,31 +258,44 @@ $(document).ready(function() {
                         //customise print output
                         //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
                         //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
-                    customize: function(window, print_btn_object, api){
-                        rows = api.rows({search:'applied'}).nodes();
-                        columns = api.columns({search:'applied'}).nodes();
-                        cells = api.cells('.danger-text', {search:'applied'});
-                        $(window.document.body).css('webkit-print-color-adjust', 'exact');
-                        $(window.document.body).css('print-color-adjust', 'exact');
-                        table = $(window.document.body).find('table');
-                        table_head = table.find('thead');
-                        table_head.css('background-color', '#F8F9FA');
-                        table_body = table.find('tbody');
-                        trs = table_body.find('tr');
-                        tds = table_body.find('td');
-                        table.find('th').css('white-space', 'nowrap');
-                        $.each(rows, function(index, item){
-                            if (item.classList.contains('bg-danger')){
-                                $(trs[index]).css('background-color', '#FCEAEC');
-                            }
-                            $.each(item.cells, function(indx, td){
-                                if (td.classList.contains('danger-text')){
-                                    $(trs[index].cells[indx]).css('color', '#ff0000');
-                                } else if (td.classList.contains('success-text')){
-                                    $(trs[index].cells[indx]).css('color', '#198754');
+                        customize: function(window, print_btn_object, api){
+                            title = $(window.document.body).find('h1')[0];
+                            title.innerText = title_for_page_print;
+                            title.style.fontSize = '20px';
+                            timestamp = window.document.createElement('p');
+                            timestamp.innerText = my_response.latest_timestamp;
+                            timestamp.style.fontSize = '16px';
+                            timestamp.style.float = 'right';
+                            title.append(timestamp);
+                            rows = api.rows({search:'applied'}).nodes();
+                            columns = api.columns({search:'applied'}).nodes();
+                            cells = api.cells('.text-danger', {search:'applied'});
+                            $(window.document.body).css('webkit-print-color-adjust', 'exact');
+                            $(window.document.body).css('print-color-adjust', 'exact');
+                            table = $(window.document.body).find('table');
+                            table_head = table.find('thead');
+                            table_head.css('background-color', '#F8F9FA');
+                            table_body = table.find('tbody');
+                            trs = table_body.find('tr');
+                            tds = table_body.find('td');
+                            table.find('th').css('white-space', 'nowrap');
+                            table.find('th').css('border', '1px solid #b2b2b2');
+                            table.find('th').css('text-align', 'center');
+                            $.each(rows, function(index, item){
+                                if (item.classList.contains('bg-danger')){
+                                    $(trs[index]).css('background-color', '#FCEAEC');
                                 }
+                                $.each(item.cells, function(indx, td){
+                                    $(trs[index].cells[indx]).css('padding', '1px');
+                                    $(trs[index].cells[indx]).css('border', '1px solid #b2b2b2');
+                                    //$(trs[index].cells[indx]).css('border-right', '.5px solid #b2b2b2');
+                                    if (td.classList.contains('text-danger')){
+                                        $(trs[index].cells[indx]).css('color', '#ff0000');
+                                    } else if (td.classList.contains('text-success')){
+                                        $(trs[index].cells[indx]).css('color', '#198754');
+                                    }
+                                });
                             });
-                        });
                     },
                 },
                 {
@@ -393,12 +407,11 @@ $(document).ready(function() {
                 config.columns = my_response.columns;
                 config.data = my_response.data_set;
                 rows_below = my_response.rows_below;
-
+                latest_timestamp = my_response.latest_timestamp;
                 document.getElementById("key_account_custom_report_card").style.display = 'block';
 
                 if ( $.fn.dataTable.isDataTable( '#key_account_custom_report_table') ) {
-                    $('#key_account_custom_report_table').DataTable().destroy();
-                    $('#key_account_custom_report_table').empty();
+                    key_account_custom_report_table.destroy();
                     key_account_custom_report_table = $('#key_account_custom_report_table').DataTable(config);
                 }
                 else {
@@ -406,9 +419,16 @@ $(document).ready(function() {
                 }
 
                 document.querySelectorAll('#key_account_custom_report_table thead tr')[0].classList.add('bg-light', 'head-filters');
-
+                // TODO smaller cell paddings, vertical borders
                 for(var i=0; i < rows_below.length; i++){
                     key_account_custom_report_table.row(rows_below[i]).node().classList.add('bg-danger', 'bg-opacity-10');
+                    map_price = key_account_custom_report_table.row(rows_below[i]).node().childNodes[4].innerText;
+                    for(j=5; j < key_account_custom_report_table.row(rows_below[i]).node().childNodes.length; j++){
+                        value = key_account_custom_report_table.row(rows_below[i]).node().childNodes[j].innerText;
+                        if(value != '-' && parseFloat(value) < parseFloat(map_price)){
+                            key_account_custom_report_table.row(rows_below[i]).node().childNodes[j].classList.add('text-danger');
+                        }
+                    }
                 }
             }
         }
