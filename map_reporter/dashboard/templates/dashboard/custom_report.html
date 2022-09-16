@@ -176,8 +176,9 @@ $(document).ready(function() {
                             red_row = false;
                             red_cell = false;
                             for(z = 0; z < doc.content[1].table.body[j].length; z++){
-                                    if(typeof doc.content[1].table.body[j][z].text !== 'undefined' && doc.content[1].table.body[j][z].text != 'undefined'){
-                                        if(doc.content[1].table.body[j][z].text.includes('text-danger')){
+                                if(typeof doc.content[1].table.body[j][z].text !== 'undefined' && doc.content[1].table.body[j][z].text != 'undefined'){
+                                    console.log(doc.content[1].table.body[j][z]);
+                                    if(doc.content[1].table.body[j][z].text.includes('text-danger')){
                                             red_row = true;
                                             if(j % 2 == 0){
                                                 doc.content[1].table.body[j][z].style = 'redcelleven';

@@ -3,6 +3,7 @@ from ast import And
 from itertools import product
 from this import d
 from django.http import Http404, HttpResponseRedirect, HttpResponse
+from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404, get_list_or_404, redirect
 from django.views import View
 from django.views.generic.base import TemplateView
@@ -38,6 +39,10 @@ import numpy as np
 
 def is_seller(user):
     return user.groups.filter(name="Seller").exists()
+
+
+def is_sales_dep(user):
+    return user.groups.filter(name="Sales_Dep").exists()
 
 
 class Index(TemplateView):
@@ -208,6 +213,8 @@ class Index(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -374,6 +381,8 @@ class AllProducts(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -474,6 +483,8 @@ class ShopsPage(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -580,6 +591,8 @@ class ShopInfo(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -667,6 +680,8 @@ class CategoriesPage(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -847,6 +862,8 @@ class CategoryInfo(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
 
@@ -944,6 +961,8 @@ class ManufacturersPage(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -1122,6 +1141,8 @@ class ManufacturerInfo(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
 
@@ -1255,6 +1276,8 @@ class ShopProductInfo(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -1397,6 +1420,8 @@ class ProductInfo(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -1813,6 +1838,8 @@ class SearchResults(TemplateView):
                     "term": term,
                     "user": user,
                     "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
                 }
             )
         return context
@@ -1823,23 +1850,28 @@ class CustomReport(TemplateView):
     template_name = "dashboard/custom_report.html"
 
     def get_context_data(self, **kwargs):
-        context = super(CustomReport, self).get_context_data(**kwargs)
-
-        # Get the categories we will show in the dropdown
-        categories = Category.objects.all()
-
         user = self.request.user
-        seller_flag = is_seller(user)
+        if is_sales_dep(user) or user.is_superuser or user.is_staff:
+            context = super(CustomReport, self).get_context_data(**kwargs)
 
-        context.update(
-            {
-                "categories": categories,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-            }
-        )
-        return context
+            # Get the categories we will show in the dropdown
+            categories = Category.objects.all()
+
+            seller_flag = is_seller(user)
+
+            context.update(
+                {
+                    "categories": categories,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                }
+            )
+            return context
+        else:
+            raise PermissionDenied()
 
 
 def key_accounts_custom_report(request):
