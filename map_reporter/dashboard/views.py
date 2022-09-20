@@ -2003,7 +2003,7 @@ def key_accounts_custom_report(request):
 
         grouped_retailprices = grouped_retailprices[cols_to_sort]
 
-        grouped_retailprices.replace(0, None, inplace=True)
+        grouped_retailprices.replace(0, np.nan, inplace=True)
 
         index_table = grouped_retailprices.copy()
 

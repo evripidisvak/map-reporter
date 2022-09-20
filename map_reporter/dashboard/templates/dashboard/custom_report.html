@@ -412,6 +412,7 @@ $(document).ready(function() {
 
                 if ( $.fn.dataTable.isDataTable( '#key_account_custom_report_table') ) {
                     key_account_custom_report_table.destroy();
+                    key_account_custom_report_table.clear();
                     key_account_custom_report_table = $('#key_account_custom_report_table').DataTable(config);
                 }
                 else {
