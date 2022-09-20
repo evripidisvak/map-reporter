@@ -71,8 +71,8 @@ class Command(BaseCommand):
                                 "## Invalidating this page:",
                                 page.url,
                             )
-                            # page.valid = False
-                            # page.save()
+                            page.valid = False
+                            page.save()
 
                     else:
                         todayDate = datetime.today().strftime("%d-%m-%Y")
