@@ -39,9 +39,9 @@ class Command(BaseCommand):
         #  global my_proxies
         #  my_proxies = []
         records = []
-        page_list = Page.objects.filter(valid=True, source_id=5)
+        page_list = Page.objects.filter(valid=True)
         failedRecords = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
             # Start the load operations and mark each future with its URL
             while len(page_list) > 0:
                 future_to_url = {
@@ -81,7 +81,7 @@ class Command(BaseCommand):
                         if data != "Key Account":
                             records.append(data)
                             print(
-                                "*** *** *** Processed URLs: "
+                                "*** Processed URLs: "
                                 + format(len(records))
                                 + " in "
                                 + format(time_needed)
@@ -124,7 +124,7 @@ def parse_urls(page_list_item):
             # print('+++ Proxy used: ', proxy)
             # print('+++ URL: ', url)
             options = Options()
-            # options.headless = True
+            options.headless = True
 
             path = (
                 subprocess.run(["which", "geckodriver"], capture_output=True)
@@ -377,7 +377,6 @@ def parse_urls(page_list_item):
                     "div.product__actions__top div.product__price.product__price--initial span"
                 )
 
-                print(orig_pricear)
                 if orig_pricear and orig_pricear[0].text.strip():
                     orig_price = orig_pricear[0].text.strip()
                     orig_price = float(orig_price)
@@ -404,9 +403,7 @@ def parse_urls(page_list_item):
                 page_list_item.retries = 3
                 raise ValueError("Page is going to be invalidated.")
             pricear = soup.select('div[class="article__price"]')
-            print(pricear)
             orig_pricear = soup.select('div[class="article__price article__price--sm"]')
-            print(orig_pricear)
             # only_this = soup.select('img[class="this"]')
             if pricear:
                 price = pricear[0].text.replace(",", ".")
@@ -424,12 +421,10 @@ def parse_urls(page_list_item):
             pricear_sale = soup.select("div.product-price div.special-price")
             if pricear:
                 price = pricear[0].text.strip().replace(",", ".").rstrip().strip("€")
-                print(price)
             elif pricear_sale:
                 price = (
                     pricear_sale[0].text.strip().replace(",", ".").rstrip().strip("€")
                 )
-                print(price)
                 orig_pricear = soup.select(
                     "div.product-price div.strikethrough span.oldprice-strikethrough"
                 )
@@ -515,7 +510,6 @@ def save_prices(
             curr_target_price=product_obj.map_price,
             source=source_obj,
         )
-        print(orig_price)
         if orig_price > 0:
             rp.original_price = orig_price
         rp.save()
