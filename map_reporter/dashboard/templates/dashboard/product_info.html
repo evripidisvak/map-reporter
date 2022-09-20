@@ -96,12 +96,26 @@
                             </div>
                             <div class="col-8 g-0">
                                 <div class="row g-0">
-                                    {% for url in urls %}
-                                        <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
+                                    {% for url in valid_urls %}
+                                            <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
                                     {% endfor %}
                                 </div>
                             </div>
                         </div>
+                        {% if user_is_staff and invalid_urls|length > 0 %}
+                        <div class="row gx-5 bg-danger bg-opacity-10 mt-2">
+                            <div class="col-4 g-0">
+                                <h5 class="p-2">Σελίδες με πρόβλημα</h5>
+                            </div>
+                            <div class="col-8 g-0">
+                                <div class="row g-0">
+                                    {% for url in invalid_urls %}
+                                            <a href="{{ url }}" target="_blank" rel="noopener noreferrer" class="text-truncate mt-2 link-dark">{{ url }}</a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>

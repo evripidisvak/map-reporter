@@ -1171,6 +1171,15 @@ class ShopProductInfo(TemplateView):
         urls = Page.objects.filter(product_id=kwargs["pk_product"])
         # urls = get_list_or_404(Page, product_id=kwargs["pk_product"])
 
+        valid_urls = []
+        invalid_urls = []
+        for url in urls:
+            print(url)
+            if url.valid:
+                valid_urls.append(url)
+            else:
+                invalid_urls.append(url)
+
         user = self.request.user
         seller_flag = is_seller(user)
 
@@ -1272,7 +1281,9 @@ class ShopProductInfo(TemplateView):
             {
                 "product": product,
                 "shop": shop,
-                "urls": urls,
+                # "urls": urls,
+                "valid_urls": valid_urls,
+                "invalid_urls": invalid_urls,
                 "table_retailprices": table_retailprices,
                 "min_retailprice": min_retailprice,
                 "max_retailprice": max_retailprice,
@@ -1301,6 +1312,14 @@ class ProductInfo(TemplateView):
         context = super(ProductInfo, self).get_context_data(**kwargs)
         product = get_object_or_404(Product, id=kwargs["pk"])
         urls = get_list_or_404(Page, product_id=kwargs["pk"])
+
+        valid_urls = []
+        invalid_urls = []
+        for url in urls:
+            if url.valid:
+                valid_urls.append(url)
+            else:
+                invalid_urls.append(url)
 
         user = self.request.user
         seller_flag = is_seller(user)
@@ -1416,7 +1435,9 @@ class ProductInfo(TemplateView):
             {
                 "product": product,
                 "shops": shops_for_product,
-                "urls": urls,
+                # "urls": urls,
+                "valid_urls": valid_urls,
+                "invalid_urls": invalid_urls,
                 "retailprices": retailprices,
                 "table_retailprices": table_retailprices,
                 "min_retailprice": min_retailprice,
