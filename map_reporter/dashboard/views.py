@@ -1888,7 +1888,6 @@ def key_accounts_custom_report(request):
     if request.method == "POST":
         # try:
         categories = request.POST.get("categories_list").strip()
-
         categories_request = [data.strip() for data in categories.split(" ")]
 
         categories_list = Category.objects.filter(
@@ -1902,10 +1901,10 @@ def key_accounts_custom_report(request):
                 shop__in=key_accounts,
                 product__main_category__in=categories_list,
                 product__active=True,
-                # timestamp__range=(
-                #     make_aware(datetime.datetime.now() - datetime.timedelta(days=14)),
-                #     make_aware(datetime.datetime.now()),
-                # ),
+                timestamp__range=(
+                    make_aware(datetime.datetime.now() - datetime.timedelta(days=14)),
+                    make_aware(datetime.datetime.now()),
+                ),
             )
             .select_related("product")
             .annotate(
@@ -1978,17 +1977,12 @@ def key_accounts_custom_report(request):
 
         title_cols = len(cols) - 1
 
-        new_column_names = {}
-
         key_accounts_shops = []
         for shop in grouped_retailprices.columns:
             if shop[0] == "price":
                 key_accounts_shops.append(shop[1])
             if shop[0] == "original_price":
-                col_name = shop[1] + " Αρχ."
-                col_name_cut = shop[1][:4] + " Αρχ."
-                new_column_names[col_name] = col_name_cut
-                key_accounts_shops.append(col_name)
+                key_accounts_shops.append(shop[1] + " Αρχ.")
 
         cols.extend(key_accounts_shops)
 
@@ -2037,10 +2031,8 @@ def key_accounts_custom_report(request):
 
         response_data = {}
         for account in res:
-            if account in new_column_names.keys():
-                columns.append({"title": new_column_names[account]})
-            else:
-                columns.append({"title": account})
+            columns.append({"title": account})
+
         parsed_df = grouped_retailprices.to_json(orient="values")
 
         response_data["columns"] = columns
