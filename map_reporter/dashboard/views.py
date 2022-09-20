@@ -3,7 +3,6 @@ from ast import And
 from itertools import product
 from this import d
 from django.http import Http404, HttpResponseRedirect, HttpResponse
-from django.core.exceptions import PermissionDenied
 from django.shortcuts import render, get_object_or_404, get_list_or_404, redirect
 from django.views import View
 from django.views.generic.base import TemplateView
@@ -39,10 +38,6 @@ import numpy as np
 
 def is_seller(user):
     return user.groups.filter(name="Seller").exists()
-
-
-def is_sales_dep(user):
-    return user.groups.filter(name="Sales_Dep").exists()
 
 
 class Index(TemplateView):
@@ -213,8 +208,6 @@ class Index(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -381,8 +374,6 @@ class AllProducts(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -483,8 +474,6 @@ class ShopsPage(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -591,8 +580,6 @@ class ShopInfo(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -680,8 +667,6 @@ class CategoriesPage(TemplateView):
                 "latest_timestamp": latest_timestamp,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -862,8 +847,6 @@ class CategoryInfo(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
 
@@ -961,8 +944,6 @@ class ManufacturersPage(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -1141,8 +1122,6 @@ class ManufacturerInfo(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
 
@@ -1276,8 +1255,6 @@ class ShopProductInfo(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -1420,8 +1397,6 @@ class ProductInfo(TemplateView):
                 "seller_flag": seller_flag,
                 "user": user,
                 "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
             }
         )
         return context
@@ -1838,8 +1813,6 @@ class SearchResults(TemplateView):
                     "term": term,
                     "user": user,
                     "user_is_staff": user.is_staff,
-                    "user_is_sales_dep": is_sales_dep(user),
-                    "user_is_superuser": user.is_superuser,
                 }
             )
         return context
@@ -1850,28 +1823,23 @@ class CustomReport(TemplateView):
     template_name = "dashboard/custom_report.html"
 
     def get_context_data(self, **kwargs):
+        context = super(CustomReport, self).get_context_data(**kwargs)
+
+        # Get the categories we will show in the dropdown
+        categories = Category.objects.all()
+
         user = self.request.user
-        if is_sales_dep(user) or user.is_superuser or user.is_staff:
-            context = super(CustomReport, self).get_context_data(**kwargs)
+        seller_flag = is_seller(user)
 
-            # Get the categories we will show in the dropdown
-            categories = Category.objects.all()
-
-            seller_flag = is_seller(user)
-
-            context.update(
-                {
-                    "categories": categories,
-                    "seller_flag": seller_flag,
-                    "user": user,
-                    "user_is_staff": user.is_staff,
-                    "user_is_sales_dep": is_sales_dep(user),
-                    "user_is_superuser": user.is_superuser,
-                }
-            )
-            return context
-        else:
-            raise PermissionDenied()
+        context.update(
+            {
+                "categories": categories,
+                "seller_flag": seller_flag,
+                "user": user,
+                "user_is_staff": user.is_staff,
+            }
+        )
+        return context
 
 
 def key_accounts_custom_report(request):
@@ -1911,7 +1879,6 @@ def key_accounts_custom_report(request):
             columns=[
                 "id",
                 "price",
-                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -1951,7 +1918,7 @@ def key_accounts_custom_report(request):
                 "curr_target_price",
             ],
             columns=["shop_name"],
-            values=["price", "original_price"],
+            values=["price"],
         ).sort_values(by=["product_manufacturer", "product_category", "product_sku"])
 
         cols = [
@@ -1962,17 +1929,11 @@ def key_accounts_custom_report(request):
             "product_sku",
             "curr_target_price",
         ]
-
-        cols_to_sort = cols[1:]
-
         title_cols = len(cols) - 1
 
         key_accounts_shops = []
         for shop in grouped_retailprices.columns:
-            if shop[0] == "price":
-                key_accounts_shops.append(shop[1])
-            if shop[0] == "original_price":
-                key_accounts_shops.append(shop[1] + " Αρχ.")
+            key_accounts_shops.append(shop[1])
 
         cols.extend(key_accounts_shops)
 
@@ -1981,19 +1942,6 @@ def key_accounts_custom_report(request):
         grouped_retailprices.columns = cols
 
         grouped_retailprices.drop("product_id", axis=1, inplace=True)
-
-        grouped_retailprices_cols = grouped_retailprices.columns.values.tolist()
-
-        # Cheeky way to remove the fixed columns from the df columns list
-        set1 = set(grouped_retailprices_cols)
-        set2 = set(cols_to_sort)
-        res = list(set1 - set2)
-        res.sort()
-        cols_to_sort.extend(res)
-
-        grouped_retailprices = grouped_retailprices[cols_to_sort]
-
-        grouped_retailprices.replace(0, None, inplace=True)
 
         index_table = grouped_retailprices.copy()
 
@@ -2020,7 +1968,8 @@ def key_accounts_custom_report(request):
         ]
 
         response_data = {}
-        for account in res:
+
+        for account in key_accounts_shops:
             columns.append({"title": account})
 
         parsed_df = grouped_retailprices.to_json(orient="values")
