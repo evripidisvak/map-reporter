@@ -2041,7 +2041,6 @@ def key_accounts_custom_report(request):
                 columns.append({"title": new_column_names[account]})
             else:
                 columns.append({"title": account})
-        
         parsed_df = grouped_retailprices.to_json(orient="values")
 
         response_data["columns"] = columns
