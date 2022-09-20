@@ -64,7 +64,7 @@ class ProductAdmin(admin.ModelAdmin):
             request,
             ngettext(
                 "%d product was successfully deactivated.",
-                "%d products were successfully deactivated.",
+                "%d products was successfully deactivated.",
                 updated,
             )
             % updated,
@@ -81,7 +81,7 @@ class ProductAdmin(admin.ModelAdmin):
             request,
             ngettext(
                 "%d product was successfully activated.",
-                "%d products were successfully activated.",
+                "%d products was successfully activated.",
                 updated,
             )
             % updated,
@@ -177,42 +177,6 @@ class PageAdminView(admin.ModelAdmin):
         "product__manufacturer__name",
     ]
     list_filter = ["valid", "source"]
-
-    @admin.action(description="Invalidate selected pages")
-    def invalidate_pages(self, request, queryset):
-        updated = queryset.update(valid=False)
-        for page in queryset:
-            page.save()
-
-        self.message_user(
-            request,
-            ngettext(
-                "%d page was successfully invalidated.",
-                "%d pages were successfully invalidated.",
-                updated,
-            )
-            % updated,
-            messages.SUCCESS,
-        )
-
-    @admin.action(description="Validate selected pages")
-    def validate_pages(self, request, queryset):
-        updated = queryset.update(valid=True)
-        for page in queryset:
-            page.save()
-
-        self.message_user(
-            request,
-            ngettext(
-                "%d page was successfully validated.",
-                "%d pages were successfully validated.",
-                updated,
-            )
-            % updated,
-            messages.SUCCESS,
-        )
-
-    actions = [invalidate_pages, validate_pages]
 
 
 admin.site.register(Category, CategoryAdmin)

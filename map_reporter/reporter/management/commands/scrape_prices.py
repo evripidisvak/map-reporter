@@ -66,22 +66,22 @@ class Command(BaseCommand):
                                 url.retries = 1
                             page_list.append(url)
                         else:
-                            page = Page.objects.get(id=url.id)
+                            # page = Page.objects.get(id=url.id)
                             print(
-                                "## Invalidating this page:",
+                                "########################## Invalidating this page:",
                                 page.url,
                             )
-                            page.valid = False
-                            page.save()
+                            # page.valid = False
+                            # page.save()
 
                     else:
-                        todayDate = datetime.today().strftime("%d-%m-%Y")
-                        time_needed = datetime.now() - startTime
-                        time_needed = str(time_needed)
                         if data != "Key Account":
                             records.append(data)
+                            todayDate = datetime.today().strftime("%d-%m-%Y")
+                            time_needed = datetime.now() - startTime
+                            time_needed = str(time_needed)
                             print(
-                                "*** Processed URLs: "
+                                "*** *** *** Processed URLs: "
                                 + format(len(records))
                                 + " in "
                                 + format(time_needed)
@@ -107,7 +107,6 @@ def parse_urls(page_list_item):
     product_id = page_list_item.product_id
     source_id = page_list_item.source_id
     url = page_list_item.url
-    orig_price = None
     print("Now scraping: ", url)
     #  global my_proxies
     # global proxy
@@ -281,23 +280,11 @@ def parse_urls(page_list_item):
             ):
                 print("*** Network Error ***")
                 raise ValueError("Network Error")
-            if not soup.find("div", class_="pdp-stock"):
-                page_list_item.retries = 3
-                raise ValueError("Page is going to be invalidated.")
             pricear = soup.select(
                 ".pdp-price-container .pdp-price-container__price .product-price .price"
             )
-            orig_pricear = soup.select(
-                ".pdp-price-container .pdp-price-container__price .product-price .from-price"
-            )
-
             if pricear:
                 price = pricear[0].text.strip(" €").strip().replace(",", ".")
-                if orig_pricear[0].text:
-                    orig_price = (
-                        orig_pricear[0].text.strip(" €").strip().replace(",", ".")
-                    )
-                    orig_price = float(orig_price)
                 price = [price]
                 shop = ["Plaisio"]
                 off_seller = ["1"]
@@ -311,30 +298,17 @@ def parse_urls(page_list_item):
             ):
                 print("*** Network Error ***")
                 raise ValueError("Network Error")
-            if not soup.find("div", class_="product__prices").text.strip():
-                page_list_item.retries = 3
-                raise ValueError("Page is going to be invalidated.")
-            pricear = soup.select("div.product__prices")
+            pricear = soup.select("span.product__price.product__price--main")
+            pricear_sale = soup.select(
+                "span.product__price.product__price--main.product__price--discounted"
+            )
             shop = "Praktiker"
             if pricear:
-                for elem in pricear:
-                    if elem.find("span", "product__price--main"):
-                        price = (
-                            elem.find("span", "product__price--main")
-                            .text.strip()
-                            .replace(",", ".")
-                            .rstrip()
-                            .strip("€")
-                        )
-                    if elem.find("span", "product__price--deleted"):
-                        orig_price = (
-                            elem.find("span", "product__price--deleted")
-                            .text.strip()
-                            .replace(",", ".")
-                            .rstrip()
-                            .strip("€")
-                        )
-                        orig_price = float(orig_price)
+                price = pricear[0].text.strip().replace(",", ".").rstrip().strip("€")
+            elif pricear_sale:
+                price = (
+                    pricear_sale[0].text.strip().replace(",", ".").rstrip().strip("€")
+                )
             if price is not None:
                 price = [price]
                 shop = ["Praktiker"]
@@ -343,9 +317,6 @@ def parse_urls(page_list_item):
 
         elif source_id == 4:  # Kotsovolos
             soup = BeautifulSoup(driver.page_source, "lxml")
-            if not soup.find("button", class_="addItemToCartBtn"):
-                page_list_item.retries = 3
-                raise ValueError("Page is going to be invalidated.")
             pricear = soup.select(".prDetail .priceWithVat .simplePrice")
             pricear_sale = soup.select(".prDetail .priceWithVat .price")
             shop = "Kotsovolos"
@@ -354,9 +325,6 @@ def parse_urls(page_list_item):
                 price = pricear[0].text.strip().replace(",", ".")
             elif pricear_sale:
                 for elem in pricear_sale:
-                    if elem.find("span", "displayPrice"):
-                        elem.find("span", "displayPrice").decompose()
-                        orig_price = float(elem.text.strip().replace(",", "."))
                     if elem.find("span", "main-price"):
                         elem.find("span", "main-price").decompose()
                         price = elem.text.strip().replace(",", ".")
@@ -369,17 +337,10 @@ def parse_urls(page_list_item):
         elif source_id == 5:  # Public
             soup = BeautifulSoup(driver.page_source, "lxml")
             pricear = soup.select(
-                "div.product__actions__top div.product__price.product__price--xlarge.text-primary"
+                "div.product__price.product__price--xlarge.text-primary"
             )
             if pricear and pricear != "" and "\n" not in pricear[0].text:
                 price = pricear[0].text.strip(" €").replace(",", ".")
-                orig_pricear = soup.select(
-                    "div.product__actions__top div.product__price.product__price--initial span"
-                )
-
-                if orig_pricear and orig_pricear[0].text.strip():
-                    orig_price = orig_pricear[0].text.strip()
-                    orig_price = float(orig_price)
             if price is not None:
                 price = [price]
                 shop = ["Public"]
@@ -399,17 +360,9 @@ def parse_urls(page_list_item):
 
         elif source_id == 7:  # Media Markt
             soup = BeautifulSoup(driver.page_source, "lxml")
-            if not soup.find("button", class_="btn-cart"):
-                page_list_item.retries = 3
-                raise ValueError("Page is going to be invalidated.")
-            pricear = soup.select('div[class="article__price"]')
-            orig_pricear = soup.select('div[class="article__price article__price--sm"]')
-            # only_this = soup.select('img[class="this"]')
+            pricear = soup.select("div.article__price.ng-star-inserted")
             if pricear:
                 price = pricear[0].text.replace(",", ".")
-            if orig_pricear:
-                orig_price = orig_pricear[0].text.replace(",", ".")
-                orig_price = float(orig_price)
             if price is not None:
                 price = [price]
                 shop = ["Media Markt"]
@@ -417,26 +370,14 @@ def parse_urls(page_list_item):
 
         elif source_id == 8:  # Germanos
             soup = BeautifulSoup(driver.page_source, "lxml")
-            pricear = soup.select("div.product-price div.price")
-            pricear_sale = soup.select("div.product-price div.special-price")
+            pricear = soup.select("div.product-price span.price")
+            pricear_sale = soup.select("div.product-price span.special-price")
             if pricear:
                 price = pricear[0].text.strip().replace(",", ".").rstrip().strip("€")
             elif pricear_sale:
                 price = (
                     pricear_sale[0].text.strip().replace(",", ".").rstrip().strip("€")
                 )
-                orig_pricear = soup.select(
-                    "div.product-price div.strikethrough span.oldprice-strikethrough"
-                )
-                if orig_pricear[0].text.strip():
-                    orig_price = (
-                        orig_pricear[0]
-                        .text.strip()
-                        .replace(",", ".")
-                        .rstrip()
-                        .strip("€")
-                    )
-                    orig_price = float(orig_price)
             if price is not None:
                 price = [price]
                 shop = ["Germanos"]
@@ -478,11 +419,8 @@ def parse_urls(page_list_item):
     driver.quit()
     print("DRIVER MURDERED - THIS IS AN EX DRIVER")
     try:
-        if orig_price is None:
-            save_prices(price, product_id, shop, off_seller, source_id)
-        else:
-            save_prices(price, product_id, shop, off_seller, source_id, orig_price)
-        # pass
+        #  save_prices(price, product_id, shop, off_seller, source_id)
+        pass
     except Exception as e:
         print(e)
         return False
@@ -492,9 +430,7 @@ def parse_urls(page_list_item):
         return "Key Account"
 
 
-def save_prices(
-    price_list, product_id, shop, official_reseller, source_id, orig_price=0
-):
+def save_prices(price_list, product_id, shop, official_reseller, source_id):
     # The below stores time in UTC, but Django can convert and compare time by itself using the user's timezone. In case you definately need the local time use this: timenow = timezone.localtime(timezone.now())
     timenow = timezone.now()
     product_obj = Product.objects.get(id=product_id)
@@ -510,8 +446,6 @@ def save_prices(
             curr_target_price=product_obj.map_price,
             source=source_obj,
         )
-        if orig_price > 0:
-            rp.original_price = orig_price
         rp.save()
 
 
