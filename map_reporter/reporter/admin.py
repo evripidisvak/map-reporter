@@ -146,6 +146,7 @@ class RetailPriceView(admin.ModelAdmin):
         "timestamp",
     )
     list_filter = ["product", "shop"]
+    search_fields = ["product__model", "shop__name"]
 
 
 class ShopAdminView(admin.ModelAdmin):
@@ -177,6 +178,11 @@ class PageAdminView(admin.ModelAdmin):
         "product__manufacturer__name",
     ]
     list_filter = ["valid", "source"]
+    list_display = ("url", "product", "get_sku", "valid")
+
+    @admin.display(description="Product SKU")
+    def get_sku(self, obj):
+        return obj.product.sku
 
     @admin.action(description="Invalidate selected pages")
     def invalidate_pages(self, request, queryset):
