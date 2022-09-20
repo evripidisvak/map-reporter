@@ -220,6 +220,9 @@ class RetailPrice(models.Model):
     price = models.DecimalField(
         max_digits=6, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     )
+    original_price = models.DecimalField(
+        max_digits=6, decimal_places=2, default=Decimal("0.00"), null=True, blank=True
+    )
     timestamp = models.DateTimeField()
     product = models.ForeignKey(Product, on_delete=models.CASCADE, default=None)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, default=None)

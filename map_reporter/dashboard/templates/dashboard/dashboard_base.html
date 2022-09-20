@@ -108,10 +108,12 @@
                                 <div class="sb-nav-link-icon"><i class="fa-solid fa-screwdriver-wrench"></i></div>
                                 Κατασκευαστές
                             </a>
-                            <a class="nav-link pb-4" href="{% url 'custom_report' %}">
-                                <div class="sb-nav-link-icon"><i class="fa-solid fa-chart-simple"></i></div>
-                                Custom Reports
-                            </a>
+                            {% if user_is_sales_dep or user_is_superuser or user_is_staff %}
+                                <a class="nav-link pb-4" href="{% url 'custom_report' %}">
+                                    <div class="sb-nav-link-icon"><i class="fa-solid fa-chart-simple"></i></div>
+                                    Custom Reports
+                                </a>
+                                {% endif %}
                         </div>
                     </div>
                     <div class="sb-sidenav-footer">
