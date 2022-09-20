@@ -101,6 +101,7 @@ class Index(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -270,6 +271,7 @@ class AllProducts(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -411,6 +413,7 @@ class ShopsPage(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -511,6 +514,7 @@ class ShopInfo(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -611,6 +615,7 @@ class CategoriesPage(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -747,6 +752,7 @@ class CategoryInfo(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -882,6 +888,7 @@ class ManufacturersPage(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -1019,6 +1026,7 @@ class ManufacturerInfo(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -1162,6 +1170,7 @@ class ShopProductInfo(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -1302,6 +1311,7 @@ class ProductInfo(TemplateView):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
