@@ -145,7 +145,6 @@ class RetailPriceView(admin.ModelAdmin):
         "source",
         "timestamp",
     )
-    list_filter = ["product", "shop"]
     search_fields = ["product__model", "shop__name"]
 
 
