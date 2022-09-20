@@ -1911,6 +1911,7 @@ def key_accounts_custom_report(request):
             columns=[
                 "id",
                 "price",
+                "original_price",
                 "timestamp",
                 "product_id",
                 "shop_id",
@@ -1950,7 +1951,7 @@ def key_accounts_custom_report(request):
                 "curr_target_price",
             ],
             columns=["shop_name"],
-            values=["price"],
+            values=["price", "original_price"],
         ).sort_values(by=["product_manufacturer", "product_category", "product_sku"])
 
         cols = [
@@ -1961,11 +1962,17 @@ def key_accounts_custom_report(request):
             "product_sku",
             "curr_target_price",
         ]
+
+        cols_to_sort = cols[1:]
+
         title_cols = len(cols) - 1
 
         key_accounts_shops = []
         for shop in grouped_retailprices.columns:
-            key_accounts_shops.append(shop[1])
+            if shop[0] == "price":
+                key_accounts_shops.append(shop[1])
+            if shop[0] == "original_price":
+                key_accounts_shops.append(shop[1] + " Αρχ.")
 
         cols.extend(key_accounts_shops)
 
@@ -1974,6 +1981,19 @@ def key_accounts_custom_report(request):
         grouped_retailprices.columns = cols
 
         grouped_retailprices.drop("product_id", axis=1, inplace=True)
+
+        grouped_retailprices_cols = grouped_retailprices.columns.values.tolist()
+
+        # Cheeky way to remove the fixed columns from the df columns list
+        set1 = set(grouped_retailprices_cols)
+        set2 = set(cols_to_sort)
+        res = list(set1 - set2)
+        res.sort()
+        cols_to_sort.extend(res)
+
+        grouped_retailprices = grouped_retailprices[cols_to_sort]
+
+        grouped_retailprices.replace(0, None, inplace=True)
 
         index_table = grouped_retailprices.copy()
 
@@ -2000,8 +2020,7 @@ def key_accounts_custom_report(request):
         ]
 
         response_data = {}
-
-        for account in key_accounts_shops:
+        for account in res:
             columns.append({"title": account})
 
         parsed_df = grouped_retailprices.to_json(orient="values")
