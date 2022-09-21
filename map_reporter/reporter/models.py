@@ -126,7 +126,7 @@ class Product(models.Model):
         if self.active:
             return "Ναι"
         else:
-            return "Οχι"
+            return "Όχι"
 
     def name(self):
         return str(self.model)
@@ -233,6 +233,9 @@ class RetailPrice(models.Model):
     source = models.ForeignKey(
         Source, on_delete=models.CASCADE, default=None, blank=False, null=False
     )
+
+    def __str__(self):
+        return str(self.price)
 
     def get_shop_products(shop_id):
         retailprices = RetailPrice.objects.filter(shop=shop_id)

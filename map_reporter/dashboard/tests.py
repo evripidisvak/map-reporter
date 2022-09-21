@@ -167,3 +167,4 @@ class TestProductInfoView(TestCase, SimpleTestCase):
 
 # def populate_db():
 #     product = baker.make("reporter.Product", _quantity=5, _fill_optional=True)
+
