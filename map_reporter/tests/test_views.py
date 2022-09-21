@@ -2,12 +2,23 @@ from itertools import product
 from urllib import response
 from django.test import TestCase, SimpleTestCase, Client
 from django.contrib.auth.models import AnonymousUser
-from .urls import *
+from dashboard.urls import *
 from django.urls import reverse
 from django.contrib.auth.models import User
 from model_bakery import baker
+from reporter.models import *
+from mptt.models import MPTTModel, TreeForeignKey
 
 # import reverse
+
+
+def login_dummy_user():
+    client = Client()
+    user = User.objects.create(username="testuser")
+    user.set_password("12345")
+    user.save()
+    client.login(username="testuser", password="12345")
+    return client
 
 
 class TestLoginView(TestCase, SimpleTestCase):
@@ -34,11 +45,7 @@ class TestLoginView(TestCase, SimpleTestCase):
 
 class TestIndexView(TestCase, SimpleTestCase):
     def test_index_has_data(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+        client = login_dummy_user()
         response = client.get(reverse("index"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -47,11 +54,7 @@ class TestIndexView(TestCase, SimpleTestCase):
 
 class TestAllProductsView(TestCase, SimpleTestCase):
     def test_all_prods_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+        client = login_dummy_user()
         response = client.get(reverse("all_products"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -60,11 +63,7 @@ class TestAllProductsView(TestCase, SimpleTestCase):
 
 class TestShopsPageView(TestCase, SimpleTestCase):
     def test_shops_page_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+        client = login_dummy_user()
         response = client.get(reverse("shops_page"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -73,12 +72,8 @@ class TestShopsPageView(TestCase, SimpleTestCase):
 
 # TODO create shop
 class TestShopInfoView(TestCase, SimpleTestCase):
-    def test_shops_page_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+    def test_shop_info_view(self):
+        client = login_dummy_user()
         response = client.get(reverse("shop_info"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -87,12 +82,8 @@ class TestShopInfoView(TestCase, SimpleTestCase):
 
 # TODO create categories
 class TestCategoriesPageView(TestCase, SimpleTestCase):
-    def test_shops_page_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+    def test_categories_page_view(self):
+        client = login_dummy_user()
         response = client.get(reverse("categories_page"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -101,12 +92,8 @@ class TestCategoriesPageView(TestCase, SimpleTestCase):
 
 # TODO create a dummy caregory
 class TestCategoryInfoView(TestCase, SimpleTestCase):
-    def test_shops_page_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+    def test_category_info_view(self):
+        client = login_dummy_user()
         response = client.get(reverse("category_info"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -114,12 +101,8 @@ class TestCategoryInfoView(TestCase, SimpleTestCase):
 
 
 class TestManufacturersPageView(TestCase, SimpleTestCase):
-    def test_shops_page_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+    def test_manufacturers_page_view(self):
+        client = login_dummy_user()
         response = client.get(reverse("manufacturer_page"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -127,12 +110,8 @@ class TestManufacturersPageView(TestCase, SimpleTestCase):
 
 
 class TestManufacturerInfoView(TestCase, SimpleTestCase):
-    def test_shops_page_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+    def test_manufacturer_info_view(self):
+        client = login_dummy_user()
         response = client.get(reverse("manufacturer_info"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -140,12 +119,8 @@ class TestManufacturerInfoView(TestCase, SimpleTestCase):
 
 
 class TestShopProductInfoView(TestCase, SimpleTestCase):
-    def test_shops_page_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+    def test_shop_product_info_view(self):
+        client = login_dummy_user()
         response = client.get(reverse("shop_product_info"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
@@ -153,18 +128,34 @@ class TestShopProductInfoView(TestCase, SimpleTestCase):
 
 
 class TestProductInfoView(TestCase, SimpleTestCase):
-    def test_shops_page_view(self):
-        user = User.objects.create(username="testuser")
-        user.set_password("12345")
-        user.save()
-        client = Client()
-        client.login(username="testuser", password="12345")
+    def test_product_info_view(self):
+        client = login_dummy_user()
         response = client.get(reverse("product_info"))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
         # self.assertTrue(response.context[0]["data_exists"])
 
 
-# def populate_db():
-#     product = baker.make("reporter.Product", _quantity=5, _fill_optional=True)
-
+def populate_db():
+    product = baker.make("reporter.Product", _quantity=5, _fill_optional=True)
+    category = baker.make("reporter.Category")
+    manufacturer = baker.make("reporter.Manufacturer")
+    source = baker.make("reporter.Source")
+    shop = baker.make("reporter.Shop", key_account=True)
+    shop = baker.make("reporter.Shop", key_account=False)
+    page = baker.make("reporter.Page", product=product, source=source)
+    map_price = baker.make("reporter.MapPrice", product=product)
+    retail_price_off_reseller = baker.make(
+        "reporter.RetailPrice",
+        product=product,
+        shop=shop,
+        source=source,
+        official_reseller=True,
+    )
+    retail_price = baker.make(
+        "reporter.RetailPrice",
+        product=product,
+        shop=shop,
+        source=source,
+        official_reseller=False,
+    )

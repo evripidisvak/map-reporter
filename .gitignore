@@ -49,3 +49,4 @@ map_reporter/reports
 map_reporter/map_reporter/settings.py
 map_reporter/reporter/wc_api.py
 map_reporter/reporter/management/commands/stores-sellersCOPY.csv
+map_reporter/.coverage
