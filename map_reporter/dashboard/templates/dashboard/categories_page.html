@@ -13,6 +13,7 @@ P{% extends "dashboard_base.html" %}
 
 {% block main %}
 <h1 class="mb-4">Κατηγορίες</h1>
+{% if data_exists %}
     <div class="row pt-lg-5">
         <div class="col-xl-6">
             <div class="card mb-4">
@@ -389,5 +390,7 @@ P{% extends "dashboard_base.html" %}
     } );
 
 </script>
-
+{% else %}
+<div class="alert alert-danger" role="alert">Δεν βρέθηκαν δεδομένα.</div>
+{% endif %}
 {% endblock %}

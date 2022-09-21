@@ -161,7 +161,7 @@
             </div>
         </div>
     </div>
-
+    {% if data_exists %}
 <div class="row pt-lg-5">
     <div class="col-xl-6">
         <div class="card h-100">
@@ -835,5 +835,7 @@ config_the_table();
 } );
 //TABLE_1 STUFF ENDS
 </script>
-
+{% else %}
+<div class="alert alert-danger mt-2" role="alert">Δεν βρέθηκαν δεδομένα.</div>
+{% endif %}
 {% endblock main %}
