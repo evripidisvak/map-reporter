@@ -51,6 +51,7 @@
             </div>
         </div>
     </div>
+    {% if data_exists %}
     <div class="row">
         <div class="col-xl-6">
             <div class="card mb-4">
@@ -595,4 +596,7 @@
     } );
 
 </script>
+{% else %}
+<div class="alert alert-danger" role="alert">Δεν βρέθηκαν δεδομένα.</div>
+{% endif %}
 {% endblock %}

@@ -15,6 +15,7 @@
 <h1 class="mb-4">
     {{ shop.name }}
 </h1>
+{% if data_exists %}
 <div class="row">
     <div class="col-xl-6">
         <div class='card mb-4'>
@@ -896,4 +897,59 @@ $(document).ready(function() {
 } );
 
 </script>
+{% else %}
+<div class="row">
+    <div class="col-xl-6">
+        <div class="card mb-4">
+            <div class='card-header'>
+                <i class="fa-solid fa-address-card"></i>
+                Στοιχεία επικοινωνίας καταστήματος
+            </div>
+            <div class="card-body bg-light">
+                <div class="container-fluid">
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Website: </h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2"><a href="{{shop.website}}" target="_blank" class="link-dark">{{shop.website}}</a></h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Τηλέφωνο: </h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2"><a href="tel:{{shop.phone_number}}" class="link-dark">{{shop.phone_number}}</a></h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Διεύθυνση: </h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2"><a href="https://www.google.com/maps/place/{{shop.address}}" target="_blank" class="link-dark">{{shop.address}}</a></h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Πωλητής: </h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2"><a href="mailto:{{shop.seller.email}}" class="link-dark">{{ shop.seller.first_name }} {{shop.seller.last_name}}</a></h5>
+                        </div>
+                    </div>
+                    <div class="row gx-5">
+                        <div class="col-4 g-0">
+                            <h5 class="p-sm-2">Key Account: </h5>
+                        </div>
+                        <div class="col-8 g-0">
+                            <h5 class="p-sm-2"><p>{{shop.is_key_account}}</p></h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    <div class="alert alert-danger" role="alert">Δεν βρέθηκαν δεδομένα.</div>
+{% endif %}
 {% endblock %}
