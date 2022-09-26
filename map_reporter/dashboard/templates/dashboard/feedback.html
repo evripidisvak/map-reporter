@@ -13,6 +13,13 @@
 {% block main %}
         <div class="row">
             <div class="col-lg-12">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <p {% if message.tags %} class="alert alert-{{ message.tags }}"{% endif %}>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 <div class="card" style="max-width:500px;">
                     <div class="card-header">
                         <i class="fa-solid fa-comment-dots me-1"></i>
@@ -26,7 +33,7 @@
                                         <div class="form-check mt-4 mb-4">
                                             <label for="{{field.auto_id}}" class="form-check-label fw-bold">{{field.label}}</label>
                                             {{ field }}
-                                        </div>                                        
+                                        </div>
                                     {% else %}
                                         <label for="{{field.auto_id}}" class="form-label fw-bold">{{field.label}}</label>
                                         {{ field }}
@@ -38,15 +45,8 @@
                                 {% endfor %}
                                 <input type="submit" value="Υποβολή" class="btn btn-primary mt-2">
                         </form>
-                        {% if messages %}
-                        <div class="messages">
-                            {% for message in messages %}
-                            <p {% if message.tags %} class="alert alert-{{ message.tags }}"{% endif %}>{{ message }}</p>
-                            {% endfor %}
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
-        </div>    
+        </div>
 {% endblock main %}
