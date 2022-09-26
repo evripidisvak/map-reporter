@@ -86,7 +86,7 @@ class DatePicker(forms.Form):
 class FeedbackForm(forms.Form):
     subjects = [
         ("feature", "Αίτημα νέας λειτουργίας"),
-        ("bug", "Αίτημα υποστήρηξης"),
+        ("bug", "Αίτημα υποστήριξης"),
     ]
     subject = forms.CharField(
         label="Επιλέξτε θέμα",
