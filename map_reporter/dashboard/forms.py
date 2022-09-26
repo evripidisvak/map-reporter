@@ -76,9 +76,51 @@ class DatePicker(forms.Form):
     # datetime_range_clearable = fields.DateTimeRangeField(required=False)
 
 
+# name = forms.CharField(
+#     widget=forms.TextInput(
+#         attrs={"placeholder": "Name", "style": "width: 300px;", "class": "form-control"}
+#     )
+# )
+
+
 class FeedbackForm(forms.Form):
-    message = forms.CharField(widget=forms.Textarea)
-    cc_myself = forms.BooleanField(required=False)
+    subjects = [
+        ("feature", "Αίτημα νέας λειτουργίας"),
+        ("bug", "Αίτημα υποστήρηξης"),
+    ]
+    subject = forms.CharField(
+        label="Επιλέξτε θέμα",
+        widget=forms.Select(
+            choices=subjects,
+            attrs={
+                "class": "form-select m-2",
+            },
+        ),
+    )
+    message = forms.CharField(
+        label="Περιγραφή",
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control m-2",
+            }
+        ),
+    )
+    cc_myself = forms.BooleanField(
+        label="Κοινοποίηση μηνύματος σε εμένα",
+        required=False,
+        widget=forms.CheckboxInput(
+            attrs={
+                "class": "form-check-input",
+            }
+        ),
+    )
     file_field = forms.FileField(
-        widget=forms.ClearableFileInput(attrs={"multiple": True}), required=False
+        label="Προσθήκη αρχείων",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "multiple": True,
+                "class": "form-control m-2",
+            }
+        ),
+        required=False,
     )
