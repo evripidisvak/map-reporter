@@ -14,6 +14,7 @@
 <div class="container-fluid px-4">
     <h1 class="mt-4 mb-4">Αρχική</h1>
     <div class="row">
+        {% comment %} TODO add danger card {% endcomment %}
         <div class="col-xl-3 col-md-6">
             <div class="card bg-primary text-white mb-4">
                 <div class="card-body"><i class="fa-solid fa-box-open"></i> <b>Προϊόντα</b></div>
@@ -51,6 +52,7 @@
             </div>
         </div>
     </div>
+    {% if data_exists %}
     <div class="row">
         <div class="col-xl-6">
             <div class="card mb-4">
@@ -595,4 +597,7 @@
     } );
 
 </script>
+{% else %}
+<div class="alert alert-danger" role="alert">Δεν βρέθηκαν δεδομένα.</div>
+{% endif %}
 {% endblock %}

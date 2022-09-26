@@ -34,6 +34,7 @@ urlpatterns = [
     ),
     path("topbar_seach/", views.topbar_search, name="topbar_search"),
     path("custom_report/", views.CustomReport.as_view(), name="custom_report"),
+    path("feedback/", views.FeedbackFormView.as_view(), name="feedback_page"),
     # path('__debug__/', include('debug_toolbar.urls')),
 ]
 

@@ -10,6 +10,7 @@
 {% block main %}
 
 <h1 class="mb-4">Κατασκευαστές</h1>
+{% if data_exists %} 
 <div class="container-fluid">
     <div class="row">
         <div class="col-xl-6">
@@ -321,4 +322,7 @@
     } );
     // TABLE_1 STUFF ENDS
 </script>
+{% else %}
+<div class="alert alert-danger" role="alert">Δεν βρέθηκαν δεδομένα.</div>
+{% endif %}
 {% endblock %}

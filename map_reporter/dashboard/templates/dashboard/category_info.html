@@ -15,6 +15,7 @@
 <h1 class="mb-4">
     {{ category.name }}
 </h1>
+{% if data_exists %}
     <div class="row">
         <div class="col-xl-6">
             <div class='card mb-4 h-100'>
@@ -932,7 +933,9 @@ $(document).ready(function() {
 });*/
 } );
 //TABLE_2 STUFF ENDS
-
 </script>
+{% else %}
+<div class="alert alert-danger" role="alert">Δεν βρέθηκαν δεδομένα.</div>
+{% endif %}
 
 {% endblock %}

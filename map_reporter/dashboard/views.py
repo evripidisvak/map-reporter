@@ -4,19 +4,23 @@ from itertools import product
 from this import d
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
+from django.core.mail import EmailMessage
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.shortcuts import render, get_object_or_404, get_list_or_404, redirect
 from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
+from django.contrib import messages
 from django.views import generic
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import make_aware
 from django.db.models import *
 from reporter.models import *
-from .forms import DatePicker
+from .forms import *
 from django.http import JsonResponse
 import json
 import datetime
@@ -48,24 +52,19 @@ def is_sales_dep(user):
 class Index(TemplateView):
     template_name = "dashboard/index.html"
 
-    # def get(self, request):
-    #     return render(request, self.template)
-
     def get_context_data(self, **kwargs):
         context = super(Index, self).get_context_data(**kwargs)
 
         user = self.request.user
         seller_flag = is_seller(user)
         table_image_size = "80x80"
-        # products = Product.objects.all()
-        # products = get_list_or_404(Product, active=True)
+
         products = (
             Product.objects.filter(active=True)
             .prefetch_related("manufacturer")
             .prefetch_related("main_category")
         )
-        # latest_timestamp = RetailPrice.objects.latest("timestamp").timestamp
-        # products = Product.objects.annotate(shop_count=Count('shop', distinct=True))
+
         retail_prices = []
         products_below = 0
         this_products_below = 0
@@ -101,123 +100,152 @@ class Index(TemplateView):
                 ),
             ).select_related()
 
-        retailpricesdf = pd.DataFrame.from_records(
-            retailprices_obj.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
+        data_exists = False
+        if retailprices_obj.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        grouped_retailprices = retailpricesdf.loc[
-            retailpricesdf.groupby(["source_id", "product_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
+        if data_exists:
 
-        grouped_retailprices_by_shop = retailpricesdf.loc[
-            retailpricesdf.groupby(["shop_id", "product_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
-        grouped_retailprices_by_shop["comparison"] = grouped_retailprices_by_shop.apply(
-            lambda x: "below"
-            if x["price"] < x["curr_target_price"]
-            else "equal"
-            if x["price"] == x["curr_target_price"]
-            else "above",
-            axis=1,
-        )
-
-        for shop in shops:
-            this_shop_below = 0
-            this_shop_equal = 0
-            this_shop_above = 0
-            shop_records = grouped_retailprices_by_shop.loc[
-                grouped_retailprices_by_shop["shop_id"] == shop.id
-            ].copy()
-            if not shop_records.empty:
-                this_shop_below = shop_records["comparison"].tolist().count("below")
-                this_shop_equal = shop_records["comparison"].tolist().count("equal")
-                this_shop_above = shop_records["comparison"].tolist().count("above")
-
-            shop.this_shop_below = this_shop_below
-            shop.this_shop_equal = this_shop_equal
-            shop.this_shop_above = this_shop_above
-            shop.prod_count = this_shop_below + this_shop_equal + this_shop_above
-
-            if shop.this_shop_below >= 1:
-                shops_below += 1
-            else:
-                shops_ok += 1
-
-        grouped = retailpricesdf.loc[
-            retailpricesdf.groupby(["product_id", "source_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
-        grouped.sort_values(by=["product_id", "price"], inplace=True, ascending=True)
-        grouped.drop_duplicates(subset=["product_id"], inplace=True)
-
-        grouped["comparison"] = grouped.apply(
-            lambda x: "below"
-            if x["price"] < x["curr_target_price"]
-            else "equal"
-            if x["price"] == x["curr_target_price"]
-            else "above",
-            axis=1,
-        )
-        products_below = grouped["comparison"].tolist().count("below")
-        products_equal = grouped["comparison"].tolist().count("equal")
-        products_above = grouped["comparison"].tolist().count("above")
-
-        filtered_retail_prices = grouped.loc[grouped["comparison"] == "below"]
-
-        latest_timestamp = filtered_retail_prices.sort_values(
-            by="timestamp", ascending=False
-        )["timestamp"].iloc[0]
-        if not latest_timestamp:
-            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
-
-        retail_prices = (
-            retailprices_obj.filter(id__in=filtered_retail_prices["id"])
-            .select_related()
-            .annotate(
-                product_model=F("product__model"),
-                product_manufacturer_id=F("product__manufacturer"),
-                product_manufacturer=F("product__manufacturer__name"),
-                product_category_id=F("product__main_category"),
-                product_category=F("product__main_category__name"),
-                product_sku=F("product__sku"),
-                source_domain=F("source__domain"),
+            retailpricesdf = pd.DataFrame.from_records(
+                retailprices_obj.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
             )
-        )
 
-        for retailprice in retail_prices:
-            im = get_thumbnail(retailprice.product.image, table_image_size)
-            retailprice.product_image = im.url
-        latest_timestamp = latest_timestamp.to_pydatetime()
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+            grouped_retailprices = retailpricesdf.loc[
+                retailpricesdf.groupby(["source_id", "product_id"])[
+                    "timestamp"
+                ].idxmax()
+            ].reset_index(drop=True)
 
-        context.update(
-            {
-                "retail_prices": retail_prices,
-                "products_below": products_below,
-                "products_equal": products_equal,
-                "products_above": products_above,
-                "shops_below": shops_below,
-                "shops_ok": shops_ok,
-                "table_image_size": table_image_size,
-                "latest_timestamp": latest_timestamp,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            grouped_retailprices_by_shop = retailpricesdf.loc[
+                retailpricesdf.groupby(["shop_id", "product_id"])["timestamp"].idxmax()
+            ].reset_index(drop=True)
+            grouped_retailprices_by_shop[
+                "comparison"
+            ] = grouped_retailprices_by_shop.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
+
+            for shop in shops:
+                this_shop_below = 0
+                this_shop_equal = 0
+                this_shop_above = 0
+                shop_records = grouped_retailprices_by_shop.loc[
+                    grouped_retailprices_by_shop["shop_id"] == shop.id
+                ].copy()
+                if not shop_records.empty:
+                    this_shop_below = shop_records["comparison"].tolist().count("below")
+                    this_shop_equal = shop_records["comparison"].tolist().count("equal")
+                    this_shop_above = shop_records["comparison"].tolist().count("above")
+
+                shop.this_shop_below = this_shop_below
+                shop.this_shop_equal = this_shop_equal
+                shop.this_shop_above = this_shop_above
+                shop.prod_count = this_shop_below + this_shop_equal + this_shop_above
+
+                if shop.this_shop_below >= 1:
+                    shops_below += 1
+                else:
+                    shops_ok += 1
+
+            grouped = retailpricesdf.loc[
+                retailpricesdf.groupby(["product_id", "source_id"])[
+                    "timestamp"
+                ].idxmax()
+            ].reset_index(drop=True)
+            grouped.sort_values(
+                by=["product_id", "price"], inplace=True, ascending=True
+            )
+            grouped.drop_duplicates(subset=["product_id"], inplace=True)
+
+            grouped["comparison"] = grouped.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
+            products_below = grouped["comparison"].tolist().count("below")
+            products_equal = grouped["comparison"].tolist().count("equal")
+            products_above = grouped["comparison"].tolist().count("above")
+
+            filtered_retail_prices = grouped.loc[grouped["comparison"] == "below"]
+
+            latest_timestamp = filtered_retail_prices.sort_values(
+                by="timestamp", ascending=False
+            )["timestamp"].iloc[0]
+            if not latest_timestamp:
+                raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+
+            retail_prices = (
+                retailprices_obj.filter(id__in=filtered_retail_prices["id"])
+                .select_related()
+                .annotate(
+                    product_model=F("product__model"),
+                    product_manufacturer_id=F("product__manufacturer"),
+                    product_manufacturer=F("product__manufacturer__name"),
+                    product_category_id=F("product__main_category"),
+                    product_category=F("product__main_category__name"),
+                    product_sku=F("product__sku"),
+                    source_domain=F("source__domain"),
+                )
+            )
+
+            for retailprice in retail_prices:
+                im = get_thumbnail(retailprice.product.image, table_image_size)
+                retailprice.product_image = im.url
+            latest_timestamp = latest_timestamp.to_pydatetime()
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+
+            context.update(
+                {
+                    "retail_prices": retail_prices,
+                    "products_below": products_below,
+                    "products_equal": products_equal,
+                    "products_above": products_above,
+                    "shops_below": shops_below,
+                    "shops_ok": shops_ok,
+                    "table_image_size": table_image_size,
+                    "latest_timestamp": latest_timestamp,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+
         return context
 
 
@@ -251,142 +279,163 @@ class AllProducts(TemplateView):
         else:
             retailprices_obj = RetailPrice.objects.filter(product__in=products)
 
-        active_products = (
-            pd.DataFrame()
-            .from_records(
-                products.values_list(),
+        data_exists = False
+        if retailprices_obj.exists():
+            data_exists = True
+        else:
+            data_exists = False
+
+        if data_exists:
+            active_products = (
+                pd.DataFrame()
+                .from_records(
+                    products.values_list(),
+                    columns=[
+                        "product_id",
+                        "manufacturer",
+                        "model",
+                        "sku",
+                        "active",
+                        "map_price",
+                        "main_category",
+                        "image",
+                        "image_url",
+                    ],
+                )
+                .copy()
+            )
+            active_products = active_products.loc[
+                active_products["active"] == True
+            ].reset_index(drop=True)
+
+            retailpricesdf = pd.DataFrame.from_records(
+                retailprices_obj.values_list(),
                 columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
                     "product_id",
-                    "manufacturer",
-                    "model",
-                    "sku",
-                    "active",
-                    "map_price",
-                    "main_category",
-                    "image",
-                    "image_url",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
                 ],
             )
-            .copy()
-        )
-        active_products = active_products.loc[
-            active_products["active"] == True
-        ].reset_index(drop=True)
 
-        retailpricesdf = pd.DataFrame.from_records(
-            retailprices_obj.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
-
-        grouped_retailprices_by_shop = retailpricesdf.loc[
-            retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
-        grouped_retailprices_by_shop["comparison"] = grouped_retailprices_by_shop.apply(
-            lambda x: "below"
-            if x["price"] < x["curr_target_price"]
-            else "equal"
-            if x["price"] == x["curr_target_price"]
-            else "above",
-            axis=1,
-        )
-
-        for product in products:
-            shops_below = 0
-            shops_equal = 0
-            shops_above = 0
-            product_records = grouped_retailprices_by_shop.loc[
-                grouped_retailprices_by_shop["product_id"] == product.id
-            ].copy()
-            if not product_records.empty:
-                shops_below = product_records["comparison"].tolist().count("below")
-                shops_equal = product_records["comparison"].tolist().count("equal")
-                shops_above = product_records["comparison"].tolist().count("above")
-            product.shops_below = shops_below
-            product.shops_equal = shops_equal
-            product.shops_above = shops_above
-            product.shop_count = shops_below + shops_equal + shops_above
-
-            im = get_thumbnail(product.image, table_image_size)
-            product.product_image = im.url
-
-        grouped_retailprices = retailpricesdf.loc[
-            retailpricesdf["product_id"].isin(active_products.product_id.unique())
-        ].reset_index(drop=True)
-        grouped_retailprices = retailpricesdf.loc[
-            retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
-
-        grouped_retailprices["comparison"] = retailpricesdf.apply(
-            lambda x: "below"
-            if x["price"] < x["curr_target_price"]
-            else "equal"
-            if x["price"] == x["curr_target_price"]
-            else "above",
-            axis=1,
-        )
-        products_below = grouped_retailprices["comparison"].tolist().count("below")
-        products_equal = grouped_retailprices["comparison"].tolist().count("equal")
-        products_above = grouped_retailprices["comparison"].tolist().count("above")
-
-        grouped_retailprices.sort_values(
-            by=["product_id", "price"], inplace=True, ascending=True
-        )
-        grouped_retailprices.drop_duplicates(subset=["product_id"], inplace=True)
-
-        retail_prices = (
-            retailprices_obj.filter(id__in=grouped_retailprices["id"])
-            .select_related()
-            .annotate(
-                product_model=F("product__model"),
-                product_manufacturer=F("product__manufacturer__name"),
-                product_category=F("product__main_category__name"),
-                product_sku=F("product__sku"),
-                shop_name=F("shop__name"),
-                source_domain=F("source__domain"),
+            grouped_retailprices_by_shop = retailpricesdf.loc[
+                retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
+            ].reset_index(drop=True)
+            grouped_retailprices_by_shop[
+                "comparison"
+            ] = grouped_retailprices_by_shop.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
             )
-        )
 
-        for retailprice in retail_prices:
-            im = get_thumbnail(retailprice.product.image, table_image_size)
-            retailprice.product_image = im.url
+            for product in products:
+                shops_below = 0
+                shops_equal = 0
+                shops_above = 0
+                product_records = grouped_retailprices_by_shop.loc[
+                    grouped_retailprices_by_shop["product_id"] == product.id
+                ].copy()
+                if not product_records.empty:
+                    shops_below = product_records["comparison"].tolist().count("below")
+                    shops_equal = product_records["comparison"].tolist().count("equal")
+                    shops_above = product_records["comparison"].tolist().count("above")
+                product.shops_below = shops_below
+                product.shops_equal = shops_equal
+                product.shops_above = shops_above
+                product.shop_count = shops_below + shops_equal + shops_above
 
-        latest_timestamp = grouped_retailprices.sort_values(
-            by="timestamp", ascending=False
-        )["timestamp"].iloc[0]
-        if not latest_timestamp:
-            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+                im = get_thumbnail(product.image, table_image_size)
+                product.product_image = im.url
 
-        latest_timestamp = latest_timestamp.to_pydatetime()
+            grouped_retailprices = retailpricesdf.loc[
+                retailpricesdf["product_id"].isin(active_products.product_id.unique())
+            ].reset_index(drop=True)
+            grouped_retailprices = retailpricesdf.loc[
+                retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
+            ].reset_index(drop=True)
 
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+            grouped_retailprices["comparison"] = retailpricesdf.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
+            products_below = grouped_retailprices["comparison"].tolist().count("below")
+            products_equal = grouped_retailprices["comparison"].tolist().count("equal")
+            products_above = grouped_retailprices["comparison"].tolist().count("above")
 
-        context.update(
-            {
-                "products": products,
-                "retail_prices": retail_prices,
-                "products_below": products_below,
-                "products_equal": products_equal,
-                "products_above": products_above,
-                "table_image_size": table_image_size,
-                "latest_timestamp": latest_timestamp,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            grouped_retailprices.sort_values(
+                by=["product_id", "price"], inplace=True, ascending=True
+            )
+            grouped_retailprices.drop_duplicates(subset=["product_id"], inplace=True)
+
+            retail_prices = (
+                retailprices_obj.filter(id__in=grouped_retailprices["id"])
+                .select_related()
+                .annotate(
+                    product_model=F("product__model"),
+                    product_manufacturer=F("product__manufacturer__name"),
+                    product_category=F("product__main_category__name"),
+                    product_sku=F("product__sku"),
+                    shop_name=F("shop__name"),
+                    source_domain=F("source__domain"),
+                )
+            )
+
+            for retailprice in retail_prices:
+                im = get_thumbnail(retailprice.product.image, table_image_size)
+                retailprice.product_image = im.url
+
+            latest_timestamp = grouped_retailprices.sort_values(
+                by="timestamp", ascending=False
+            )["timestamp"].iloc[0]
+            if not latest_timestamp:
+                raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+
+            latest_timestamp = latest_timestamp.to_pydatetime()
+
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+
+            context.update(
+                {
+                    "products": products,
+                    "retail_prices": retail_prices,
+                    "products_below": products_below,
+                    "products_equal": products_equal,
+                    "products_above": products_above,
+                    "table_image_size": table_image_size,
+                    "latest_timestamp": latest_timestamp,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
         return context
 
 
@@ -417,79 +466,99 @@ class ShopsPage(TemplateView):
             shop__in=shops, product__in=products
         ).select_related()
 
-        retailpricesdf = pd.DataFrame.from_records(
-            retailprices.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
+        data_exists = False
+        if retailprices.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        groupedretailprices = retailpricesdf.loc[
-            retailpricesdf.groupby(["shop_id", "product_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
+        if data_exists:
 
-        for shop in shops:
-            this_shop_below = 0
-            this_shop_equal = 0
-            this_shop_above = 0
-            shop_records = groupedretailprices.loc[
-                groupedretailprices["shop_id"] == shop.id
-            ].copy()
-            if not shop_records.empty:
-                shop_records["comparison"] = shop_records.apply(
-                    lambda x: "below"
-                    if x["price"] < x["curr_target_price"]
-                    else "equal"
-                    if x["price"] == x["curr_target_price"]
-                    else "above",
-                    axis=1,
-                )
-                this_shop_below = shop_records["comparison"].tolist().count("below")
-                this_shop_equal = shop_records["comparison"].tolist().count("equal")
-                this_shop_above = shop_records["comparison"].tolist().count("above")
+            retailpricesdf = pd.DataFrame.from_records(
+                retailprices.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
+            )
 
-            shop.this_shop_below = this_shop_below
-            shop.this_shop_equal = this_shop_equal
-            shop.this_shop_above = this_shop_above
-            shop.prod_count = this_shop_below + this_shop_equal + this_shop_above
+            groupedretailprices = retailpricesdf.loc[
+                retailpricesdf.groupby(["shop_id", "product_id"])["timestamp"].idxmax()
+            ].reset_index(drop=True)
 
-            if shop.this_shop_below >= 1:
-                shops_below += 1
-            else:
-                shops_ok += 1
+            for shop in shops:
+                this_shop_below = 0
+                this_shop_equal = 0
+                this_shop_above = 0
+                shop_records = groupedretailprices.loc[
+                    groupedretailprices["shop_id"] == shop.id
+                ].copy()
+                if not shop_records.empty:
+                    shop_records["comparison"] = shop_records.apply(
+                        lambda x: "below"
+                        if x["price"] < x["curr_target_price"]
+                        else "equal"
+                        if x["price"] == x["curr_target_price"]
+                        else "above",
+                        axis=1,
+                    )
+                    this_shop_below = shop_records["comparison"].tolist().count("below")
+                    this_shop_equal = shop_records["comparison"].tolist().count("equal")
+                    this_shop_above = shop_records["comparison"].tolist().count("above")
 
-        latest_timestamp = groupedretailprices.sort_values(
-            by="timestamp", ascending=False
-        )["timestamp"].iloc[0]
-        if not latest_timestamp:
-            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+                shop.this_shop_below = this_shop_below
+                shop.this_shop_equal = this_shop_equal
+                shop.this_shop_above = this_shop_above
+                shop.prod_count = this_shop_below + this_shop_equal + this_shop_above
 
-        latest_timestamp = latest_timestamp.to_pydatetime()
+                if shop.this_shop_below >= 1:
+                    shops_below += 1
+                else:
+                    shops_ok += 1
 
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+            latest_timestamp = groupedretailprices.sort_values(
+                by="timestamp", ascending=False
+            )["timestamp"].iloc[0]
+            if not latest_timestamp:
+                raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
 
-        context.update(
-            {
-                "shops": shops,
-                "shops_below": shops_below,
-                "shops_ok": shops_ok,
-                "latest_timestamp": latest_timestamp,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            latest_timestamp = latest_timestamp.to_pydatetime()
+
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+
+            context.update(
+                {
+                    "shops": shops,
+                    "shops_below": shops_below,
+                    "shops_ok": shops_ok,
+                    "latest_timestamp": latest_timestamp,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
         return context
 
 
@@ -506,99 +575,123 @@ class ShopInfo(TemplateView):
         retailprices = RetailPrice.objects.filter(
             shop=kwargs["pk"], product__active=True
         )
-        table_image_size = "80x80"
-        products = (
-            Product.objects.filter(retailprice__shop=kwargs["pk"])
-            .distinct()
-            .select_related()
-            .annotate(
-                manufacturer_name=F("manufacturer__name"),
-                category_name=F("main_category__name"),
-            )
-        )
-        for product in products:
-            im = get_thumbnail(product.image, table_image_size)
-            product.prod_img = im.url
 
-        retailpricesdf = pd.DataFrame.from_records(
-            retailprices.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
+        data_exists = False
+        if retailprices.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        retailpricesdf = retailpricesdf.loc[
-            retailpricesdf.groupby(["product_id", "source_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
-
-        if not retailpricesdf.empty:
-            latest_timestamp = retailpricesdf.sort_values(
-                by="timestamp", ascending=False
-            )["timestamp"].iloc[0]
-
-            if not latest_timestamp:
-                raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
-
-            retailprices = (
-                retailprices.filter(id__in=retailpricesdf["id"])
+        if data_exists:
+            table_image_size = "80x80"
+            products = (
+                Product.objects.filter(retailprice__shop=kwargs["pk"])
+                .distinct()
                 .select_related()
                 .annotate(
-                    product_manufacturer_name=F("product__manufacturer__name"),
-                    product_category_name=F("product__main_category__name"),
+                    manufacturer_name=F("manufacturer__name"),
+                    category_name=F("main_category__name"),
                 )
             )
+            for product in products:
+                im = get_thumbnail(product.image, table_image_size)
+                product.prod_img = im.url
 
-            for retailprice in retailprices:
-                im = get_thumbnail(retailprice.product.image, table_image_size)
-                retailprice.product_image = im.url
-
-            retailpricesdf.sort_values(
-                by=["product_id", "price"], inplace=True, ascending=True
+            retailpricesdf = pd.DataFrame.from_records(
+                retailprices.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
             )
-            retailpricesdf.drop_duplicates(subset=["product_id"], inplace=True)
 
-            retailpricesdf["comparison"] = retailpricesdf.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
+            retailpricesdf = retailpricesdf.loc[
+                retailpricesdf.groupby(["product_id", "source_id"])[
+                    "timestamp"
+                ].idxmax()
+            ].reset_index(drop=True)
+
+            if not retailpricesdf.empty:
+                latest_timestamp = retailpricesdf.sort_values(
+                    by="timestamp", ascending=False
+                )["timestamp"].iloc[0]
+
+                if not latest_timestamp:
+                    raise Http404(
+                        "Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων"
+                    )
+
+                retailprices = (
+                    retailprices.filter(id__in=retailpricesdf["id"])
+                    .select_related()
+                    .annotate(
+                        product_manufacturer_name=F("product__manufacturer__name"),
+                        product_category_name=F("product__main_category__name"),
+                    )
+                )
+
+                for retailprice in retailprices:
+                    im = get_thumbnail(retailprice.product.image, table_image_size)
+                    retailprice.product_image = im.url
+
+                retailpricesdf.sort_values(
+                    by=["product_id", "price"], inplace=True, ascending=True
+                )
+                retailpricesdf.drop_duplicates(subset=["product_id"], inplace=True)
+
+                retailpricesdf["comparison"] = retailpricesdf.apply(
+                    lambda x: "below"
+                    if x["price"] < x["curr_target_price"]
+                    else "equal"
+                    if x["price"] == x["curr_target_price"]
+                    else "above",
+                    axis=1,
+                )
+                products_below = retailpricesdf["comparison"].tolist().count("below")
+                products_equal = retailpricesdf["comparison"].tolist().count("equal")
+                products_above = retailpricesdf["comparison"].tolist().count("above")
+
+            if not products:
+                raise Http404("Δεν υπάρχουν προϊόντα")
+
+            latest_timestamp = latest_timestamp.to_pydatetime()
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+            context.update(
+                {
+                    "shop": shop,
+                    "retailprices": retailprices,
+                    "products": products,
+                    "table_image_size": table_image_size,
+                    "products_below": products_below,
+                    "products_equal": products_equal,
+                    "products_above": products_above,
+                    "latest_timestamp": latest_timestamp,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
             )
-            products_below = retailpricesdf["comparison"].tolist().count("below")
-            products_equal = retailpricesdf["comparison"].tolist().count("equal")
-            products_above = retailpricesdf["comparison"].tolist().count("above")
-
-        if not products:
-            raise Http404("Δεν υπάρχουν προϊόντα")
-
-        latest_timestamp = latest_timestamp.to_pydatetime()
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
-        context.update(
-            {
-                "shop": shop,
-                "retailprices": retailprices,
-                "products": products,
-                "table_image_size": table_image_size,
-                "products_below": products_below,
-                "products_equal": products_equal,
-                "products_above": products_above,
-                "latest_timestamp": latest_timestamp,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+        else:
+            context.update(
+                {
+                    "shop": shop,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
         return context
 
 
@@ -618,77 +711,104 @@ class CategoriesPage(TemplateView):
         else:
             retail_prices = RetailPrice.objects.all()
 
-        products_df = pd.DataFrame().from_records(
-            products.values_list("id", "main_category"),
-            columns=["product_id", "main_category"],
-        )
+        data_exists = False
+        if retail_prices.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        retail_prices_df = pd.DataFrame().from_records(
-            retail_prices.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
-
-        grouped = retail_prices_df.loc[
-            retail_prices_df.groupby(["product_id", "source_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
-        grouped.sort_values(by=["product_id", "price"], inplace=True, ascending=True)
-        grouped.drop_duplicates(subset=["product_id"], inplace=True)
-        grouped["comparison"] = grouped.apply(
-            lambda x: "below" if x["price"] < x["curr_target_price"] else "ok", axis=1
-        )
-
-        latest_timestamp = grouped.sort_values(by="timestamp", ascending=False)[
-            "timestamp"
-        ].iloc[0]
-        if not latest_timestamp:
-            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
-
-        latest_timestamp = latest_timestamp.to_pydatetime()
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
-
-        merged = pd.merge(grouped, products_df).reset_index()
-
-        for category in categories:
-            products_below = 0
-            product_count = 0
-            products_ok = 0
-            full_tree = category.get_descendants(include_self=True)
-            tree_ids = []
-            for tree in full_tree:
-                tree_ids.append(tree.id)
-            category_records = merged.loc[merged["main_category"].isin(tree_ids)].copy()
-            if not category_records.empty:
-                products_below = category_records["comparison"].tolist().count("below")
-                products_ok = category_records["comparison"].tolist().count("ok")
-                product_count = products_ok + products_below
-            category.products_below = products_below
-            category.products_ok = products_ok
-            category.product_count = product_count
-            category.ansc_count = category.get_ancestors(
-                ascending=False, include_self=False
+        if data_exists:
+            products_df = pd.DataFrame().from_records(
+                products.values_list("id", "main_category"),
+                columns=["product_id", "main_category"],
             )
 
-        context.update(
-            {
-                "categories": categories,
-                "latest_timestamp": latest_timestamp,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            retail_prices_df = pd.DataFrame().from_records(
+                retail_prices.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
+            )
+
+            grouped = retail_prices_df.loc[
+                retail_prices_df.groupby(["product_id", "source_id"])[
+                    "timestamp"
+                ].idxmax()
+            ].reset_index(drop=True)
+            grouped.sort_values(
+                by=["product_id", "price"], inplace=True, ascending=True
+            )
+            grouped.drop_duplicates(subset=["product_id"], inplace=True)
+            grouped["comparison"] = grouped.apply(
+                lambda x: "below" if x["price"] < x["curr_target_price"] else "ok",
+                axis=1,
+            )
+
+            latest_timestamp = grouped.sort_values(by="timestamp", ascending=False)[
+                "timestamp"
+            ].iloc[0]
+            if not latest_timestamp:
+                raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+
+            latest_timestamp = latest_timestamp.to_pydatetime()
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+
+            merged = pd.merge(grouped, products_df).reset_index()
+
+            for category in categories:
+                products_below = 0
+                product_count = 0
+                products_ok = 0
+                full_tree = category.get_descendants(include_self=True)
+                tree_ids = []
+                for tree in full_tree:
+                    tree_ids.append(tree.id)
+                category_records = merged.loc[
+                    merged["main_category"].isin(tree_ids)
+                ].copy()
+                if not category_records.empty:
+                    products_below = (
+                        category_records["comparison"].tolist().count("below")
+                    )
+                    products_ok = category_records["comparison"].tolist().count("ok")
+                    product_count = products_ok + products_below
+                category.products_below = products_below
+                category.products_ok = products_ok
+                category.product_count = product_count
+                category.ansc_count = category.get_ancestors(
+                    ascending=False, include_self=False
+                )
+
+            context.update(
+                {
+                    "categories": categories,
+                    "latest_timestamp": latest_timestamp,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
         return context
 
 
@@ -761,117 +881,138 @@ class CategoryInfo(TemplateView):
                     datetime.datetime.now(),
                 ),
             )
+        data_exists = False
+        if retailprices.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        retailpricesdf = pd.DataFrame().from_records(
-            retailprices.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
-
-        latest_retailprices_for_products = (
-            retailpricesdf.loc[
-                retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
-            ]
-            .reset_index(drop=True)
-            .copy()
-        )
-
-        latest_retailprices_for_products[
-            "comparison"
-        ] = latest_retailprices_for_products.apply(
-            lambda x: "below"
-            if x["price"] < x["curr_target_price"]
-            else "equal"
-            if x["price"] == x["curr_target_price"]
-            else "above",
-            axis=1,
-        )
-
-        for product in products:
-            shops_below = 0
-            shops_equal = 0
-            shops_above = 0
-            product_records = latest_retailprices_for_products.loc[
-                latest_retailprices_for_products["product_id"] == product.id
-            ].copy()
-            if not product_records.empty:
-                shops_below = product_records["comparison"].tolist().count("below")
-                shops_equal = product_records["comparison"].tolist().count("equal")
-                shops_above = product_records["comparison"].tolist().count("above")
-            product.shops_below = shops_below
-            product.shops_equal = shops_equal
-            product.shops_above = shops_above
-            product.shop_count = shops_below + shops_equal + shops_above
-
-            im = get_thumbnail(product.image, table_image_size)
-            product.product_image = im.url
-
-        retail_prices = (
-            retailprices.filter(id__in=latest_retailprices_for_products["id"])
-            .select_related()
-            .annotate(
-                product_model=F("product__model"),
-                product_manufacturer=F("product__manufacturer__name"),
-                product_category=F("product__main_category__name"),
-                product_sku=F("product__sku"),
-                shop_name=F("shop__name"),
-                source_domain=F("source__domain"),
+        if data_exists:
+            retailpricesdf = pd.DataFrame().from_records(
+                retailprices.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
             )
-        )
 
-        latest_retailprices_for_products.sort_values(
-            by=["product_id", "price"], inplace=True, ascending=True
-        )
-        latest_retailprices_for_products.drop_duplicates(
-            subset=["product_id"], inplace=True
-        )
+            latest_retailprices_for_products = (
+                retailpricesdf.loc[
+                    retailpricesdf.groupby(["product_id", "shop_id"])[
+                        "timestamp"
+                    ].idxmax()
+                ]
+                .reset_index(drop=True)
+                .copy()
+            )
 
-        category.products_below = (
-            latest_retailprices_for_products["comparison"].tolist().count("below")
-        )
-        category.products_ok = latest_retailprices_for_products[
-            "comparison"
-        ].tolist().count("equal") + latest_retailprices_for_products[
-            "comparison"
-        ].tolist().count(
-            "above"
-        )
+            latest_retailprices_for_products[
+                "comparison"
+            ] = latest_retailprices_for_products.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
 
-        for retailprice in retail_prices:
-            im = get_thumbnail(retailprice.product.image, table_image_size)
-            retailprice.product_image = im.url
+            for product in products:
+                shops_below = 0
+                shops_equal = 0
+                shops_above = 0
+                product_records = latest_retailprices_for_products.loc[
+                    latest_retailprices_for_products["product_id"] == product.id
+                ].copy()
+                if not product_records.empty:
+                    shops_below = product_records["comparison"].tolist().count("below")
+                    shops_equal = product_records["comparison"].tolist().count("equal")
+                    shops_above = product_records["comparison"].tolist().count("above")
+                product.shops_below = shops_below
+                product.shops_equal = shops_equal
+                product.shops_above = shops_above
+                product.shop_count = shops_below + shops_equal + shops_above
 
-        latest_timestamp = latest_retailprices_for_products.sort_values(
-            by="timestamp", ascending=False
-        )["timestamp"].iloc[0]
+                im = get_thumbnail(product.image, table_image_size)
+                product.product_image = im.url
 
-        latest_timestamp = latest_timestamp.to_pydatetime()
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+            retail_prices = (
+                retailprices.filter(id__in=latest_retailprices_for_products["id"])
+                .select_related()
+                .annotate(
+                    product_model=F("product__model"),
+                    product_manufacturer=F("product__manufacturer__name"),
+                    product_category=F("product__main_category__name"),
+                    product_sku=F("product__sku"),
+                    shop_name=F("shop__name"),
+                    source_domain=F("source__domain"),
+                )
+            )
 
-        context.update(
-            {
-                "category": category,
-                "products": products,
-                "retail_prices": retail_prices,
-                "table_image_size": table_image_size,
-                "latest_timestamp": latest_timestamp,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            latest_retailprices_for_products.sort_values(
+                by=["product_id", "price"], inplace=True, ascending=True
+            )
+            latest_retailprices_for_products.drop_duplicates(
+                subset=["product_id"], inplace=True
+            )
+
+            category.products_below = (
+                latest_retailprices_for_products["comparison"].tolist().count("below")
+            )
+            category.products_ok = latest_retailprices_for_products[
+                "comparison"
+            ].tolist().count("equal") + latest_retailprices_for_products[
+                "comparison"
+            ].tolist().count(
+                "above"
+            )
+
+            for retailprice in retail_prices:
+                im = get_thumbnail(retailprice.product.image, table_image_size)
+                retailprice.product_image = im.url
+
+            latest_timestamp = latest_retailprices_for_products.sort_values(
+                by="timestamp", ascending=False
+            )["timestamp"].iloc[0]
+
+            latest_timestamp = latest_timestamp.to_pydatetime()
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+
+            context.update(
+                {
+                    "category": category,
+                    "products": products,
+                    "retail_prices": retail_prices,
+                    "table_image_size": table_image_size,
+                    "latest_timestamp": latest_timestamp,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "category": category,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
 
         return context
 
@@ -891,87 +1032,109 @@ class ManufacturersPage(TemplateView):
         else:
             retail_prices = RetailPrice.objects.all()
 
-        manufacturers_df = pd.DataFrame.from_records(
-            manufacturers.values_list(), columns=["id", "name"]
-        )
+        data_exists = False
+        if retail_prices.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        products_df = pd.DataFrame().from_records(
-            products.values_list("id", "manufacturer"),
-            columns=["product_id", "manufacturer"],
-        )
-
-        retail_prices_df = pd.DataFrame().from_records(
-            retail_prices.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
-
-        latest_retail_prices = retail_prices_df.loc[
-            retail_prices_df.groupby(["product_id"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
-
-        retail_prices_w_man = pd.merge(latest_retail_prices, products_df)
-
-        for manufacturer in manufacturers:
-            products_below = 0
-            products_ok = 0
-            products_above = 0
-            manufacturer_products = products_df.loc[
-                products_df["manufacturer"] == manufacturer.id
-            ].copy()
-            product_count = manufacturer_products["product_id"].count()
-            manufacturer_sellers_products = retail_prices_w_man.loc[
-                retail_prices_w_man["manufacturer"] == manufacturer.id
-            ].copy()
-            final_prices = retail_prices_w_man.loc[
-                retail_prices_w_man["manufacturer"] == manufacturer.id
-            ].copy()
-            if not final_prices.empty:
-                final_prices["comparison"] = final_prices.apply(
-                    lambda x: "below" if x["price"] < x["curr_target_price"] else "ok",
-                    axis=1,
-                )
-                products_below = final_prices["comparison"].tolist().count("below")
-                products_ok = product_count - products_below
-            manufacturer.seller_product_count = (
-                manufacturer_sellers_products.drop_duplicates(
-                    subset="product_id"
-                ).shape[0]
+        if data_exists:
+            manufacturers_df = pd.DataFrame.from_records(
+                manufacturers.values_list(), columns=["id", "name"]
             )
-            manufacturer.products_below = products_below
-            manufacturer.products_ok = products_ok
-            manufacturer.product_count = product_count
 
-        latest_timestamp = latest_retail_prices.sort_values(
-            by="timestamp", ascending=False
-        )["timestamp"].iloc[0]
+            products_df = pd.DataFrame().from_records(
+                products.values_list("id", "manufacturer"),
+                columns=["product_id", "manufacturer"],
+            )
 
-        if not latest_timestamp:
-            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+            retail_prices_df = pd.DataFrame().from_records(
+                retail_prices.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
+            )
 
-        latest_timestamp = latest_timestamp.to_pydatetime()
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
-        context.update(
-            {
-                "manufacturers": manufacturers,
-                "latest_timestamp": latest_timestamp,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            latest_retail_prices = retail_prices_df.loc[
+                retail_prices_df.groupby(["product_id"])["timestamp"].idxmax()
+            ].reset_index(drop=True)
+
+            retail_prices_w_man = pd.merge(latest_retail_prices, products_df)
+
+            for manufacturer in manufacturers:
+                products_below = 0
+                products_ok = 0
+                products_above = 0
+                manufacturer_products = products_df.loc[
+                    products_df["manufacturer"] == manufacturer.id
+                ].copy()
+                product_count = manufacturer_products["product_id"].count()
+                manufacturer_sellers_products = retail_prices_w_man.loc[
+                    retail_prices_w_man["manufacturer"] == manufacturer.id
+                ].copy()
+                final_prices = retail_prices_w_man.loc[
+                    retail_prices_w_man["manufacturer"] == manufacturer.id
+                ].copy()
+                if not final_prices.empty:
+                    final_prices["comparison"] = final_prices.apply(
+                        lambda x: "below"
+                        if x["price"] < x["curr_target_price"]
+                        else "ok",
+                        axis=1,
+                    )
+                    products_below = final_prices["comparison"].tolist().count("below")
+                    products_ok = product_count - products_below
+                manufacturer.seller_product_count = (
+                    manufacturer_sellers_products.drop_duplicates(
+                        subset="product_id"
+                    ).shape[0]
+                )
+                manufacturer.products_below = products_below
+                manufacturer.products_ok = products_ok
+                manufacturer.product_count = product_count
+
+            latest_timestamp = latest_retail_prices.sort_values(
+                by="timestamp", ascending=False
+            )["timestamp"].iloc[0]
+
+            if not latest_timestamp:
+                raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+
+            latest_timestamp = latest_timestamp.to_pydatetime()
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+            context.update(
+                {
+                    "manufacturers": manufacturers,
+                    "latest_timestamp": latest_timestamp,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+
         return context
 
 
@@ -1040,120 +1203,141 @@ class ManufacturerInfo(TemplateView):
                 ),
             )
 
-        retailpricesdf = pd.DataFrame().from_records(
-            retailprices.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
+        data_exists = False
+        if retailprices.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        latest_retailprices = (
-            retailpricesdf.loc[
-                retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
-            ]
-            .reset_index(drop=True)
-            .copy()
-        )
-
-        latest_retailprices_ids = latest_retailprices["id"].tolist()
-
-        retailprices = (
-            RetailPrice.objects.filter(id__in=latest_retailprices_ids)
-            .select_related()
-            .annotate(
-                product_model=F("product__model"),
-                product_manufacturer=F("product__manufacturer__name"),
-                product_category=F("product__main_category__name"),
-                product_sku=F("product__sku"),
-                shop_name=F("shop__name"),
-                source_domain=F("source__domain"),
+        if data_exists:
+            retailpricesdf = pd.DataFrame().from_records(
+                retailprices.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
             )
-        )
-        for retailprice in retailprices:
-            im = get_thumbnail(retailprice.product.image, table_image_size)
-            retailprice.product_image = im.url
 
-        latest_retailprices["comparison"] = latest_retailprices.apply(
-            lambda x: "below"
-            if x["price"] < x["curr_target_price"]
-            else "equal"
-            if x["price"] == x["curr_target_price"]
-            else "above",
-            axis=1,
-        )
+            latest_retailprices = (
+                retailpricesdf.loc[
+                    retailpricesdf.groupby(["product_id", "shop_id"])[
+                        "timestamp"
+                    ].idxmax()
+                ]
+                .reset_index(drop=True)
+                .copy()
+            )
 
-        latest_retailprices_for_comparison = latest_retailprices.sort_values(
-            by=["product_id", "price"], ascending=True
-        ).copy()
-        latest_retailprices_for_comparison.drop_duplicates(
-            subset="product_id", inplace=True
-        )
+            latest_retailprices_ids = latest_retailprices["id"].tolist()
 
-        manufacturer.products_below = (
-            latest_retailprices_for_comparison["comparison"].tolist().count("below")
-        )
+            retailprices = (
+                RetailPrice.objects.filter(id__in=latest_retailprices_ids)
+                .select_related()
+                .annotate(
+                    product_model=F("product__model"),
+                    product_manufacturer=F("product__manufacturer__name"),
+                    product_category=F("product__main_category__name"),
+                    product_sku=F("product__sku"),
+                    shop_name=F("shop__name"),
+                    source_domain=F("source__domain"),
+                )
+            )
+            for retailprice in retailprices:
+                im = get_thumbnail(retailprice.product.image, table_image_size)
+                retailprice.product_image = im.url
 
-        manufacturer.products_ok = latest_retailprices_for_comparison[
-            "comparison"
-        ].tolist().count("equal") + latest_retailprices_for_comparison[
-            "comparison"
-        ].tolist().count(
-            "above"
-        )
+            latest_retailprices["comparison"] = latest_retailprices.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
 
-        for product in products:
-            shops_below = 0
-            shops_equal = 0
-            shops_above = 0
-            product_records = latest_retailprices.loc[
-                latest_retailprices["product_id"] == product.id
-            ].copy()
-            if not product_records.empty:
-                shops_below = product_records["comparison"].tolist().count("below")
-                shops_equal = product_records["comparison"].tolist().count("equal")
-                shops_above = product_records["comparison"].tolist().count("above")
-            product.shops_below = shops_below
-            product.shops_equal = shops_equal
-            product.shops_above = shops_above
-            product.shops_count = shops_below + shops_equal + shops_above
+            latest_retailprices_for_comparison = latest_retailprices.sort_values(
+                by=["product_id", "price"], ascending=True
+            ).copy()
+            latest_retailprices_for_comparison.drop_duplicates(
+                subset="product_id", inplace=True
+            )
 
-            im = get_thumbnail(product.image, table_image_size)
-            product.product_image = im.url
+            manufacturer.products_below = (
+                latest_retailprices_for_comparison["comparison"].tolist().count("below")
+            )
 
-        latest_timestamp = latest_retailprices.sort_values(
-            by="timestamp", ascending=False
-        )["timestamp"].iloc[0]
+            manufacturer.products_ok = latest_retailprices_for_comparison[
+                "comparison"
+            ].tolist().count("equal") + latest_retailprices_for_comparison[
+                "comparison"
+            ].tolist().count(
+                "above"
+            )
 
-        if not latest_timestamp:
-            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+            for product in products:
+                shops_below = 0
+                shops_equal = 0
+                shops_above = 0
+                product_records = latest_retailprices.loc[
+                    latest_retailprices["product_id"] == product.id
+                ].copy()
+                if not product_records.empty:
+                    shops_below = product_records["comparison"].tolist().count("below")
+                    shops_equal = product_records["comparison"].tolist().count("equal")
+                    shops_above = product_records["comparison"].tolist().count("above")
+                product.shops_below = shops_below
+                product.shops_equal = shops_equal
+                product.shops_above = shops_above
+                product.shops_count = shops_below + shops_equal + shops_above
 
-        latest_timestamp = latest_timestamp.to_pydatetime()
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+                im = get_thumbnail(product.image, table_image_size)
+                product.product_image = im.url
 
-        context.update(
-            {
-                "manufacturer": manufacturer,
-                "products": products,
-                "retail_prices": retailprices,
-                "table_image_size": table_image_size,
-                "latest_timestamp": latest_timestamp,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            latest_timestamp = latest_retailprices.sort_values(
+                by="timestamp", ascending=False
+            )["timestamp"].iloc[0]
 
+            if not latest_timestamp:
+                raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+
+            latest_timestamp = latest_timestamp.to_pydatetime()
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+
+            context.update(
+                {
+                    "manufacturer": manufacturer,
+                    "products": products,
+                    "retail_prices": retailprices,
+                    "table_image_size": table_image_size,
+                    "latest_timestamp": latest_timestamp,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "manufacturer": manufacturer,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
         return context
 
 
@@ -1195,111 +1379,136 @@ class ShopProductInfo(TemplateView):
             ),
         )
 
-        retailprices_df = pd.DataFrame().from_records(
-            retailprices.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
+        data_exists = False
+        if retailprices.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        latest_retailprices = (
-            retailprices_df.loc[
-                retailprices_df.groupby("source_id")["timestamp"].idxmax()
-            ]
-            .reset_index(drop=True)
-            .copy()
-        )
-
-        latest_retailprices_ids = latest_retailprices["id"].tolist()
-
-        table_retailprices = (
-            RetailPrice.objects.filter(id__in=latest_retailprices_ids)
-            .select_related()
-            .annotate(
-                source_domain=F("source__domain"),
+        if data_exists:
+            retailprices_df = pd.DataFrame().from_records(
+                retailprices.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
             )
-        )
 
-        latest_timestamp = latest_retailprices.sort_values(
-            by="timestamp", ascending=False
-        )["timestamp"].iloc[0]
+            latest_retailprices = (
+                retailprices_df.loc[
+                    retailprices_df.groupby("source_id")["timestamp"].idxmax()
+                ]
+                .reset_index(drop=True)
+                .copy()
+            )
 
-        if not latest_timestamp:
-            raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
+            latest_retailprices_ids = latest_retailprices["id"].tolist()
 
-        latest_timestamp = latest_timestamp.to_pydatetime()
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+            table_retailprices = (
+                RetailPrice.objects.filter(id__in=latest_retailprices_ids)
+                .select_related()
+                .annotate(
+                    source_domain=F("source__domain"),
+                )
+            )
 
-        min_retailprice_list = retailprices_df.copy()
+            latest_timestamp = latest_retailprices.sort_values(
+                by="timestamp", ascending=False
+            )["timestamp"].iloc[0]
 
-        min_retailprice_list["price"] = pd.to_numeric(min_retailprice_list["price"])
-        min_retailprice_list = (
-            min_retailprice_list.loc[
-                min_retailprice_list.groupby("timestamp")["price"].idxmin()
-            ]
-            .reset_index(drop=True)
-            .copy()
-        )
+            if not latest_timestamp:
+                raise Http404("Δεν υπάρχουν καταχωρημένες τιμές πώλησης καταστημάτων")
 
-        min_retailprice = min_retailprice_list.sort_values(by="price", ascending=True)[
-            "price"
-        ].iloc[0]
-        max_retailprice = min_retailprice_list.sort_values(by="price", ascending=False)[
-            "price"
-        ].iloc[0]
+            latest_timestamp = latest_timestamp.to_pydatetime()
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
 
-        min_retailprice_list["comparison"] = min_retailprice_list.apply(
-            lambda x: "below"
-            if x["price"] < x["curr_target_price"]
-            else "equal"
-            if x["price"] == x["curr_target_price"]
-            else "above",
-            axis=1,
-        )
+            min_retailprice_list = retailprices_df.copy()
 
-        prices_below = min_retailprice_list["comparison"].tolist().count("below")
-        prices_equal = min_retailprice_list["comparison"].tolist().count("equal")
-        prices_above = min_retailprice_list["comparison"].tolist().count("above")
+            min_retailprice_list["price"] = pd.to_numeric(min_retailprice_list["price"])
+            min_retailprice_list = (
+                min_retailprice_list.loc[
+                    min_retailprice_list.groupby("timestamp")["price"].idxmin()
+                ]
+                .reset_index(drop=True)
+                .copy()
+            )
 
-        min_retailprice_list = min_retailprice_list["id"].tolist()
-        min_retailprice_list = RetailPrice.objects.filter(id__in=min_retailprice_list)
+            min_retailprice = min_retailprice_list.sort_values(
+                by="price", ascending=True
+            )["price"].iloc[0]
+            max_retailprice = min_retailprice_list.sort_values(
+                by="price", ascending=False
+            )["price"].iloc[0]
 
-        min_retailprice_list = min_retailprice_list.values(
-            "timestamp", "price", "curr_target_price"
-        )
+            min_retailprice_list["comparison"] = min_retailprice_list.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
 
-        context.update(
-            {
-                "product": product,
-                "shop": shop,
-                # "urls": urls,
-                "valid_urls": valid_urls,
-                "invalid_urls": invalid_urls,
-                "table_retailprices": table_retailprices,
-                "min_retailprice": min_retailprice,
-                "max_retailprice": max_retailprice,
-                "min_retailprice_list": min_retailprice_list,
-                "prices_below": prices_below,
-                "prices_equal": prices_equal,
-                "prices_above": prices_above,
-                "latest_timestamp": latest_timestamp,
-                "date_picker": date_picker,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            prices_below = min_retailprice_list["comparison"].tolist().count("below")
+            prices_equal = min_retailprice_list["comparison"].tolist().count("equal")
+            prices_above = min_retailprice_list["comparison"].tolist().count("above")
+
+            min_retailprice_list = min_retailprice_list["id"].tolist()
+            min_retailprice_list = RetailPrice.objects.filter(
+                id__in=min_retailprice_list
+            )
+
+            min_retailprice_list = min_retailprice_list.values(
+                "timestamp", "price", "curr_target_price"
+            )
+
+            context.update(
+                {
+                    "product": product,
+                    "shop": shop,
+                    # "urls": urls,
+                    "valid_urls": valid_urls,
+                    "invalid_urls": invalid_urls,
+                    "table_retailprices": table_retailprices,
+                    "min_retailprice": min_retailprice,
+                    "max_retailprice": max_retailprice,
+                    "min_retailprice_list": min_retailprice_list,
+                    "prices_below": prices_below,
+                    "prices_equal": prices_equal,
+                    "prices_above": prices_above,
+                    "latest_timestamp": latest_timestamp,
+                    "date_picker": date_picker,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "product": product,
+                    "shop": shop,
+                    "valid_urls": valid_urls,
+                    "invalid_urls": invalid_urls,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
         return context
 
 
@@ -1348,113 +1557,140 @@ class ProductInfo(TemplateView):
                 ),
             )
 
-        retailprices_df = pd.DataFrame().from_records(
-            retailprices.values_list(),
-            columns=[
-                "id",
-                "price",
-                "original_price",
-                "timestamp",
-                "product_id",
-                "shop_id",
-                "official_reseller",
-                "curr_target_price",
-                "source_id",
-            ],
-        )
+        data_exists = False
+        if retailprices.exists():
+            data_exists = True
+        else:
+            data_exists = False
 
-        latest_retail_prices = (
-            retailprices_df.loc[
-                retailprices_df.groupby(["shop_id", "source_id"])["timestamp"].idxmax()
-            ]
-            .reset_index(drop=True)
-            .copy()
-        )
-
-        shop_ids = latest_retail_prices["shop_id"].drop_duplicates().to_list()
-
-        shops_for_product = Shop.objects.filter(id__in=shop_ids)
-
-        latest_retail_prices
-
-        latest_retail_prices["comparison"] = latest_retail_prices.apply(
-            lambda x: "below"
-            if x["price"] < x["curr_target_price"]
-            else "equal"
-            if x["price"] == x["curr_target_price"]
-            else "above",
-            axis=1,
-        )
-
-        prices_below = latest_retail_prices["comparison"].tolist().count("below")
-        prices_equal = latest_retail_prices["comparison"].tolist().count("equal")
-        prices_above = latest_retail_prices["comparison"].tolist().count("above")
-
-        table_retailprices = (
-            RetailPrice.objects.filter(id__in=latest_retail_prices["id"])
-            .select_related()
-            .annotate(
-                shop_name=F("shop__name"),
-                source_domain=F("source__domain"),
+        if data_exists:
+            retailprices_df = pd.DataFrame().from_records(
+                retailprices.values_list(),
+                columns=[
+                    "id",
+                    "price",
+                    "original_price",
+                    "timestamp",
+                    "product_id",
+                    "shop_id",
+                    "official_reseller",
+                    "curr_target_price",
+                    "source_id",
+                ],
             )
-        )
 
-        min_retailprice_list = retailprices_df.copy()
+            latest_retail_prices = (
+                retailprices_df.loc[
+                    retailprices_df.groupby(["shop_id", "source_id"])[
+                        "timestamp"
+                    ].idxmax()
+                ]
+                .reset_index(drop=True)
+                .copy()
+            )
 
-        min_retailprice_list["price"] = pd.to_numeric(min_retailprice_list["price"])
-        min_retailprice_list = (
-            min_retailprice_list.loc[
-                min_retailprice_list.groupby("timestamp")["price"].idxmin()
-            ]
-            .reset_index(drop=True)
-            .copy()
-        )
+            shop_ids = latest_retail_prices["shop_id"].drop_duplicates().to_list()
 
-        min_retailprice = min_retailprice_list.sort_values(by="price", ascending=True)[
-            "price"
-        ].iloc[0]
+            shops_for_product = Shop.objects.filter(id__in=shop_ids)
 
-        max_retailprice = min_retailprice_list.sort_values(by="price", ascending=False)[
-            "price"
-        ].iloc[0]
+            latest_retail_prices
 
-        min_retailprice_list = min_retailprice_list["id"].tolist()
-        min_retailprice_list = RetailPrice.objects.filter(id__in=min_retailprice_list)
+            latest_retail_prices["comparison"] = latest_retail_prices.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
 
-        min_retailprice_list = min_retailprice_list.values(
-            "timestamp", "price", "curr_target_price"
-        )
+            prices_below = latest_retail_prices["comparison"].tolist().count("below")
+            prices_equal = latest_retail_prices["comparison"].tolist().count("equal")
+            prices_above = latest_retail_prices["comparison"].tolist().count("above")
 
-        latest_timestamp = latest_retail_prices.sort_values(
-            by="timestamp", ascending=False
-        )["timestamp"].iloc[0]
-        latest_timestamp = latest_timestamp.to_pydatetime()
-        local_dt = timezone.localtime(latest_timestamp)
-        latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
-        context.update(
-            {
-                "product": product,
-                "shops": shops_for_product,
-                # "urls": urls,
-                "valid_urls": valid_urls,
-                "invalid_urls": invalid_urls,
-                "retailprices": retailprices,
-                "table_retailprices": table_retailprices,
-                "min_retailprice": min_retailprice,
-                "max_retailprice": max_retailprice,
-                "min_retailprice_list": min_retailprice_list,
-                "prices_below": prices_below,
-                "prices_equal": prices_equal,
-                "prices_above": prices_above,
-                "latest_timestamp": latest_timestamp,
-                "date_picker": date_picker,
-                "seller_flag": seller_flag,
-                "user": user,
-                "user_is_staff": user.is_staff,
-                "user_is_sales_dep": is_sales_dep(user),
-                "user_is_superuser": user.is_superuser,
-            }
-        )
+            table_retailprices = (
+                RetailPrice.objects.filter(id__in=latest_retail_prices["id"])
+                .select_related()
+                .annotate(
+                    shop_name=F("shop__name"),
+                    source_domain=F("source__domain"),
+                )
+            )
+
+            min_retailprice_list = retailprices_df.copy()
+
+            min_retailprice_list["price"] = pd.to_numeric(min_retailprice_list["price"])
+            min_retailprice_list = (
+                min_retailprice_list.loc[
+                    min_retailprice_list.groupby("timestamp")["price"].idxmin()
+                ]
+                .reset_index(drop=True)
+                .copy()
+            )
+
+            min_retailprice = min_retailprice_list.sort_values(
+                by="price", ascending=True
+            )["price"].iloc[0]
+
+            max_retailprice = min_retailprice_list.sort_values(
+                by="price", ascending=False
+            )["price"].iloc[0]
+
+            min_retailprice_list = min_retailprice_list["id"].tolist()
+            min_retailprice_list = RetailPrice.objects.filter(
+                id__in=min_retailprice_list
+            )
+
+            min_retailprice_list = min_retailprice_list.values(
+                "timestamp", "price", "curr_target_price"
+            )
+
+            latest_timestamp = latest_retail_prices.sort_values(
+                by="timestamp", ascending=False
+            )["timestamp"].iloc[0]
+            latest_timestamp = latest_timestamp.to_pydatetime()
+            local_dt = timezone.localtime(latest_timestamp)
+            latest_timestamp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+            context.update(
+                {
+                    "product": product,
+                    "shops": shops_for_product,
+                    # "urls": urls,
+                    "valid_urls": valid_urls,
+                    "invalid_urls": invalid_urls,
+                    "retailprices": retailprices,
+                    "table_retailprices": table_retailprices,
+                    "min_retailprice": min_retailprice,
+                    "max_retailprice": max_retailprice,
+                    "min_retailprice_list": min_retailprice_list,
+                    "prices_below": prices_below,
+                    "prices_equal": prices_equal,
+                    "prices_above": prices_above,
+                    "latest_timestamp": latest_timestamp,
+                    "date_picker": date_picker,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
+        else:
+            context.update(
+                {
+                    "product": product,
+                    # "urls": urls,
+                    "valid_urls": valid_urls,
+                    "invalid_urls": invalid_urls,
+                    "seller_flag": seller_flag,
+                    "user": user,
+                    "user_is_staff": user.is_staff,
+                    "user_is_sales_dep": is_sales_dep(user),
+                    "user_is_superuser": user.is_superuser,
+                    "data_exists": data_exists,
+                }
+            )
         return context
 
 
@@ -2082,3 +2318,121 @@ def key_accounts_custom_report(request):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(settings.LOGIN_URL)
+
+
+class FeedbackFormView(FormView):
+    template_name = "feedback.html"
+    form_class = FeedbackForm
+    success_url = "/feedback/"
+
+    def post(self, request, *args, **kwargs):
+        form_class = self.get_form_class()
+        form = self.form_class(request.POST, request.FILES)
+
+        if form.is_valid():
+            if form.cleaned_data["subject"] == "feature":
+                subject = "Meerkat Feedback - Feature Request"
+            elif form.cleaned_data["subject"] == "bug":
+                subject = "Meerkat Feedback - Bug Report"
+            message = form.cleaned_data["message"]
+            sender = request.user.email
+            cc_myself = form.cleaned_data["cc_myself"]
+            recipients = ["n.zervos@soundstar.gr"]
+            files = request.FILES.getlist("file_field")
+
+            valid_extensions = [
+                ".pdf",
+                ".csv",
+                ".doc",
+                ".docx",
+                ".xlsx",
+                ".xlx",
+                ".png",
+                ".jpg",
+            ]
+
+            try:
+                if cc_myself:
+                    recipients.append(sender)
+                email = EmailMessage(
+                    subject,
+                    message,
+                    "e.vakalis@soundstar.gr",
+                    recipients,
+                    # ['to1@example.com', 'to2@example.com'],
+                    # ['bcc@example.com'],
+                    # reply_to=['another@example.com'],
+                    headers={"Message-ID": "Meerkat Feedback"},
+                    # attachments=files,
+                )
+                invalid_files = []
+                """
+                * max_upload_size - a number indicating the maximum file size allowed for upload.
+                    2.5MB - 2621440
+                    5MB - 5242880
+                    6MB - 6144000
+                    10MB - 10485760
+                    20MB - 20971520
+                    50MB - 5242880
+                    100MB - 104857600
+                    250MB - 214958080
+                    500MB - 429916160
+                """
+                max_upload_limit = 6144000
+                total_size = 0
+                file_error = False
+
+                for f in files:
+                    total_size += f.size
+                    extension = os.path.splitext(f.name)[1]
+                    if extension.lower() in valid_extensions:
+                        email.attach(f.name, f.read(), f.content_type)
+                    else:
+                        invalid_files.append(f.name)
+
+                if total_size > max_upload_limit:
+                    form.add_error(
+                        "file_field",
+                        "Το συνολικό μέγεθος των αρχείων υπερβαίνει το όριο."
+                        + " ".join(map(str, invalid_files)),
+                    )
+                    messages.error(
+                        request,
+                        "Το συνολικό μέγεθος των αρχείων υπερβαίνει το όριο. Το μύνημα δεν έχει αποσταλεί.",
+                        extra_tags="danger",
+                    )
+                    file_error = True
+
+                if len(invalid_files) > 0:
+                    form.add_error(
+                        "file_field",
+                        "Αυτά τα αρχεία δεν έχουν επισυναπτεί: "
+                        + " ".join(map(str, invalid_files)),
+                    )
+                    messages.error(
+                        request,
+                        "Ο τύπος κάποιου από τα αρχεία που επιλέξατε δεν είναι επιτρεπτός. Το μύνημα δεν έχει αποσταλεί.",
+                        extra_tags="danger",
+                    )
+                    file_error = True
+
+                if file_error:
+                    return self.form_invalid(form)
+
+                else:
+                    email.send()
+                    messages.success(request, "Το μύνημα εστάλει επιτυχώς.")
+                    return self.form_valid(form)
+            except:
+                messages.error(
+                    request,
+                    "Παρουσιάστηκε ένα σφάλμα κατά την αποστολή του μύνήματος. Παρακαλώ προσπαθήστε ξανά.",
+                    extra_tags="danger",
+                )
+                return self.form_invalid(form)
+
+        else:
+            messages.error(
+                request, "Υπάχει σφάλμα στα πεδία της φόρμας.", extra_tags="danger"
+            )
+            return self.form_invalid(form)
