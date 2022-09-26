@@ -1,4 +1,6 @@
 from django import forms
+from django.core.mail import send_mail
+from django.core.mail import EmailMessage
 from bootstrap_daterangepicker import widgets, fields
 from datetime import date, datetime, timedelta
 from collections import OrderedDict
@@ -26,18 +28,17 @@ class DatePicker(forms.Form):
     #     )
     # )
 
-
     date_range_with_predefined_ranges = fields.DateRangeField(
-        input_formats=['%d/%m/%Y'],
+        input_formats=["%d/%m/%Y"],
         widget=widgets.DateRangeWidget(
             picker_options={
-                'locale':{
-                    'format':'DD/MM/YYYY',
+                "locale": {
+                    "format": "DD/MM/YYYY",
                 },
-                'ranges':widgets.common_dates('%d/%m/%Y'),
-                'alwaysShowCalendars': True,
-                },
-        )
+                "ranges": widgets.common_dates("%d/%m/%Y"),
+                "alwaysShowCalendars": True,
+            },
+        ),
     )
 
     # date_range_with_predefined_ranges = fields.DateRangeField(
@@ -73,3 +74,11 @@ class DatePicker(forms.Form):
     #     )
     # )
     # datetime_range_clearable = fields.DateTimeRangeField(required=False)
+
+
+class FeedbackForm(forms.Form):
+    message = forms.CharField(widget=forms.Textarea)
+    cc_myself = forms.BooleanField(required=False)
+    file_field = forms.FileField(
+        widget=forms.ClearableFileInput(attrs={"multiple": True}), required=False
+    )

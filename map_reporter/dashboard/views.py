@@ -4,19 +4,23 @@ from itertools import product
 from this import d
 from django.http import Http404, HttpResponseRedirect, HttpResponse
 from django.core.exceptions import PermissionDenied
+from django.core.mail import send_mail
+from django.core.mail import EmailMessage
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.shortcuts import render, get_object_or_404, get_list_or_404, redirect
 from django.views import View
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import FormView
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth import login, authenticate, logout
+from django.contrib import messages
 from django.views import generic
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import make_aware
 from django.db.models import *
 from reporter.models import *
-from .forms import DatePicker
+from .forms import *
 from django.http import JsonResponse
 import json
 import datetime
@@ -878,7 +882,7 @@ class CategoryInfo(TemplateView):
                 ),
             )
         data_exists = False
-        if retail_prices.exists():
+        if retailprices.exists():
             data_exists = True
         else:
             data_exists = False
@@ -2314,3 +2318,118 @@ def key_accounts_custom_report(request):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect(settings.LOGIN_URL)
+
+
+class FeedbackFormView(FormView):
+    template_name = "feedback.html"
+    form_class = FeedbackForm
+    success_url = "/feedback/"
+
+    def post(self, request, *args, **kwargs):
+        form_class = self.get_form_class()
+        form = self.form_class(request.POST, request.FILES)
+
+        if form.is_valid():
+            subject = "Meerkat Feedback Message"
+            message = form.cleaned_data["message"]
+            sender = request.user.email
+            cc_myself = form.cleaned_data["cc_myself"]
+            recipients = ["n.zervos@soundstar.gr"]
+            files = request.FILES.getlist("file_field")
+
+            valid_extensions = [
+                ".pdf",
+                ".csv",
+                ".doc",
+                ".docx",
+                ".xlsx",
+                ".xlx",
+                ".png",
+                ".jpg",
+            ]
+
+            try:
+                if cc_myself:
+                    recipients.append(sender)
+                email = EmailMessage(
+                    subject,
+                    message,
+                    "e.vakalis@soundstar.gr",
+                    recipients,
+                    # ['to1@example.com', 'to2@example.com'],
+                    # ['bcc@example.com'],
+                    # reply_to=['another@example.com'],
+                    headers={"Message-ID": "Meerkat Feedback"},
+                    # attachments=files,
+                )
+                invalid_files = []
+                """
+                * max_upload_size - a number indicating the maximum file size allowed for upload.
+                    2.5MB - 2621440
+                    5MB - 5242880
+                    6MB - 6144000
+                    10MB - 10485760
+                    20MB - 20971520
+                    50MB - 5242880
+                    100MB - 104857600
+                    250MB - 214958080
+                    500MB - 429916160
+                """
+                max_upload_limit = 6144000
+                total_size = 0
+                file_error = False
+
+                for f in files:
+                    total_size += f.size
+                    extension = os.path.splitext(f.name)[1]
+                    if extension.lower() in valid_extensions:
+                        email.attach(f.name, f.read(), f.content_type)
+                    else:
+                        invalid_files.append(f.name)
+
+                if total_size > max_upload_limit:
+                    form.add_error(
+                        "file_field",
+                        "Το συνολικό μέγεθος των αρχείων υπερβαίνει το όριο."
+                        + " ".join(map(str, invalid_files)),
+                    )
+                    messages.error(
+                        request,
+                        "Το συνολικό μέγεθος των αρχείων υπερβαίνει το όριο. Το μύνημα δεν έχει αποσταλεί.",
+                        extra_tags="danger",
+                    )
+                    file_error = True
+
+                if len(invalid_files) > 0:
+                    form.add_error(
+                        "file_field",
+                        "Αυτά τα αρχεία δεν έχουν επισυναπτεί: "
+                        + " ".join(map(str, invalid_files)),
+                    )
+                    messages.error(
+                        request,
+                        "Ο τύπος κάποιου από τα αρχεία που επιλέξατε δεν είναι επιτρεπτός. Το μύνημα δεν έχει αποσταλεί.",
+                        extra_tags="danger",
+                    )
+                    file_error = True
+
+                if file_error:
+                    return self.form_invalid(form)
+
+                else:
+                    email.send()
+                    messages.success(request, "Το μύνημα εστάλει επιτυχώς.")
+                    return self.form_valid(form)
+            except:
+                messages.error(
+                    request,
+                    "Παρουσιάστηκε ένα σφάλμα κατά την αποστολή του μύνήματος. Παρακαλώ προσπαθήστε ξανά.",
+                    extra_tags="danger",
+                )
+                return self.form_invalid(form)
+
+        else:
+            messages.error(
+                request, "Υπάχει σφάλμα στα πεδία της φόρμας.", extra_tags="danger"
+            )
+            return self.form_invalid(form)
