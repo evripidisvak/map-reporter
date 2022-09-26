@@ -74,7 +74,8 @@ class TestShopsPageView(TestCase, SimpleTestCase):
 class TestShopInfoView(TestCase, SimpleTestCase):
     def test_shop_info_view(self):
         client = login_dummy_user()
-        response = client.get(reverse("shop_info"))
+        shop = baker.make("reporter.Shop")
+        response = client.get(reverse("shop_info", kwargs={"pk": shop.id}))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
         # self.assertTrue(response.context[0]["data_exists"])
@@ -94,8 +95,8 @@ class TestCategoriesPageView(TestCase, SimpleTestCase):
 class TestCategoryInfoView(TestCase, SimpleTestCase):
     def test_category_info_view(self):
         client = login_dummy_user()
-        response = client.get(reverse("category_info"))
-        # print(response.content)
+        category = baker.make("reporter.Category")
+        response = client.get(reverse("category_info", kwargs={"pk": category.id}))
         self.assertTrue(response.status_code, 200)
         # self.assertTrue(response.context[0]["data_exists"])
 
@@ -112,7 +113,10 @@ class TestManufacturersPageView(TestCase, SimpleTestCase):
 class TestManufacturerInfoView(TestCase, SimpleTestCase):
     def test_manufacturer_info_view(self):
         client = login_dummy_user()
-        response = client.get(reverse("manufacturer_info"))
+        manufacturer = baker.make("reporter.Manufacturer")
+        response = client.get(
+            reverse("manufacturer_info", kwargs={"pk": manufacturer.id})
+        )
         # print(response.content)
         self.assertTrue(response.status_code, 200)
         # self.assertTrue(response.context[0]["data_exists"])
@@ -121,8 +125,14 @@ class TestManufacturerInfoView(TestCase, SimpleTestCase):
 class TestShopProductInfoView(TestCase, SimpleTestCase):
     def test_shop_product_info_view(self):
         client = login_dummy_user()
-        response = client.get(reverse("shop_product_info"))
-        # print(response.content)
+        product = baker.make("reporter.Product")
+        shop = baker.make("reporter.Shop")
+        response = client.get(
+            reverse(
+                "shop_product_info",
+                kwargs={"pk_shop": shop.id, "pk_product": product.id},
+            )
+        )
         self.assertTrue(response.status_code, 200)
         # self.assertTrue(response.context[0]["data_exists"])
 
@@ -130,7 +140,8 @@ class TestShopProductInfoView(TestCase, SimpleTestCase):
 class TestProductInfoView(TestCase, SimpleTestCase):
     def test_product_info_view(self):
         client = login_dummy_user()
-        response = client.get(reverse("product_info"))
+        product = baker.make("reporter.Product")
+        response = client.get(reverse("product_info", kwargs={"pk": product.id}))
         # print(response.content)
         self.assertTrue(response.status_code, 200)
         # self.assertTrue(response.context[0]["data_exists"])
