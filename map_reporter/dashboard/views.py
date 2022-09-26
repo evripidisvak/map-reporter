@@ -2330,7 +2330,10 @@ class FeedbackFormView(FormView):
         form = self.form_class(request.POST, request.FILES)
 
         if form.is_valid():
-            subject = "Meerkat Feedback Message"
+            if form.cleaned_data["subject"] == "feature":
+                subject = "Meerkat Feedback - Feature Request"
+            elif form.cleaned_data["subject"] == "bug":
+                subject = "Meerkat Feedback - Bug Report"
             message = form.cleaned_data["message"]
             sender = request.user.email
             cc_myself = form.cleaned_data["cc_myself"]
