@@ -2325,6 +2325,23 @@ class FeedbackFormView(FormView):
     form_class = FeedbackForm
     success_url = "/feedback/"
 
+    def get_context_data(self, **kwargs):
+        user = self.request.user
+        context = super(FeedbackFormView, self).get_context_data(**kwargs)
+
+        seller_flag = is_seller(user)
+
+        context.update(
+            {
+                "seller_flag": seller_flag,
+                "user": user,
+                "user_is_staff": user.is_staff,
+                "user_is_sales_dep": is_sales_dep(user),
+                "user_is_superuser": user.is_superuser,
+            }
+        )
+        return context
+
     def post(self, request, *args, **kwargs):
         form_class = self.get_form_class()
         form = self.form_class(request.POST, request.FILES)
@@ -2337,7 +2354,7 @@ class FeedbackFormView(FormView):
             message = form.cleaned_data["message"]
             sender = request.user.email
             cc_myself = form.cleaned_data["cc_myself"]
-            recipients = ["n.zervos@soundstar.gr"]
+            recipients = ["n.zervos@soundstar.gr", "e.vakalis@soundstar.gr"]
             files = request.FILES.getlist("file_field")
 
             valid_extensions = [
@@ -2357,7 +2374,7 @@ class FeedbackFormView(FormView):
                 email = EmailMessage(
                     subject,
                     message,
-                    "e.vakalis@soundstar.gr",
+                    sender,
                     recipients,
                     # ['to1@example.com', 'to2@example.com'],
                     # ['bcc@example.com'],
