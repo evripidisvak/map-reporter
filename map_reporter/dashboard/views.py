@@ -274,10 +274,21 @@ class AllProducts(TemplateView):
 
         if seller_flag:
             retailprices_obj = RetailPrice.objects.filter(
-                product__in=products, shop__seller=user
+                product__in=products,
+                shop__seller=user,
+                timestamp__range=(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    datetime.datetime.now(),
+                ),
             )
         else:
-            retailprices_obj = RetailPrice.objects.filter(product__in=products)
+            retailprices_obj = RetailPrice.objects.filter(
+                product__in=products,
+                timestamp__range=(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    datetime.datetime.now(),
+                ),
+            )
 
         data_exists = False
         if retailprices_obj.exists():
@@ -463,7 +474,12 @@ class ShopsPage(TemplateView):
         shops_ok = 0
 
         retailprices = RetailPrice.objects.filter(
-            shop__in=shops, product__in=products
+            shop__in=shops,
+            product__in=products,
+            timestamp__range=(
+                datetime.datetime.now() - datetime.timedelta(days=14),
+                datetime.datetime.now(),
+            ),
         ).select_related()
 
         data_exists = False
@@ -573,7 +589,12 @@ class ShopInfo(TemplateView):
         if seller_flag and not shop.seller == user:
             raise Http404("Δεν έχετε πρόσβαση σε αυτό το κατάστημα.")
         retailprices = RetailPrice.objects.filter(
-            shop=kwargs["pk"], product__active=True
+            shop=kwargs["pk"],
+            product__active=True,
+            timestamp__range=(
+                datetime.datetime.now() - datetime.timedelta(days=14),
+                datetime.datetime.now(),
+            ),
         )
 
         data_exists = False
@@ -707,9 +728,20 @@ class CategoriesPage(TemplateView):
         products = Product.objects.filter(active=True)
         seller_flag = is_seller(user)
         if seller_flag:
-            retail_prices = RetailPrice.objects.filter(shop__seller=user)
+            retail_prices = RetailPrice.objects.filter(
+                shop__seller=user,
+                timestamp__range=(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    datetime.datetime.now(),
+                ),
+            )
         else:
-            retail_prices = RetailPrice.objects.all()
+            retail_prices = RetailPrice.objects.filter(
+                timestamp__range=(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    datetime.datetime.now(),
+                )
+            )
 
         data_exists = False
         if retail_prices.exists():
@@ -1028,9 +1060,20 @@ class ManufacturersPage(TemplateView):
         products = Product.objects.filter(active=True)
 
         if seller_flag:
-            retail_prices = RetailPrice.objects.filter(shop__seller=user)
+            retail_prices = RetailPrice.objects.filter(
+                shop__seller=user,
+                timestamp__range=(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    datetime.datetime.now(),
+                ),
+            )
         else:
-            retail_prices = RetailPrice.objects.all()
+            retail_prices = RetailPrice.objects.filter(
+                timestamp__range=(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    datetime.datetime.now(),
+                )
+            )
 
         data_exists = False
         if retail_prices.exists():
@@ -2159,10 +2202,10 @@ def key_accounts_custom_report(request):
                 shop__in=key_accounts,
                 product__main_category__in=categories_list,
                 product__active=True,
-                # timestamp__range=(
-                #     make_aware(datetime.datetime.now() - datetime.timedelta(days=14)),
-                #     make_aware(datetime.datetime.now()),
-                # ),
+                timestamp__range=(
+                    make_aware(datetime.datetime.now() - datetime.timedelta(days=14)),
+                    make_aware(datetime.datetime.now()),
+                ),
             )
             .select_related("product")
             .annotate(
