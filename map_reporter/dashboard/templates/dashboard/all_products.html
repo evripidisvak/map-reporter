@@ -128,6 +128,12 @@
                 Τελευταίες τιμές όλων των ενεργών προϊόντων
             </div>
             <div class="card-body overflow-auto">
+
+                <div class="form-check form-switch only-below-switch mb-2 ms-2">
+                    <input class="form-check-input" type="checkbox" name="only-below" id="only-below-checkbox">
+                    <label class="form-check-label fw-bold" for="only-below-checkbox">Μόνο γραμμές με πρόβλημα</label>
+                </div>
+
                 <table id='table_2' class="data-table display">
                     <!--data-search-highlight use for highlight individual column search-->
                     <thead>
@@ -146,7 +152,7 @@
                             <th class="select-filter">Key Account</th>
                             <th class="select-filter">Επ. Μεταπωλ.</th>
                             {% if not seller_flag %}
-                                <th class="select-filter">Πωλητής</th>
+                            <th class="select-filter">Πωλητής</th>
                             {% endif %}
                             <th>Ημερομηνία</th>
                         </tr>
@@ -166,7 +172,7 @@
                             <th class="select">Key Account</th>
                             <th class="select">Επ. Μεταπωλ.</th>
                             {% if not seller_flag %}
-                                <th class="select">Πωλητής</th>
+                            <th class="select">Πωλητής</th>
                             {% endif %}
                             <th class="no-filter">Ημερομηνία</th>
                             {% comment %} <th class="date-filter"><div id="reportrange" class="btn btn-secondary"> <span></span> <b class="caret"></b></div></th> {% endcomment %}
@@ -592,6 +598,34 @@ $(document).ready(function() {
 //TABLE 2
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         $(document).ready(function() {
+
+            // Filter the rows and show only below (red rows)
+            $.fn.dataTable.ext.search.push(
+                function (settings, searchData, index, rowData, counter) {
+
+                var checked = $('input:checkbox[name="only-below"]').is(':checked');
+                // If checked, see if we should hide some rows
+                if (checked){
+                    // If column in position of Diff column has the 'text-danger' class display the row
+                    if (rowData[8].indexOf('text-danger') >= 0) {
+                        return true;
+                    } else {
+                        // Otherwise hide the row
+                        return false;
+                    }
+                } else {
+                    // Otherwise show the all the rows
+                    return true;
+                }
+                });
+
+            $('input:checkbox').on('change', function () {
+                // Run the search plugin
+                $('#table_2').DataTable().draw();
+            });
+
+
+
             //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
             $('#table_2 tr.head-filters th').each( function (i) {
                 var title = $('#table_2 thead th').eq( $(this).index() ).text();
