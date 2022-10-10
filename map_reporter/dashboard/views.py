@@ -608,6 +608,7 @@ def update_allproducts_table(retail_prices, seller_flag):
             else:
                 updated_table += """<td>
                 <p class='text-black'>"""
+                # TODO retail_price.source.domain probably causes db calls. Changes it.
             updated_table += (
                 str(
                     round(
@@ -621,7 +622,7 @@ def update_allproducts_table(retail_prices, seller_flag):
                 + """ %</p>
                         </td>
                         <td>"""
-                + retail_price.source_domain
+                + retail_price.source.domain
                 + """</td>
                         <td>"""
                 + retail_price.shop.is_key_account()
