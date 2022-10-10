@@ -653,6 +653,8 @@ def update_allproducts_table(retail_prices, seller_flag):
 def all_products_table_filter(request):
     if request.method == "POST":
         # try:
+        table_image_size = "80x80"
+
         user = request.user
         seller_flag = is_seller(user)
 
@@ -723,24 +725,21 @@ def all_products_table_filter(request):
                 "product_sku",
             ],
         )
-        table_image_size = "80x80"
 
         if date_range:
             grouped_retailprices = retailpricesdf.groupby(
                 ["product_id", "shop_name", "timestamp"]
             ).obj.reset_index(drop=True)
         else:
-            # grouped_retailprices = retail_prices_df.loc[
-            #     retail_prices_df.groupby(["product_id", "shop_name"])[
-            #         "timestamp"
-            #     ].idxmax()
-            # ].reset_index(drop=True)
-            grouped_retailprices_by_shop = retailpricesdf.loc[
-                retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
+            grouped_retailprices = retailpricesdf.loc[
+                retailpricesdf.groupby(["product_id", "shop_name"])[
+                    "timestamp"
+                ].idxmax()
             ].reset_index(drop=True)
-            grouped_retailprices_by_shop[
-                "comparison"
-            ] = grouped_retailprices_by_shop.apply(
+            # grouped_retailprices_by_shop = retailpricesdf.loc[
+            #     retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
+            # ].reset_index(drop=True)
+            grouped_retailprices["comparison"] = grouped_retailprices.apply(
                 lambda x: "below"
                 if x["price"] < x["curr_target_price"]
                 else "equal"
@@ -761,9 +760,6 @@ def all_products_table_filter(request):
                 else "above",
                 axis=1,
             )
-            products_below = grouped_retailprices["comparison"].tolist().count("below")
-            products_equal = grouped_retailprices["comparison"].tolist().count("equal")
-            products_above = grouped_retailprices["comparison"].tolist().count("above")
 
             grouped_retailprices.sort_values(
                 by=["product_id", "price"], inplace=True, ascending=True
