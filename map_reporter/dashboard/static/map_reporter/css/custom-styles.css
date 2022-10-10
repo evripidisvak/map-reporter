@@ -124,8 +124,14 @@
     vertical-align: top !important;
 }
 
-label[for="id_date_range_with_predefined_ranges"] {
+label[for="id_date_range_with_predefined_ranges"],
+label[for="id_datetime_range_with_predefined_ranges"] {
     display: none !important;
+}
+
+#id_date_range_with_predefined_ranges,
+#id_datetime_range_with_predefined_ranges {
+    min-width: 320px;
 }
 
 .dataTables_wrapper .dataTables_filter input {
