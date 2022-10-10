@@ -678,7 +678,7 @@ $(document).ready(function() {
         date_column_sort = 13;
     {% endif %}
     config = {
-        //order: [[15, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],
+        order: [[date_column_sort, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],
         dom: 'Bfplrtipl',
         info:true,
         searching: true,
@@ -1008,7 +1008,6 @@ $(document).ready(function() {
         evt.detail.parameters['categories_list'] = category_list; // add a new parameter into the mix
         evt.detail.parameters['shops_list'] = shop_list; // add a new parameter into the mix
     });
-
     // What should i do with the response from the server?
     document.body.addEventListener('htmx:afterRequest', function (evt) {
         const targetError = evt.target.attributes.getNamedItem('hx-target-error');
@@ -1026,72 +1025,16 @@ $(document).ready(function() {
                 error_elem.innerHTML = 'Υπήρξε κάποιο σφάλμα. Προσπαθήστε ξανά. Εάν το σφάλμα συνεχιστεί επικοινωνήστε με το τμήμα Internet.';
                 error_elem.style.display = "block";
             } else {
-                //config.columns = my_response.columns;
-                console.log(my_response);
-                config.data = my_response.data_set;
-                //rows_below = my_response.rows_below;
-                //latest_timestamp = my_response.latest_timestamp;
-
                 if ( $.fn.dataTable.isDataTable( '#table_2') ) {
-                    console.log('DA FUCK???????????');
-                    //table_2.clear();
-                    //table_2.rows.add(my_response.data_set);
-                    //table_2.draw();
-                    //table_2.destroy();
-                    ////table_2.data()
-                    ////$('#table_2').empty();
-                    //table_2 = $('#table_2').DataTable(config);
-                    //table_2.draw();
-
-                     // Update the table
-                //    table_1.destroy();
-                //    table = $('#table_1');
-                //    table.html(my_response.table);
-                //    {% if not seller_flag %}
-                //        date_column_sort = 9;
-                //    {% else%}
-                //        date_column_sort = 8;
-                //    {% endif %}
-                //    config.order = [[date_column_sort, 'desc'], [1, 'asc'],];
-                //    table_1 = $('#table_1').DataTable(config);
-                //    config_the_table();
-                //    table_1.draw();
-                //}
-
                     // Update the table
-                    seller_flag = my_response.seller_flag
+                    table_2.clear();
                     table_2.destroy();
-                    table = $('#table_2');
-                    table.html(my_response.table);
-                    {% if not seller_flag %}
-                    date_column_sort = 14;
-                    {% else%}
-                    date_column_sort = 13;
-                    {% endif %}
-                    console.log(seller_flag);
-                    console.log(date_column_sort);
-                    //config.order = [[date_column_sort, 'desc'], [1, 'asc'],];
-                    table_2 = $('#table_2').DataTable(config);
-                    //config_the_table();
-                    //table_2.draw();
                 }
-                else {
-                    console.log('SHIT');
-                    table_2 = $('#table_2').DataTable(config);
-                }
-
-                document.querySelectorAll('#table_2 thead tr')[0].classList.add('bg-light', 'head-filters');
-                // TODO smaller cell paddings, vertical borders
-                for(var i=0; i < rows_below.length; i++){
-                    table_2.row(rows_below[i]).node().classList.add('bg-danger', 'bg-opacity-10');
-                    map_price = table_2.row(rows_below[i]).node().childNodes[4].innerText;
-                    for(j=5; j < table_2.row(rows_below[i]).node().childNodes.length; j++){
-                        value = table_2.row(rows_below[i]).node().childNodes[j].innerText;
-                        if(value != '-' && parseFloat(value) < parseFloat(map_price)){
-                            table_2.row(rows_below[i]).node().childNodes[j].classList.add('text-danger');
-                        }
-                    }
-                }
+                table_2 = $('#table_2');
+                table_2.html(my_response.table);
+                table_2 = $('#table_2').DataTable(config);
+                config_the_table();
+                table_2.draw();
             }
         }
     });
