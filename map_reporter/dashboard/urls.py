@@ -48,6 +48,11 @@ htmx_urlpatterns = [
         views.key_accounts_custom_report,
         name="key_accounts_custom_report",
     ),
+    path(
+        "all_products_table_filter/",
+        views.all_products_table_filter,
+        name="all_products_table_filter",
+    ),
 ]
 
 urlpatterns += htmx_urlpatterns
