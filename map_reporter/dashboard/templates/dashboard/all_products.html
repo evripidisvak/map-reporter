@@ -134,7 +134,7 @@
                         <div class="row">
                             <p>Επιλέξτε ημερομηνίες και ώρες. Αφήστε το πεδίο της ημερομηνίας κενό ή διαγράψτε το περιεχόμενό του για να δείτε την τελευταία διαθέσιμη πληροφορία για κάθε κατάστημα.</p>
                             <p>Επιλέξτε καταστήματα και κατηγορίες προϊόντων που σας ενδιαφέρουν.</p>
-                            <p>Πατήστε 'Υποβολή' για να παραχθεί ο πίνακας τιμών.</p>
+                            <p>Πατήστε 'Υποβολή' για να ανανεωθεί ο πίνακας τιμών.</p>
                             <div class="col-lg-12">
                                 <div class="m-2 d-inline-block">
                                     {{date_picker}}
@@ -671,414 +671,390 @@ $(document).ready(function() {
 //TABLE 2
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     $(document).ready(function() {
-    //table_2 configuration
-    {% if not seller_flag %}
-        date_column_sort = 14;
-    {% else%}
-        date_column_sort = 13;
-    {% endif %}
-    config = {
-        order: [[date_column_sort, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],
-        dom: 'Bfplrtipl',
-        info:true,
-        searching: true,
-        language: {
-            search: "Αναζήτηση: ",
-            paginate:{
-                previous: "&lt;",
-                next: "&gt;",
+        //table_2 configuration
+        {% if not seller_flag %}
+            date_column_sort = 14;
+        {% else%}
+            date_column_sort = 13;
+        {% endif %}
+        config = {
+            order: [[date_column_sort, 'desc'],[3, 'asc'],[2, 'asc'],[1, 'asc'],[6, 'asc']],
+            dom: 'Bfplrtipl',
+            info:true,
+            searching: true,
+            language: {
+                search: "Αναζήτηση: ",
+                paginate:{
+                    previous: "&lt;",
+                    next: "&gt;",
+                },
+                info: "Σελίδα _PAGE_ από _PAGES_",
+                lengthMenu: "Εμφάνιση _MENU_ γραμμών",
+                infoFiltered: " - φιλτραρισμένο από _MAX_ γραμμές",
             },
-            info: "Σελίδα _PAGE_ από _PAGES_",
-            lengthMenu: "Εμφάνιση _MENU_ γραμμών",
-            infoFiltered: " - φιλτραρισμένο από _MAX_ γραμμές",
-          },
-        paging: true,
-        responsive: true,
-        buttons: [
-            {
-                // Save as PDF button
-                // TODO Check margins, add datetime of export, fix title in pdf, check file name
-                extend: 'pdf',
-                text: 'PDF',
-                className: 'btn btn-secondary',
-                orientation: 'landscape',
-                pageSize: 'A4',
-                exportOptions: {
-                    format: {
-                        body: function ( inner, coldex, rowdex ) {
-                          if (inner.length <= 0) return inner;
-                          var el = $.parseHTML(inner);
-                          var result='';
-                          $.each( el, function (index, item) {
-                              if (item.nodeName == '#text') {
-                                  result += item.textContent;
-                            }
-                            else if (item.nodeName == 'STRONG'){
-                                result += item.outerHTML;
-                            }
-                            else if (item.nodeName == 'A'){
-                                nodes = item.childNodes;
-                                is_image = false;
-                                for(elem of nodes.values()){
-                                    if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
-                                        image = elem.getAttribute('aria-src').trim();
-                                        result += image;
-                                        is_image = true;
-                                    }
+            paging: true,
+            responsive: true,
+            buttons: [
+                {
+                    // Save as PDF button
+                    // TODO Check margins, add datetime of export, fix title in pdf, check file name
+                    extend: 'pdf',
+                    text: 'PDF',
+                    className: 'btn btn-secondary',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        format: {
+                            body: function ( inner, coldex, rowdex ) {
+                            if (inner.length <= 0) return inner;
+                            var el = $.parseHTML(inner);
+                            var result='';
+                            $.each( el, function (index, item) {
+                                if (item.nodeName == '#text') {
+                                    result += item.textContent;
                                 }
-                                if(! is_image){
+                                else if (item.nodeName == 'STRONG'){
                                     result += item.outerHTML;
                                 }
-                            }
-                            else {
-                                result += item.outerHTML;
-                            }
-                          });
-                          return result;
-                        }
-                      },
-                      modifier: {
-                    },
-                },
-                customize: function(doc){
-                    doc.content[1].table.dontBreakRows = true;
-                    doc.pageMargins = [ 1,1,1,1 ];
-                    doc.styles.title = {
-                        alignment: "center",
-                        fontSize: 12,
-                        noWrap: true,
-                    };
-                    doc.styles.redcelleven = {
-                        color: '#dc3545',
-                        fillColor: '#fceaec',
-                    };
-                    doc.styles.redcellodd = {
-                        color: '#dc3545',
-                        fillColor: '#e2d2d4',
-                    };
-                    doc.styles.redroweven = {
-                        fillColor: '#fceaec',
-                    };
-                    doc.styles.redrowodd = {
-                        fillColor: '#e2d2d4',
-                    };
-                    var photo_index = 0;
-                    for(i = 0; i < doc.content[1].table.body[0].length; i++){
-                        if (doc.content[1].table.body[0][i].text == 'Φωτογραφία'){
-                            photo_index = i;
-                            break;
-                        }
-                    }
-                    for(j = 1; j < doc.content[1].table.body.length; j++){
-                        red_row = false;
-                        red_cell = false;
-                        doc.content[1].table.body[j][photo_index] = {
-                            image: doc.content[1].table.body[j][photo_index].text,
-                            width: 50,
-                        }
-                        for(z = 1; z < doc.content[1].table.body[j].length; z++){
-                            if(z != photo_index){
-                                if(typeof doc.content[1].table.body[j][z].text !== 'undefined' && doc.content[1].table.body[j][z].text != 'undefined'){
-                                    if(doc.content[1].table.body[j][z].text.includes('text-danger')){
-                                        red_row = true;
-                                        if(j % 2 == 0){
-                                            doc.content[1].table.body[j][z].style = 'redcelleven';
-                                        } else {
-                                            doc.content[1].table.body[j][z].style = 'redcellodd';
+                                else if (item.nodeName == 'A'){
+                                    nodes = item.childNodes;
+                                    is_image = false;
+                                    for(elem of nodes.values()){
+                                        if (typeof elem.attributes !== 'undefined' && elem.hasAttribute('aria-src')){
+                                            image = elem.getAttribute('aria-src').trim();
+                                            result += image;
+                                            is_image = true;
                                         }
                                     }
-                                    let reg = /<\/?.+?\/?>/g;
-                                    new_value = doc.content[1].table.body[j][z].text.replace(reg, '').trim();
-                                    doc.content[1].table.body[j][z].text = new_value;
+                                    if(! is_image){
+                                        result += item.outerHTML;
+                                    }
                                 }
+                                else {
+                                    result += item.outerHTML;
+                                }
+                            });
+                            return result;
+                            }
+                        },
+                        modifier: {
+                        },
+                    },
+                    customize: function(doc){
+                        doc.content[1].table.dontBreakRows = true;
+                        doc.pageMargins = [ 1,1,1,1 ];
+                        doc.styles.title = {
+                            alignment: "center",
+                            fontSize: 12,
+                            noWrap: true,
+                        };
+                        doc.styles.redcelleven = {
+                            color: '#dc3545',
+                            fillColor: '#fceaec',
+                        };
+                        doc.styles.redcellodd = {
+                            color: '#dc3545',
+                            fillColor: '#e2d2d4',
+                        };
+                        doc.styles.redroweven = {
+                            fillColor: '#fceaec',
+                        };
+                        doc.styles.redrowodd = {
+                            fillColor: '#e2d2d4',
+                        };
+                        var photo_index = 0;
+                        for(i = 0; i < doc.content[1].table.body[0].length; i++){
+                            if (doc.content[1].table.body[0][i].text == 'Φωτογραφία'){
+                                photo_index = i;
+                                break;
                             }
                         }
-                        if(red_row){
+                        for(j = 1; j < doc.content[1].table.body.length; j++){
+                            red_row = false;
+                            red_cell = false;
+                            doc.content[1].table.body[j][photo_index] = {
+                                image: doc.content[1].table.body[j][photo_index].text,
+                                width: 50,
+                            }
                             for(z = 1; z < doc.content[1].table.body[j].length; z++){
-                                if(doc.content[1].table.body[j][z].style != 'redcellodd' && doc.content[1].table.body[j][z].style != 'redcelleven' ){
-                                    if(j % 2 == 0){
-                                        doc.content[1].table.body[j][z].style = 'redroweven';
-                                    }else {
-                                        doc.content[1].table.body[j][z].style = 'redrowodd';
+                                if(z != photo_index){
+                                    if(typeof doc.content[1].table.body[j][z].text !== 'undefined' && doc.content[1].table.body[j][z].text != 'undefined'){
+                                        if(doc.content[1].table.body[j][z].text.includes('text-danger')){
+                                            red_row = true;
+                                            if(j % 2 == 0){
+                                                doc.content[1].table.body[j][z].style = 'redcelleven';
+                                            } else {
+                                                doc.content[1].table.body[j][z].style = 'redcellodd';
+                                            }
+                                        }
+                                        let reg = /<\/?.+?\/?>/g;
+                                        new_value = doc.content[1].table.body[j][z].text.replace(reg, '').trim();
+                                        doc.content[1].table.body[j][z].text = new_value;
+                                    }
+                                }
+                            }
+                            if(red_row){
+                                for(z = 1; z < doc.content[1].table.body[j].length; z++){
+                                    if(doc.content[1].table.body[j][z].style != 'redcellodd' && doc.content[1].table.body[j][z].style != 'redcelleven' ){
+                                        if(j % 2 == 0){
+                                            doc.content[1].table.body[j][z].style = 'redroweven';
+                                        }else {
+                                            doc.content[1].table.body[j][z].style = 'redrowodd';
+                                        }
                                     }
                                 }
                             }
                         }
+                    },
+                },
+                {
+                    extend:'excel',
+                    className: 'btn btn-secondary',
+                    text:'Excel',
+                    exportOptions: {
+                        columns: export_cols,
+                        stripHtml: true,
+                        },
+                },
+                {
+                    extend:'csv',
+                    className: 'btn btn-secondary',
+                    exportOptions:{
+                        columns: export_cols, //columns we want to exclude (look at the start of the script)
                     }
                 },
-            },
-            {
-                extend:'excel',
-                className: 'btn btn-secondary',
-                text:'Excel',
-                exportOptions: {
-                    columns: export_cols,
-                    stripHtml: true,
-                    },
-            },
-            {
-                extend:'csv',
-                className: 'btn btn-secondary',
-                exportOptions:{
-                    columns: export_cols, //columns we want to exclude (look at the start of the script)
-                }
-            },
-            //customise print button
-            {
-                extend: 'print',
-                text: 'Εκτύπωση',
-                className: 'btn btn-secondary',
-                orientation: 'landscape',
-                exportOptions: {
-                    stripHtml: false,
-                    //function to keep images and other html tags
-                    format: {
-                        body: function ( inner, coldex, rowdex ) {
-                          if (inner.length <= 0) return inner;
-                          var el = $.parseHTML(inner);
-                          var result='';
-                          $.each( el, function (index, item) {
-                            if (item.nodeName == '#text') {
-                                if (item.textContent !== 'undefined'){
-                                    result += item.textContent;
-                                } else {
-                                    result += item.nextSibling.innerText;
+                //customise print button
+                {
+                    extend: 'print',
+                    text: 'Εκτύπωση',
+                    className: 'btn btn-secondary',
+                    orientation: 'landscape',
+                    exportOptions: {
+                        stripHtml: false,
+                        //function to keep images and other html tags
+                        format: {
+                            body: function ( inner, coldex, rowdex ) {
+                            if (inner.length <= 0) return inner;
+                            var el = $.parseHTML(inner);
+                            var result='';
+                            $.each( el, function (index, item) {
+                                if (item.nodeName == '#text') {
+                                    if (item.textContent !== 'undefined'){
+                                        result += item.textContent;
+                                    } else {
+                                        result += item.nextSibling.innerText;
+                                    }
                                 }
+                                else if (item.nodeName == 'STRONG'){
+                                    result += item.outerHTML;
+                                }
+                                else if (item.nodeName == 'A'){
+                                    result += item.outerHTML;
+                                }
+                                else {
+                                    result += item.innerText;
+                                }
+                            });
+                            return result;
                             }
-                            else if (item.nodeName == 'STRONG'){
-                                result += item.outerHTML;
+                        },
+                        },
+                        //customise print output
+                        //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
+                        //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
+                    customize: function(window, print_btn_object, api){
+                        rows = api.rows({search:'applied'}).nodes();
+                        columns = api.columns({search:'applied'}).nodes();
+                        cells = api.cells('.danger-text', {search:'applied'});
+                        $(window.document.body).css('webkit-print-color-adjust', 'exact');
+                        $(window.document.body).css('print-color-adjust', 'exact');
+                        table = $(window.document.body).find('table');
+                        table_head = table.find('thead');
+                        table_head.css('background-color', '#F8F9FA');
+                        table_body = table.find('tbody');
+                        trs = table_body.find('tr');
+                        tds = table_body.find('td');
+                        table.find('th').css('white-space', 'nowrap');
+                        $.each(rows, function(index, item){
+                            if (item.classList.contains('bg-danger')){
+                                $(trs[index]).css('background-color', '#FCEAEC');
                             }
-                            else if (item.nodeName == 'A'){
-                                result += item.outerHTML;
-                            }
-                            else {
-                                result += item.innerText;
-                            }
-                          });
-                          return result;
-                        }
-                      },
-                    },
-                    //customise print output
-                    //function gives us three params, the window that will be printed, the print button object, and the data_tables api object
-                    //using jquery we force the document to print background colors, get all the rows that are colored red in the original document(.bg-danger) and pass that color to the rows in the print document, give some styling to the header, and fix some text styling issues.
-                customize: function(window, print_btn_object, api){
-                    rows = api.rows({search:'applied'}).nodes();
-                    columns = api.columns({search:'applied'}).nodes();
-                    cells = api.cells('.danger-text', {search:'applied'});
-                    $(window.document.body).css('webkit-print-color-adjust', 'exact');
-                    $(window.document.body).css('print-color-adjust', 'exact');
-                    table = $(window.document.body).find('table');
-                    table_head = table.find('thead');
-                    table_head.css('background-color', '#F8F9FA');
-                    table_body = table.find('tbody');
-                    trs = table_body.find('tr');
-                    tds = table_body.find('td');
-                    table.find('th').css('white-space', 'nowrap');
-                    $.each(rows, function(index, item){
-                        if (item.classList.contains('bg-danger')){
-                            $(trs[index]).css('background-color', '#FCEAEC');
-                        }
-                        $.each(item.cells, function(indx, td){
-                            if (td.classList.contains('danger-text')){
-                                $(trs[index].cells[indx]).css('color', '#ff0000');
-                            } else if (td.classList.contains('success-text')){
-                                $(trs[index].cells[indx]).css('color', '#198754');
-                            }
+                            $.each(item.cells, function(indx, td){
+                                if (td.classList.contains('danger-text')){
+                                    $(trs[index].cells[indx]).css('color', '#ff0000');
+                                } else if (td.classList.contains('success-text')){
+                                    $(trs[index].cells[indx]).css('color', '#198754');
+                                }
+                            });
                         });
+                    },
+                },
+                {
+                    extend:'copy',
+                    className: 'btn btn-secondary',
+                    text: 'Αντιγραφή',
+                },
+            ],
+            orderCellsTop: true,
+            fixedColumns:   true,
+            //add select filters where we have select-filter class on the first th row of the thead.
+            initComplete: function(){
+                this.api()
+                .columns('.select-filter')
+                .every(function () {
+                        var column = this;
+                        var select = $('<select class="form-select"><option value=""></option></select>').appendTo($("#table_2 thead tr:eq(1) th").eq(column.index()).empty()).on('change', function () {
+                                var val = $(this).val();
+                                column.search(val ? val : '', false, true).draw();
+                            });
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                let reg = /<\/?.+?\/?>/g;
+                                new_value = d.replace(reg, '').trim();
+                                select.append('<option value="' + new_value + '">' + new_value + '</option>');
+                            });
                     });
                 },
-            },
-            {
-                extend:'copy',
-                className: 'btn btn-secondary',
-                text: 'Αντιγραφή',
-            },
-        ],
-        orderCellsTop: true,
-        fixedColumns:   true,
-        //add select filters where we have select-filter class on the first th row of the thead.
-        initComplete: function(){
-            this.api()
-            .columns('.select-filter')
-            .every(function () {
-                    var column = this;
-                    var select = $('<select class="form-select"><option value=""></option></select>').appendTo($("#table_2 thead tr:eq(1) th").eq(column.index()).empty()).on('change', function () {
-                            var val = $(this).val();
-                            column.search(val ? val : '', false, true).draw();
-                        });
-                    column
-                        .data()
-                        .unique()
-                        .sort()
-                        .each(function (d, j) {
-                            let reg = /<\/?.+?\/?>/g;
-                            new_value = d.replace(reg, '').trim();
-                            select.append('<option value="' + new_value + '">' + new_value + '</option>');
-                        });
-                });
-            },
-    };
+        };
 
-    //stop dropdown from closing on click, so we can select multiple categories
-    $('body').on('click', function(e){
-        dropdown_elem = $('#CategorySelectDropdown');
-        target_element = $(e.target);
-        if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check') || target_element.hasClass('dropdown-menu show') || target_element.hasClass('dropdown-category') ){
-            e.stopPropagation();
-        }
-        if (target_element.attr('id') == 'CategorySelectAllCheckbox'){
-            checkboxes = $('.category-form-check-input');
-            if (target_element.prop('checked') == true ){
-                checkboxes.each(function(i, element){
-                    $(this).prop('checked', true);
-                });
+        //stop dropdown from closing on click, so we can select multiple categories
+        $('body').on('click', function(e){
+            dropdown_elem = $('#CategorySelectDropdown');
+            target_element = $(e.target);
+            if (target_element.hasClass('form-check-label') || target_element.hasClass('form-check') || target_element.hasClass('dropdown-menu show') || target_element.hasClass('dropdown-category') ){
+                e.stopPropagation();
             }
-            else if (target_element.prop('checked') == false ){
-                checkboxes.each(function(i, element){
-                    $(this).prop('checked', false);
-                });
-            }
-        }
-        if (target_element.attr('id') == 'ShopSelectAllCheckbox'){
-            checkboxes = $('.shop-form-check-input');
-            if (target_element.prop('checked') == true ){
-                checkboxes.each(function(i, element){
-                    $(this).prop('checked', true);
-                });
-            }
-            else if (target_element.prop('checked') == false ){
-                checkboxes.each(function(i, element){
-                    $(this).prop('checked', false);
-                });
-            }
-        }
-    });
-
-    document.body.addEventListener('htmx:beforeRequest', function (evt) {
-        const targetError = evt.target.attributes.getNamedItem('hx-target-error')
-        if (targetError) {
-          document.getElementById(targetError.value).style.display = "none";
-        }
-      });
-
-    // Get all checked items from the dropdown and add them in the request parameters
-    document.body.addEventListener('htmx:configRequest', function(evt) {
-    if (evt.target.id == 'price-picker-form'){
-        category_checkboxes = $('.category-form-check-input');
-        category_list = '';
-        category_checkboxes.each(
-            function(i,elem) {
-                if($(this).prop('checked') == true){
-                    category_list += $(this).val() + ' ';
+            if (target_element.attr('id') == 'CategorySelectAllCheckbox'){
+                checkboxes = $('.category-form-check-input');
+                if (target_element.prop('checked') == true ){
+                    checkboxes.each(function(i, element){
+                        $(this).prop('checked', true);
+                    });
+                }
+                else if (target_element.prop('checked') == false ){
+                    checkboxes.each(function(i, element){
+                        $(this).prop('checked', false);
+                    });
+                }
+            } else if (target_element.attr('id') == 'ShopSelectAllCheckbox'){
+                checkboxes = $('.shop-form-check-input');
+                if (target_element.prop('checked') == true ){
+                    checkboxes.each(function(i, element){
+                        $(this).prop('checked', true);
+                    });
+                }
+                else if (target_element.prop('checked') == false ){
+                    checkboxes.each(function(i, element){
+                        $(this).prop('checked', false);
+                    });
                 }
             }
-            );
-            if(category_list == ''){
-                error_elem = document.getElementById('error_notice');
-                error_elem.innerHTML = 'Παρακαλώ επιλέξτε τουλάχιστον μια κατηγορία.';
-                error_elem.style.display = "block";
-                evt.preventDefault();
-            } else {
-                error_elem = document.getElementById('error_notice')
-                error_elem.innerHTML = '';
-                error_elem.style.display = "none";
-            }
+        });
 
-            shop_checkboxes = $('.shop-form-check-input');
-            shop_list = '';
-            shop_checkboxes.each(
-            function(i,elem) {
-                if($(this).prop('checked') == true){
-                    shop_list += $(this).val() + ' ';
-                }
-            }
-            );
-            if(shop_list == ''){
-                error_elem = document.getElementById('error_notice');
-                error_elem.innerHTML = 'Παρακαλώ επιλέξτε τουλάχιστον έαν κατάστημα.';
-                error_elem.style.display = "block";
-                evt.preventDefault();
-            } else {
-                error_elem = document.getElementById('error_notice')
-                error_elem.innerHTML = '';
-                error_elem.style.display = "none";
-            }
-        }
-        evt.detail.parameters['categories_list'] = category_list; // add a new parameter into the mix
-        evt.detail.parameters['shops_list'] = shop_list; // add a new parameter into the mix
-    });
-    // What should i do with the response from the server?
-    document.body.addEventListener('htmx:afterRequest', function (evt) {
-        const targetError = evt.target.attributes.getNamedItem('hx-target-error');
-        if (evt.detail.failed && targetError) {
-            // We got an error
-            error_elem = document.getElementById(targetError.value);
-            error_elem.innerHTML = "Δεν υπάρχουν τιμές για τις επιλεγμένες κατηγορίες.";
-            error_elem.style.display = "block";
-        } else {
-            // Create the table
-            const my_response_text = evt.detail.xhr.response;
-            my_response = JSON.parse(my_response_text);
-            if ("error" in my_response){
-                error_elem = document.getElementById('error_notice');
-                error_elem.innerHTML = 'Υπήρξε κάποιο σφάλμα. Προσπαθήστε ξανά. Εάν το σφάλμα συνεχιστεί επικοινωνήστε με το τμήμα Internet.';
-                error_elem.style.display = "block";
-            } else {
-                if ( $.fn.dataTable.isDataTable( '#table_2') ) {
-                    // Update the table
-                    table_2.clear();
-                    table_2.destroy();
-                }
-                table_2 = $('#table_2');
-                table_2.html(my_response.table);
-                table_2 = $('#table_2').DataTable(config);
-                config_the_table();
-                table_2.draw();
-            }
-        }
-    });
-
-    //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
-    config_the_table = function(){
-        $('#table_2 tr.head-filters th').each( function (i) {
-            var title = $('#table_2 thead th').eq( $(this).index() ).text();
-            if ( $(this).hasClass('text') ){
-                $(this).html( '<input type="text" class="form-control" placeholder="'+title+'" data-index="'+i+'" />' );
-            } else if ( $(this).hasClass('no-filter')){
-                $(this).html('');
-            }
-        } );
-    }
-
-            // Filter the rows and show only below (red rows)
-            $.fn.dataTable.ext.search.push(
-                function (settings, searchData, index, rowData, counter) {
-
-                var checked = $('input:checkbox[name="only-below"]').is(':checked');
-                // If checked, see if we should hide some rows
-                if (checked){
-                    // If column in position of Diff column has the 'text-danger' class display the row
-                    if (rowData[8].indexOf('text-danger') >= 0) {
-                        return true;
-                    } else {
-                        // Otherwise hide the row
-                        return false;
-                    }
-                } else {
-                    // Otherwise show the all the rows
-                    return true;
-                }
-                });
-
-            $('input:checkbox').on('change', function () {
-                // Run the search plugin
-                $('#table_2').DataTable().draw();
+        //function to enable search on the shops dropdown
+        $("#shop_search").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".dropdown-menu li").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
             });
+        });
+        $("#category_search").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".dropdown-menu li").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
 
+        document.body.addEventListener('htmx:beforeRequest', function (evt) {
+            const targetError = evt.target.attributes.getNamedItem('hx-target-error')
+            if (targetError) {
+            document.getElementById(targetError.value).style.display = "none";
+            }
+        });
 
+        // Get all checked items from the dropdown and add them in the request parameters
+        document.body.addEventListener('htmx:configRequest', function(evt) {
+        if (evt.target.id == 'price-picker-form'){
+            category_checkboxes = $('.category-form-check-input');
+            category_list = '';
+            category_checkboxes.each(
+                function(i,elem) {
+                    if($(this).prop('checked') == true){
+                        category_list += $(this).val() + ' ';
+                    }
+                }
+                );
+                if(category_list == ''){
+                    error_elem = document.getElementById('error_notice');
+                    error_elem.innerHTML = 'Παρακαλώ επιλέξτε τουλάχιστον μια κατηγορία.';
+                    error_elem.style.display = "block";
+                    evt.preventDefault();
+                } else {
+                    error_elem = document.getElementById('error_notice')
+                    error_elem.innerHTML = '';
+                    error_elem.style.display = "none";
+                }
 
-            //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
+                shop_checkboxes = $('.shop-form-check-input');
+                shop_list = '';
+                shop_checkboxes.each(
+                function(i,elem) {
+                    if($(this).prop('checked') == true){
+                        shop_list += $(this).val() + ' ';
+                    }
+                }
+                );
+                if(shop_list == ''){
+                    error_elem = document.getElementById('error_notice');
+                    error_elem.innerHTML = 'Παρακαλώ επιλέξτε τουλάχιστον έαν κατάστημα.';
+                    error_elem.style.display = "block";
+                    evt.preventDefault();
+                } else {
+                    error_elem = document.getElementById('error_notice')
+                    error_elem.innerHTML = '';
+                    error_elem.style.display = "none";
+                }
+            }
+            evt.detail.parameters['categories_list'] = category_list; // add a new parameter into the mix
+            evt.detail.parameters['shops_list'] = shop_list; // add a new parameter into the mix
+        });
+        // What should i do with the response from the server?
+        document.body.addEventListener('htmx:afterRequest', function (evt) {
+            const targetError = evt.target.attributes.getNamedItem('hx-target-error');
+            if (evt.detail.failed && targetError) {
+                // We got an error
+                error_elem = document.getElementById(targetError.value);
+                error_elem.innerHTML = "Δεν υπάρχουν τιμές για τις επιλεγμένες κατηγορίες.";
+                error_elem.style.display = "block";
+            } else {
+                // Create the table
+                const my_response_text = evt.detail.xhr.response;
+                my_response = JSON.parse(my_response_text);
+                if ("error" in my_response){
+                    error_elem = document.getElementById('error_notice');
+                    error_elem.innerHTML = 'Υπήρξε κάποιο σφάλμα. Προσπαθήστε ξανά. Εάν το σφάλμα συνεχιστεί επικοινωνήστε με το τμήμα Internet.';
+                    error_elem.style.display = "block";
+                } else {
+                    if ( $.fn.dataTable.isDataTable( '#table_2') ) {
+                        // Update the table
+                        table_2.clear();
+                        table_2.destroy();
+                    }
+                    table_2 = $('#table_2');
+                    table_2.html(my_response.table);
+                    table_2 = $('#table_2').DataTable(config);
+                    config_the_table();
+                    table_2.draw();
+                    col_search();
+                }
+            }
+        });
+
+        //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
+        config_the_table = function(){
             $('#table_2 tr.head-filters th').each( function (i) {
                 var title = $('#table_2 thead th').eq( $(this).index() ).text();
                 if ( $(this).hasClass('text') ){
@@ -1087,26 +1063,65 @@ $(document).ready(function() {
                     $(this).html('');
                 }
             } );
+        }
 
-            //make excluding img col from export dynamic. columns is also used to find the date column dynamically.
-          columns = document.getElementById('table_2').rows[0].cells.length;
-          export_cols = [];
-          exclude_cols = [0];
-          for(i=0; i < columns; i++){
-            if(! exclude_cols.includes(i)){
-                export_cols.push(i);
+        // Filter the rows and show only below (red rows)
+        $.fn.dataTable.ext.search.push(
+            function (settings, searchData, index, rowData, counter) {
+
+            var checked = $('input:checkbox[name="only-below"]').is(':checked');
+            // If checked, see if we should hide some rows
+            if (checked){
+                // If column in position of Diff column has the 'text-danger' class display the row
+                if (rowData[8].indexOf('text-danger') >= 0) {
+                    return true;
+                } else {
+                    // Otherwise hide the row
+                    return false;
+                }
+            } else {
+                // Otherwise show the all the rows
+                return true;
             }
-          }
-          //initialise data table
+        });
+
+        $('input:checkbox').on('change', function () {
+            // Run the search plugin
+            $('#table_2').DataTable().draw();
+        });
+
+        //add text input filters to second row in the thead if th has class text, or nothing if class is no-filter
+        $('#table_2 tr.head-filters th').each( function (i) {
+            var title = $('#table_2 thead th').eq( $(this).index() ).text();
+            if ( $(this).hasClass('text') ){
+                $(this).html( '<input type="text" class="form-control" placeholder="'+title+'" data-index="'+i+'" />' );
+            } else if ( $(this).hasClass('no-filter')){
+                $(this).html('');
+            }
+        } );
+
+        //make excluding img col from export dynamic. columns is also used to find the date column dynamically.
+        columns = document.getElementById('table_2').rows[0].cells.length;
+        export_cols = [];
+        exclude_cols = [0];
+        for(i=0; i < columns; i++){
+        if(! exclude_cols.includes(i)){
+            export_cols.push(i);
+        }
+        }
+        //initialise data table
         table_2 = $('#table_2').DataTable(config);
-
-
-
-            // Filter event handler
-            //if table is undefined, refresh the page.
+        col_search();
+        // Filter event handler
+        function col_search(){
             $( table_2.table().container() ).on( 'keyup', 'thead input', function () {
                 table_2.column( $(this).data('index') ).search( this.value ).draw();
-            } );
+            });
+        }
+        //if table is undefined, refresh the page.
+        //$( table_2.table().container() ).on( 'keyup', 'thead input', function () {
+        //    table_2.column( $(this).data('index') ).search( this.value ).draw();
+        //});
 
         /*DATERANGEPICKER START*/
         /*$(function() {

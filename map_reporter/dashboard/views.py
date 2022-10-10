@@ -653,6 +653,9 @@ def update_allproducts_table(retail_prices, seller_flag):
 def all_products_table_filter(request):
     if request.method == "POST":
         # try:
+        user = request.user
+        seller_flag = is_seller(user)
+
         categories = request.POST.get("categories_list").strip()
         categories_request = [data.strip() for data in categories.split(" ")]
         categories_list = Category.objects.filter(
@@ -746,25 +749,6 @@ def all_products_table_filter(request):
                 axis=1,
             )
 
-            # for product in products:
-            #     shops_below = 0
-            #     shops_equal = 0
-            #     shops_above = 0
-            #     product_records = grouped_retailprices_by_shop.loc[
-            #         grouped_retailprices_by_shop["product_id"] == product.id
-            #     ].copy()
-            #     if not product_records.empty:
-            #         shops_below = product_records["comparison"].tolist().count("below")
-            #         shops_equal = product_records["comparison"].tolist().count("equal")
-            #         shops_above = product_records["comparison"].tolist().count("above")
-            #     product.shops_below = shops_below
-            #     product.shops_equal = shops_equal
-            #     product.shops_above = shops_above
-            #     product.shop_count = shops_below + shops_equal + shops_above
-
-            #     im = get_thumbnail(product.image, table_image_size)
-            #     product.product_image = im.url
-
             grouped_retailprices = retailpricesdf.loc[
                 retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
             ].reset_index(drop=True)
@@ -804,44 +788,11 @@ def all_products_table_filter(request):
                 im = get_thumbnail(retailprice.product.image, table_image_size)
                 retailprice.product_image = im.url
 
-            shops = retail_prices.values("shop_name", "shop_id").distinct()
         response_data = {}
-        # for account in res:
-        #     if account in new_column_names.keys():
-        #         columns.append({"title": new_column_names[account]})
-        #     else:
-        #         columns.append({"title": account})
-
-        retail_prices_df = pd.DataFrame.from_records(
-            retail_prices.values(),
-            columns=[
-                "product_image",
-                "product_model",
-                "product_manufacturer",
-                "product_category",
-                "product_sku",
-                "shop_name",
-                "price",
-                "curr_target_price",
-                "curr_target_price",
-                "curr_target_price",
-                "source_domain",
-                "source_domain",
-                "source_domain",
-            ],
-        )
-        # print(retail_prices.head().to_string())
-        parsed_df = retail_prices_df.to_json(orient="values")
-        # parsed_df = serializers.serialize("json", retail_prices)
-
-        # response_data["columns"] = columns
-        response_data["data_set"] = json.loads(parsed_df)
-        response_data["seller_flag"] = False
+        response_data["seller_flag"] = seller_flag
         response_data["table"] = update_allproducts_table(
             retail_prices, is_seller(request.user)
         )
-        # response_data["rows_below"] = index_table_list
-        # response_data["latest_timestamp"] = latest_timestamp
         return JsonResponse(response_data, safe=False)
     else:
         return HttpResponse("This is not the place you are looking for")
