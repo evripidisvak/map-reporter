@@ -324,11 +324,13 @@
                                     {{ retail_price.is_shop_official_reseller }}
                                 </td>
                                 {% if not seller_flag %}
-                                <td>{% if retail_price.shop.seller.last_name %}
-                                        {{retail_price.shop.seller.last_name}}
+                                <td>
+                                    {% firstof retail_price.shop_seller_last_name '-' %}
+                                    {% comment %} {% if retail_price.shop_seller %}
+                                        {{retail_price.shop_seller_last_name}}
                                     {% else %}
                                         -
-                                    {% endif %}
+                                    {% endif %} {% endcomment %}
                                 </td>
                                 {% endif %}
                                 <td>{{retail_price.timestamp|date:"d/m/Y, H:i"}}</td>
