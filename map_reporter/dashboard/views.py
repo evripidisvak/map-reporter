@@ -286,7 +286,7 @@ class AllProducts(TemplateView):
             retailprices_obj = RetailPrice.objects.filter(
                 product__in=products,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=30),
+                    datetime.datetime.now() - datetime.timedelta(days=14),
                     datetime.datetime.now(),
                 ),
             )
@@ -402,6 +402,8 @@ class AllProducts(TemplateView):
                     product_sku=F("product__sku"),
                     shop_name=F("shop__name"),
                     source_domain=F("source__domain"),
+                    shop_seller=F("shop__seller"),
+                    shop_seller_last_name=F("shop__seller__last_name"),
                 )
             )
 
@@ -456,8 +458,28 @@ class AllProducts(TemplateView):
         return context
 
 
-def update_allproducts_table(retail_prices, seller_flag):
+def update_allproducts_table(retail_prices_obj, grouped_retailprices_id, seller_flag):
+    retail_prices = (
+        retail_prices_obj.filter(id__in=grouped_retailprices_id)
+        .select_related()
+        .annotate(
+            product_model=F("product__model"),
+            product_manufacturer=F("product__manufacturer__name"),
+            product_category=F("product__main_category__name"),
+            product_sku=F("product__sku"),
+            shop_name=F("shop__name"),
+            source_domain=F("source__domain"),
+            shop_seller=F("shop__seller"),
+            shop_seller_last_name=F("shop__seller__last_name"),
+        )
+    )
+
     table_image_size = "80x80"
+
+    for retailprice in retail_prices:
+        im = get_thumbnail(retailprice.product.image, table_image_size)
+        retailprice.product_image = im.url
+
     updated_table = """
         <table id='table_2' class="data-table display">
         <!--data-search-highlight use for highlight individual column search-->
@@ -633,8 +655,11 @@ def update_allproducts_table(retail_prices, seller_flag):
             )
             if not seller_flag:
                 updated_table += """<td>"""
-                if retail_price.shop.seller:
-                    updated_table += retail_price.shop.seller.last_name
+                # updated_table += (retail_price.shop_seller_last_name, """-""")[
+                #     retail_price.shop_seller
+                # ]
+                if retail_price.shop_seller:
+                    updated_table += retail_price.shop_seller_last_name
                 else:
                     updated_table += """-"""
                 updated_table += """</td>"""
@@ -685,7 +710,7 @@ def all_products_table_filter(request):
             )
         else:
             query_date_from = make_aware(
-                datetime.datetime.now() - datetime.timedelta(days=90)
+                datetime.datetime.now() - datetime.timedelta(days=14)
             )
             query_date_to = make_aware(datetime.datetime.now())
 
@@ -767,27 +792,29 @@ def all_products_table_filter(request):
             # commended out because we need all the prices for the products, not just the min
             # grouped_retailprices.drop_duplicates(subset=["product_id"], inplace=True)
 
-            retail_prices = (
-                retail_prices.filter(id__in=grouped_retailprices["id"])
-                .select_related()
-                .annotate(
-                    product_model=F("product__model"),
-                    product_manufacturer=F("product__manufacturer__name"),
-                    product_category=F("product__main_category__name"),
-                    product_sku=F("product__sku"),
-                    shop_name=F("shop__name"),
-                    source_domain=F("source__domain"),
-                )
-            )
+            # retail_prices = (
+            #     retail_prices.filter(id__in=grouped_retailprices["id"])
+            #     .select_related()
+            #     .annotate(
+            #         product_model=F("product__model"),
+            #         product_manufacturer=F("product__manufacturer__name"),
+            #         product_category=F("product__main_category__name"),
+            #         product_sku=F("product__sku"),
+            #         shop_name=F("shop__name"),
+            #         source_domain=F("source__domain"),
+            #         shop_seller=F("shop__seller"),
+            #         shop_seller_last_name=F("shop__seller__last_name"),
+            #     )
+            # )
 
-            for retailprice in retail_prices:
-                im = get_thumbnail(retailprice.product.image, table_image_size)
-                retailprice.product_image = im.url
+            # for retailprice in retail_prices:
+            #     im = get_thumbnail(retailprice.product.image, table_image_size)
+            #     retailprice.product_image = im.url
 
         response_data = {}
         response_data["seller_flag"] = seller_flag
         response_data["table"] = update_allproducts_table(
-            retail_prices, is_seller(request.user)
+            retail_prices, grouped_retailprices["id"], is_seller(request.user)
         )
         return JsonResponse(response_data, safe=False)
     else:
@@ -1760,7 +1787,7 @@ class ShopProductInfo(TemplateView):
             product=kwargs["pk_product"],
             shop=shop,
             timestamp__range=(
-                datetime.datetime.now() - datetime.timedelta(days=30),
+                datetime.datetime.now() - datetime.timedelta(days=14),
                 datetime.datetime.now(),
             ),
         )
@@ -1930,7 +1957,7 @@ class ProductInfo(TemplateView):
                 shop__seller=user,
                 product=product,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=30),
+                    datetime.datetime.now() - datetime.timedelta(days=14),
                     datetime.datetime.now(),
                 ),
             )
@@ -1938,7 +1965,7 @@ class ProductInfo(TemplateView):
             retailprices = RetailPrice.objects.filter(
                 product=product,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=30),
+                    datetime.datetime.now() - datetime.timedelta(days=14),
                     datetime.datetime.now(),
                 ),
             )
