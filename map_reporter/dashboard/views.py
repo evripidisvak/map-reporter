@@ -411,7 +411,7 @@ class AllProducts(TemplateView):
                 im = get_thumbnail(retailprice.product.image, table_image_size)
                 retailprice.product_image = im.url
 
-            shops = retail_prices.values("shop_name", "shop_id").distinct()
+            shops = retail_prices.values("shop_name", "shop_id").distinct("shop_id")
 
             latest_timestamp = grouped_retailprices.sort_values(
                 by="timestamp", ascending=False
@@ -630,7 +630,6 @@ def update_allproducts_table(retail_prices_obj, grouped_retailprices_id, seller_
             else:
                 updated_table += """<td>
                 <p class='text-black'>"""
-                # TODO retail_price.source.domain probably causes db calls. Changes it.
             updated_table += (
                 str(
                     round(
@@ -655,9 +654,6 @@ def update_allproducts_table(retail_prices_obj, grouped_retailprices_id, seller_
             )
             if not seller_flag:
                 updated_table += """<td>"""
-                # updated_table += (retail_price.shop_seller_last_name, """-""")[
-                #     retail_price.shop_seller
-                # ]
                 if retail_price.shop_seller:
                     updated_table += retail_price.shop_seller_last_name
                 else:
@@ -761,9 +757,6 @@ def all_products_table_filter(request):
                     "timestamp"
                 ].idxmax()
             ].reset_index(drop=True)
-            # grouped_retailprices_by_shop = retailpricesdf.loc[
-            #     retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
-            # ].reset_index(drop=True)
             grouped_retailprices["comparison"] = grouped_retailprices.apply(
                 lambda x: "below"
                 if x["price"] < x["curr_target_price"]
@@ -789,27 +782,6 @@ def all_products_table_filter(request):
             grouped_retailprices.sort_values(
                 by=["product_id", "price"], inplace=True, ascending=True
             )
-            # commended out because we need all the prices for the products, not just the min
-            # grouped_retailprices.drop_duplicates(subset=["product_id"], inplace=True)
-
-            # retail_prices = (
-            #     retail_prices.filter(id__in=grouped_retailprices["id"])
-            #     .select_related()
-            #     .annotate(
-            #         product_model=F("product__model"),
-            #         product_manufacturer=F("product__manufacturer__name"),
-            #         product_category=F("product__main_category__name"),
-            #         product_sku=F("product__sku"),
-            #         shop_name=F("shop__name"),
-            #         source_domain=F("source__domain"),
-            #         shop_seller=F("shop__seller"),
-            #         shop_seller_last_name=F("shop__seller__last_name"),
-            #     )
-            # )
-
-            # for retailprice in retail_prices:
-            #     im = get_thumbnail(retailprice.product.image, table_image_size)
-            #     retailprice.product_image = im.url
 
         response_data = {}
         response_data["seller_flag"] = seller_flag
