@@ -76,6 +76,41 @@ class DatePicker(forms.Form):
     # datetime_range_clearable = fields.DateTimeRangeField(required=False)
 
 
+class TimeDatePicker(forms.Form):
+    datetime_range_with_predefined_ranges = fields.DateTimeRangeField(
+        input_formats=["%d/%m/%Y, %H:%M"],
+        widget=widgets.DateTimeRangeWidget(
+            picker_options={
+                "locale": {
+                    "format": "DD/MM/YYYY, HH:mm",
+                },
+                "ranges": widgets.common_dates("%d/%m/%Y, %H:%M"),
+                "alwaysShowCalendars": True,
+                "timePicker24Hour": True,
+                "timePickerIncrement": 15,
+            },
+        ),
+    )
+
+
+class TimeDatePickerClearable(forms.Form):
+    datetime_range_with_predefined_ranges = fields.DateTimeRangeField(
+        input_formats=["%d/%m/%Y, %H:%M"],
+        required=False,
+        widget=widgets.DateTimeRangeWidget(
+            picker_options={
+                "locale": {
+                    "format": "DD/MM/YYYY, HH:mm",
+                },
+                "ranges": widgets.common_dates("%d/%m/%Y, %H:%M"),
+                "alwaysShowCalendars": True,
+                "timePicker24Hour": True,
+                "timePickerIncrement": 15,
+            },
+        ),
+    )
+
+
 # name = forms.CharField(
 #     widget=forms.TextInput(
 #         attrs={"placeholder": "Name", "style": "width: 300px;", "class": "form-control"}

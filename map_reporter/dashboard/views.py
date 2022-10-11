@@ -254,6 +254,7 @@ class AllProducts(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super(AllProducts, self).get_context_data(**kwargs)
+        date_picker = TimeDatePickerClearable
         user = self.request.user
         seller_flag = is_seller(user)
         table_image_size = "80x80"
@@ -297,6 +298,8 @@ class AllProducts(TemplateView):
             data_exists = False
 
         if data_exists:
+            categories = Category.objects.all()
+
             active_products = (
                 pd.DataFrame()
                 .from_records(
@@ -368,9 +371,6 @@ class AllProducts(TemplateView):
                 product.product_image = im.url
 
             grouped_retailprices = retailpricesdf.loc[
-                retailpricesdf["product_id"].isin(active_products.product_id.unique())
-            ].reset_index(drop=True)
-            grouped_retailprices = retailpricesdf.loc[
                 retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
             ].reset_index(drop=True)
 
@@ -389,7 +389,8 @@ class AllProducts(TemplateView):
             grouped_retailprices.sort_values(
                 by=["product_id", "price"], inplace=True, ascending=True
             )
-            grouped_retailprices.drop_duplicates(subset=["product_id"], inplace=True)
+            # commended out because we need all the prices for the products, not just the min
+            # grouped_retailprices.drop_duplicates(subset=["product_id"], inplace=True)
 
             retail_prices = (
                 retailprices_obj.filter(id__in=grouped_retailprices["id"])
@@ -401,12 +402,16 @@ class AllProducts(TemplateView):
                     product_sku=F("product__sku"),
                     shop_name=F("shop__name"),
                     source_domain=F("source__domain"),
+                    shop_seller=F("shop__seller"),
+                    shop_seller_last_name=F("shop__seller__last_name"),
                 )
             )
 
             for retailprice in retail_prices:
                 im = get_thumbnail(retailprice.product.image, table_image_size)
                 retailprice.product_image = im.url
+
+            shops = retail_prices.values("shop_name", "shop_id").distinct("shop_id")
 
             latest_timestamp = grouped_retailprices.sort_values(
                 by="timestamp", ascending=False
@@ -434,6 +439,9 @@ class AllProducts(TemplateView):
                     "user_is_sales_dep": is_sales_dep(user),
                     "user_is_superuser": user.is_superuser,
                     "data_exists": data_exists,
+                    "categories": categories,
+                    "shops": shops,
+                    "date_picker": date_picker,
                 }
             )
         else:
@@ -448,6 +456,341 @@ class AllProducts(TemplateView):
                 }
             )
         return context
+
+
+def update_allproducts_table(retail_prices_obj, grouped_retailprices_id, seller_flag):
+    retail_prices = (
+        retail_prices_obj.filter(id__in=grouped_retailprices_id)
+        .select_related()
+        .annotate(
+            product_model=F("product__model"),
+            product_manufacturer=F("product__manufacturer__name"),
+            product_category=F("product__main_category__name"),
+            product_sku=F("product__sku"),
+            shop_name=F("shop__name"),
+            source_domain=F("source__domain"),
+            shop_seller=F("shop__seller"),
+            shop_seller_last_name=F("shop__seller__last_name"),
+        )
+    )
+
+    table_image_size = "80x80"
+
+    for retailprice in retail_prices:
+        im = get_thumbnail(retailprice.product.image, table_image_size)
+        retailprice.product_image = im.url
+
+    updated_table = """
+        <table id='table_2' class="data-table display">
+        <!--data-search-highlight use for highlight individual column search-->
+        <thead>
+            <tr class="bg-light">
+                <th>Φωτογραφία</th>
+                <th class="text-filter">Μοντέλο</th>
+                <th class="select-filter">Κατασκ.</th>
+                <th class="select-filter">Κατηγορία</th>
+                <th class="text-filter">SKU</th>
+                <th class="text-filter">Κατάστημα</th>
+                <th>Τιμή</th>
+                <th>Τιμή MAP</th>
+                <th>Διαφ.</th>
+                <th>Διαφ. %</th>
+                <th class="select-filter">Πηγή</th>
+                <th class="select-filter">Key Account</th>
+                <th class="select-filter">Επ. Μεταπωλ.</th>"""
+    if not seller_flag:
+        updated_table += """<th class="select-filter">Πωλητής</th>"""
+    updated_table += """<th>Ημερομηνία</th>
+        </tr>
+        <tr class="bg-light head-filters">
+            <th class="no-filter">Φωτογραφία</th>
+            <th class="text">Μοντέλο</th>
+            <th class="select">Κατασκ.</th>
+            <th class="select">Κατηγορία</th>
+            <th class="text">SKU</th>
+            <th class="text">Κατάστημα</th>
+            <th class="no-filter">Τιμή</th>
+            <th class="no-filter">Τιμή MAP</th>
+            <th class="no-filter">Διαφ.</th>
+            <th class="no-filter">Διαφ. %</th>
+            <th class="select">Πηγή</th>
+            <th class="select">Key Account</th>
+            <th class="select">Επ. Μεταπωλ.</th>"""
+    if not seller_flag:
+        updated_table += """<th class="select">Πωλητής</th>"""
+    updated_table += """<th class="no-filter">Ημερομηνία</th>
+                        </tr>
+                    </thead>
+                    <tbody>"""
+    for retail_price in retail_prices:
+        if retail_price.product.active:
+            product_info = reverse(
+                "product_info", kwargs={"pk": retail_price.product_id}
+            )
+            manufacturer_info = reverse(
+                "manufacturer_info", kwargs={"pk": retail_price.product.manufacturer_id}
+            )
+            category_info = reverse(
+                "category_info", kwargs={"pk": retail_price.product.main_category_id}
+            )
+            shop_info = reverse("shop_info", kwargs={"pk": retail_price.shop_id})
+            im = get_thumbnail(retail_price.product.image, table_image_size)
+            local_dt = timezone.localtime(retail_price.timestamp)
+            timestamp_tmp = datetime.datetime.strftime(local_dt, "%d/%m/%Y, %H:%M")
+
+            if retail_price.price - retail_price.curr_target_price < 0:
+                updated_table += (
+                    """<tr class="bg-danger" style="--bs-bg-opacity: .1;">"""
+                )
+            else:
+                updated_table += """<tr>"""
+            updated_table += (
+                '''<td>
+                <a href="'''
+                + product_info
+                + '''">
+                <img src="'''
+                + im.url
+                + '''" alt="'''
+                + str(retail_price.product.name)
+                + '''" loading="lazy" class="product_image">
+                    </a>
+                </td>
+                <td>
+                    <a href="'''
+                + product_info
+                + """" class="link-dark">"""
+                + retail_price.product_model
+                + '''</a>
+                        </td>
+                        <td>
+                            <a href="'''
+                + manufacturer_info
+                + """" class="link-dark">"""
+                + retail_price.product_manufacturer
+            )
+            updated_table += (
+                '''</a>
+                </td>
+                <td>
+                    <a href="'''
+                + category_info
+                + """" class="link-dark">"""
+                + str(retail_price.product_category)
+                + """
+                    </a>
+                </td>
+                <td>"""
+                + retail_price.product_sku
+                + """</td>"""
+            )
+            updated_table += (
+                '''<td>
+            <a href="'''
+                + shop_info
+                + """" class="link-dark">"""
+                + retail_price.shop_name
+                + """</a>
+                </td>
+                <td>"""
+                + str(retail_price.price)
+                + """ €
+            </td>
+            <td>"""
+                + str(retail_price.curr_target_price)
+                + """ €
+            </td>"""
+            )
+            if retail_price.price - retail_price.curr_target_price < 0:
+                updated_table += """<td class="danger-text">
+                                <p class='text-danger'>"""
+            elif retail_price.price - retail_price.curr_target_price > 0:
+                updated_table += """<td class="success-text">
+                                <p class='text-success'>"""
+            else:
+                updated_table += """<td>
+                                <p class='text-black'>"""
+            updated_table += (
+                str(
+                    round(
+                        float(retail_price.price)
+                        - float(retail_price.curr_target_price),
+                        2,
+                    )
+                )
+                + """ €</p> </td>"""
+            )
+
+            if retail_price.price - retail_price.curr_target_price < 0:
+                updated_table += """<td class="danger-text">
+                                <p class='text-danger'>"""
+            elif retail_price.price - retail_price.curr_target_price > 0:
+                updated_table += """<td class="success-text">
+                                <p class='text-success'>"""
+            else:
+                updated_table += """<td>
+                <p class='text-black'>"""
+            updated_table += (
+                str(
+                    round(
+                        get_change(
+                            float(retail_price.price),
+                            float(retail_price.curr_target_price),
+                        ),
+                        2,
+                    )
+                )
+                + """ %</p>
+                        </td>
+                        <td>"""
+                + retail_price.source.domain
+                + """</td>
+                        <td>"""
+                + retail_price.shop.is_key_account()
+                + """</td>
+                        <td>"""
+                + retail_price.is_shop_official_reseller()
+                + """</td>"""
+            )
+            if not seller_flag:
+                updated_table += """<td>"""
+                if retail_price.shop_seller:
+                    updated_table += retail_price.shop_seller_last_name
+                else:
+                    updated_table += """-"""
+                updated_table += """</td>"""
+            updated_table += (
+                """<td>"""
+                + str(timestamp_tmp)
+                + """</td>
+                    </tr>"""
+            )
+    updated_table += """</tbody>
+        </table>"""
+
+    return updated_table
+
+
+def all_products_table_filter(request):
+    if request.method == "POST":
+        # try:
+        table_image_size = "80x80"
+
+        user = request.user
+        seller_flag = is_seller(user)
+
+        categories = request.POST.get("categories_list").strip()
+        categories_request = [data.strip() for data in categories.split(" ")]
+        categories_list = Category.objects.filter(
+            id__in=categories_request
+        ).get_descendants(include_self=True)
+
+        shops = request.POST.get("shops_list").strip()
+        shops_request = [data.strip() for data in shops.split(" ")]
+        shops_list = Shop.objects.filter(id__in=shops_request)
+
+        date_range = request.POST.get("datetime_range_with_predefined_ranges")
+
+        if date_range:
+            date_range_list = [data.strip() for data in date_range.split(" - ")]
+            date_from = date_range_list[0]
+            date_to = date_range_list[1]
+            naive_query_date_from = datetime.datetime.strptime(
+                date_from, "%d/%m/%Y, %H:%M"
+            )
+            naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y, %H:%M")
+
+            query_date_from = make_aware(naive_query_date_from)
+            query_date_to = make_aware(naive_query_date_to).replace(
+                second=59, microsecond=999999
+            )
+        else:
+            query_date_from = make_aware(
+                datetime.datetime.now() - datetime.timedelta(days=14)
+            )
+            query_date_to = make_aware(datetime.datetime.now())
+
+        retail_prices = (
+            RetailPrice.objects.filter(
+                shop__in=shops_list,
+                product__main_category__in=categories_list,
+                product__active=True,
+                timestamp__range=(query_date_from, query_date_to),
+            )
+            .select_related("product")
+            .annotate(
+                shop_name=F("shop__name"),
+                product_category=F("product__main_category__name"),
+                product_manufacturer=F("product__manufacturer__name"),
+                product_model=F("product__model"),
+                product_sku=F("product__sku"),
+            )
+        )
+
+        retailpricesdf = pd.DataFrame.from_records(
+            retail_prices.values_list(),
+            columns=[
+                "id",
+                "price",
+                "original_price",
+                "timestamp",
+                "product_id",
+                "shop_id",
+                "official_reseller",
+                "curr_target_price",
+                "source_id",
+                "shop_name",
+                "product_category",
+                "product_manufacturer",
+                "product_model",
+                "product_sku",
+            ],
+        )
+
+        if date_range:
+            grouped_retailprices = retailpricesdf.groupby(
+                ["product_id", "shop_name", "timestamp"]
+            ).obj.reset_index(drop=True)
+        else:
+            grouped_retailprices = retailpricesdf.loc[
+                retailpricesdf.groupby(["product_id", "shop_name"])[
+                    "timestamp"
+                ].idxmax()
+            ].reset_index(drop=True)
+            grouped_retailprices["comparison"] = grouped_retailprices.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
+
+            grouped_retailprices = retailpricesdf.loc[
+                retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
+            ].reset_index(drop=True)
+
+            grouped_retailprices["comparison"] = retailpricesdf.apply(
+                lambda x: "below"
+                if x["price"] < x["curr_target_price"]
+                else "equal"
+                if x["price"] == x["curr_target_price"]
+                else "above",
+                axis=1,
+            )
+
+            grouped_retailprices.sort_values(
+                by=["product_id", "price"], inplace=True, ascending=True
+            )
+
+        response_data = {}
+        response_data["seller_flag"] = seller_flag
+        response_data["table"] = update_allproducts_table(
+            retail_prices, grouped_retailprices["id"], is_seller(request.user)
+        )
+        return JsonResponse(response_data, safe=False)
+    else:
+        return HttpResponse("This is not the place you are looking for")
 
 
 class ShopsPage(TemplateView):
@@ -1401,7 +1744,6 @@ class ShopProductInfo(TemplateView):
         valid_urls = []
         invalid_urls = []
         for url in urls:
-            print(url)
             if url.valid:
                 valid_urls.append(url)
             else:
@@ -1417,7 +1759,7 @@ class ShopProductInfo(TemplateView):
             product=kwargs["pk_product"],
             shop=shop,
             timestamp__range=(
-                datetime.datetime.now() - datetime.timedelta(days=30),
+                datetime.datetime.now() - datetime.timedelta(days=14),
                 datetime.datetime.now(),
             ),
         )
@@ -1560,7 +1902,7 @@ class ProductInfo(TemplateView):
     template_name = "dashboard/product_info.html"
 
     def get_context_data(self, **kwargs):
-        date_picker = DatePicker
+        date_picker = TimeDatePicker
         context = super(ProductInfo, self).get_context_data(**kwargs)
         product = get_object_or_404(Product, id=kwargs["pk"])
         urls = get_list_or_404(Page, product_id=kwargs["pk"])
@@ -1587,7 +1929,7 @@ class ProductInfo(TemplateView):
                 shop__seller=user,
                 product=product,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=30),
+                    datetime.datetime.now() - datetime.timedelta(days=14),
                     datetime.datetime.now(),
                 ),
             )
@@ -1595,7 +1937,7 @@ class ProductInfo(TemplateView):
             retailprices = RetailPrice.objects.filter(
                 product=product,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=30),
+                    datetime.datetime.now() - datetime.timedelta(days=14),
                     datetime.datetime.now(),
                 ),
             )
@@ -1886,7 +2228,7 @@ def update_date(request, product_id):
         except:
             raise Http404("Δεν υπάρχει το προϊόν")
 
-        date_range = request.POST.get("date_range_with_predefined_ranges")
+        date_range = request.POST.get("datetime_range_with_predefined_ranges")
         shops = request.POST.get("shops_list").strip()
         date_range_list = [data.strip() for data in date_range.split(" - ")]
         shops_list = [data.strip() for data in shops.split(" ")]
@@ -1894,13 +2236,16 @@ def update_date(request, product_id):
         date_to = date_range_list[1]
         response_data = {}
 
-        naive_query_date_from = datetime.datetime.strptime(date_from, "%d/%m/%Y")
-        naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y")
+        naive_query_date_from = datetime.datetime.strptime(date_from, "%d/%m/%Y, %H:%M")
+        naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y, %H:%M")
 
         query_date_from = make_aware(naive_query_date_from)
         query_date_to = make_aware(naive_query_date_to).replace(
-            hour=23, minute=59, second=59, microsecond=999999
+            second=59, microsecond=999999
         )
+        # .replace(
+        #     hour=23, minute=59, second=59, microsecond=999999
+        # )
 
         try:
             filtered_retail_prices = RetailPrice.objects.filter(
@@ -2162,10 +2507,12 @@ class CustomReport(TemplateView):
     def get_context_data(self, **kwargs):
         user = self.request.user
         if is_sales_dep(user) or user.is_superuser or user.is_staff:
+            date_picker = TimeDatePickerClearable
             context = super(CustomReport, self).get_context_data(**kwargs)
 
             # Get the categories we will show in the dropdown
             categories = Category.objects.all()
+            shops = Shop.objects.filter(key_account=True)
 
             seller_flag = is_seller(user)
 
@@ -2177,6 +2524,8 @@ class CustomReport(TemplateView):
                     "user_is_staff": user.is_staff,
                     "user_is_sales_dep": is_sales_dep(user),
                     "user_is_superuser": user.is_superuser,
+                    "date_picker": date_picker,
+                    "shops": shops,
                 }
             )
             return context
@@ -2188,24 +2537,42 @@ def key_accounts_custom_report(request):
     if request.method == "POST":
         # try:
         categories = request.POST.get("categories_list").strip()
-
         categories_request = [data.strip() for data in categories.split(" ")]
-
         categories_list = Category.objects.filter(
             id__in=categories_request
         ).get_descendants(include_self=True)
 
-        key_accounts = Shop.objects.filter(key_account=True)
+        shops = request.POST.get("shops_list").strip()
+        shops_request = [data.strip() for data in shops.split(" ")]
+        key_accounts = Shop.objects.filter(id__in=shops_request)
+
+        date_range = request.POST.get("datetime_range_with_predefined_ranges")
+
+        if date_range:
+            date_range_list = [data.strip() for data in date_range.split(" - ")]
+            date_from = date_range_list[0]
+            date_to = date_range_list[1]
+            naive_query_date_from = datetime.datetime.strptime(
+                date_from, "%d/%m/%Y, %H:%M"
+            )
+            naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y, %H:%M")
+
+            query_date_from = make_aware(naive_query_date_from)
+            query_date_to = make_aware(naive_query_date_to).replace(
+                second=59, microsecond=999999
+            )
+        else:
+            query_date_from = make_aware(
+                datetime.datetime.now() - datetime.timedelta(days=14)
+            )
+            query_date_to = make_aware(datetime.datetime.now())
 
         retail_prices = (
             RetailPrice.objects.filter(
                 shop__in=key_accounts,
                 product__main_category__in=categories_list,
                 product__active=True,
-                timestamp__range=(
-                    make_aware(datetime.datetime.now() - datetime.timedelta(days=14)),
-                    make_aware(datetime.datetime.now()),
-                ),
+                timestamp__range=(query_date_from, query_date_to),
             )
             .select_related("product")
             .annotate(
@@ -2237,9 +2604,16 @@ def key_accounts_custom_report(request):
             ],
         )
 
-        grouped_retailprices = retail_prices_df.loc[
-            retail_prices_df.groupby(["product_id", "shop_name"])["timestamp"].idxmax()
-        ].reset_index(drop=True)
+        if date_range:
+            grouped_retailprices = retail_prices_df.groupby(
+                ["product_id", "shop_name", "timestamp"]
+            ).obj.reset_index(drop=True)
+        else:
+            grouped_retailprices = retail_prices_df.loc[
+                retail_prices_df.groupby(["product_id", "shop_name"])[
+                    "timestamp"
+                ].idxmax()
+            ].reset_index(drop=True)
 
         latest_timestamp = grouped_retailprices.sort_values(
             by="timestamp", ascending=False
@@ -2259,11 +2633,16 @@ def key_accounts_custom_report(request):
                 "product_manufacturer",
                 "product_model",
                 "product_sku",
+                "timestamp",
                 "curr_target_price",
             ],
-            columns=["shop_name"],
+            columns=[
+                "shop_name",
+            ],
             values=["price", "original_price"],
-        ).sort_values(by=["product_manufacturer", "product_category", "product_sku"])
+        ).sort_values(
+            by=["product_manufacturer", "product_category", "product_sku", "timestamp"]
+        )
 
         cols = [
             "product_id",
@@ -2271,6 +2650,7 @@ def key_accounts_custom_report(request):
             "product_manufacturer",
             "product_model",
             "product_sku",
+            "timestamp",
             "curr_target_price",
         ]
 
@@ -2325,6 +2705,10 @@ def key_accounts_custom_report(request):
 
         index_table_list = index_table.index[index_table["result"] == True].tolist()
 
+        grouped_retailprices["timestamp"] = grouped_retailprices[
+            "timestamp"
+        ].dt.strftime("%d/%m/%Y, %H:%M")
+
         grouped_retailprices.fillna("-", inplace=True)
 
         columns = [
@@ -2332,6 +2716,7 @@ def key_accounts_custom_report(request):
             {"title": "Κατασκευαστής"},
             {"title": "Μοντέλο"},
             {"title": "SKU"},
+            {"title": "Ημερομηνία"},
             {"title": "Τιμή MAP"},
         ]
 

@@ -15,12 +15,14 @@
 <div class="container-fluid mt-5">
     <div class="row">
         <h3 id="key_account_report_title">Αναφορά Key Account</h3>
-        <form name="date_range" id="category-picker-form" hx-post="/key_accounts_custom_report/" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
+        <form name="date_range" id="price-picker-form" hx-post="/key_accounts_custom_report/" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
             <div class="row">
-                <p>Επιλέξτε τις κατηγορίες που σας ενδιαφέρουν για να παραχθεί ο πίνακας τιμών.</p>
+                <p>Επιλέξτε ημερομηνίες και ώρες. Αφήστε το πεδίο της ημερομηνίας κενό ή διαγράψτε το περιεχόμενό του για να δείτε την τελευταία διαθέσιμη πληροφορία για κάθε κατάστημα.</p>
+                <p>Επιλέξτε καταστήματα και κατηγορίες προϊόντων που σας ενδιαφέρουν.</p>
+                <p>Πατήστε 'Υποβολή' για να παραχθεί ο πίνακας τιμών.</p>
                 <div class="col-lg-12">
                     <div class="m-2 d-inline-block">
-
+                        {{date_picker}}
                     </div>
                     <div class="dropdown m-2 d-inline-block">
                         <button class="btn btn-primary dropdown-toggle" type="button" id="CategorySelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -42,8 +44,36 @@
                             <li class="p-2 dropdown-category">
                                 <div class="form-check">
                                     <label class="form-check-label">
-                                        <input class="form-check-input" name="{{category}}" type="checkbox" value="{{category.id}}" id="CategorySelectCheckbox{{ forloop.counter0 }}">
+                                        <input class="form-check-input category-form-check-input" name="{{category}}" type="checkbox" value="{{category.id}}" id="CategorySelectCheckbox{{ forloop.counter0 }}">
                                         {{category}}
+                                    </label>
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="dropdown m-2 d-inline-block">
+                        <button class="btn btn-primary dropdown-toggle" type="button" id="ShopSelectDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                          Επιλέξτε Καταστήματα
+                        </button>
+                        <ul class="dropdown-menu overflow-auto p-0" style="max-height:300px;" aria-labelledby="ShopSelectDropdown">
+                            <div class="search sticky-top p-1 w-100 bg-white">
+                                <input type="text" class="form-control" placeholder="Αναζήτηση" id="shop_search">
+                            </div>
+                            <li class="p-2 dropdown-shop">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input class="select-all" name="select_all" type="checkbox" value="Επιλογή Όλων" id="ShopSelectAllCheckbox">
+                                        Επιλογή Όλων
+                                    </label>
+                                </div>
+                            </li>
+                            {% for shop in shops %}
+                            <li class="p-2 dropdown-shop">
+                                <div class="form-check">
+                                    <label class="form-check-label">
+                                        <input class="form-check-input shop-form-check-input" name="{{shop}}" type="checkbox" value="{{shop.id}}" id="ShopSelectCheckbox{{ forloop.counter0 }}">
+                                        {{shop}}
                                     </label>
                                 </div>
                             </li>
@@ -54,15 +84,13 @@
                     <div style="display:none;" class="mt-2 text-danger" id="error_notice"></div> <!-- errors go here -->
                 </div>
             </div>
-            <div class="row">
-            </form>
-            </div>
+        </form>
     </div>
 
     <div class="card mb-4 mt-4" id="key_account_custom_report_card">
         <div class="card-header">
             <i class="fas fa-table me-1"></i>
-            Πίνακας τιμών προϊόντος
+            Πίνακας τιμών προϊόντων
         </div>
         <div class="card-body overflow-auto">
             <table id="key_account_custom_report_table" class="data-table display"></table>
@@ -340,7 +368,7 @@ $(document).ready(function() {
             e.stopPropagation();
         }
         if (target_element.attr('id') == 'CategorySelectAllCheckbox'){
-            checkboxes = $('.form-check-input');
+            checkboxes = $('.category-form-check-input');
             if (target_element.prop('checked') == true ){
                 checkboxes.each(function(i, element){
                     $(this).prop('checked', true);
@@ -351,7 +379,20 @@ $(document).ready(function() {
                     $(this).prop('checked', false);
                 });
             }
-    }
+        }
+        if (target_element.attr('id') == 'ShopSelectAllCheckbox'){
+            checkboxes = $('.shop-form-check-input');
+            if (target_element.prop('checked') == true ){
+                checkboxes.each(function(i, element){
+                    $(this).prop('checked', true);
+                });
+            }
+            else if (target_element.prop('checked') == false ){
+                checkboxes.each(function(i, element){
+                    $(this).prop('checked', false);
+                });
+            }
+        }
     });
 
     document.body.addEventListener('htmx:beforeRequest', function (evt) {
@@ -363,10 +404,10 @@ $(document).ready(function() {
 
     // Get all checked items from the dropdown and add them in the request parameters
     document.body.addEventListener('htmx:configRequest', function(evt) {
-    if (evt.target.id == 'category-picker-form'){
-        checkboxes = $('.form-check-input');
+    if (evt.target.id == 'price-picker-form'){
+        category_checkboxes = $('.category-form-check-input');
         category_list = '';
-        checkboxes.each(
+        category_checkboxes.each(
             function(i,elem) {
                 if($(this).prop('checked') == true){
                     category_list += $(this).val() + ' ';
@@ -383,8 +424,29 @@ $(document).ready(function() {
                 error_elem.innerHTML = '';
                 error_elem.style.display = "none";
             }
+
+            shop_checkboxes = $('.shop-form-check-input');
+            shop_list = '';
+            shop_checkboxes.each(
+            function(i,elem) {
+                if($(this).prop('checked') == true){
+                    shop_list += $(this).val() + ' ';
+                }
+            }
+            );
+            if(shop_list == ''){
+                error_elem = document.getElementById('error_notice');
+                error_elem.innerHTML = 'Παρακαλώ επιλέξτε τουλάχιστον έαν κατάστημα.';
+                error_elem.style.display = "block";
+                evt.preventDefault();
+            } else {
+                error_elem = document.getElementById('error_notice')
+                error_elem.innerHTML = '';
+                error_elem.style.display = "none";
+            }
         }
         evt.detail.parameters['categories_list'] = category_list; // add a new parameter into the mix
+        evt.detail.parameters['shops_list'] = shop_list; // add a new parameter into the mix
     });
 
     // What should i do with the response from the server?
