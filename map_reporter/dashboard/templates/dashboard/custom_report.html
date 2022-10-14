@@ -80,7 +80,10 @@
                             {% endfor %}
                         </ul>
                     </div>
-                    <button class="btn btn-primary ms-3" type="submit" value="Submit" style="width:auto;"><i class="fa-solid fa-paper-plane"></i> Υποβολή</button>
+                    <button hx-indicator="#spinner" class="btn btn-primary ms-3" type="submit" value="Submit" style="width:auto;">
+                        <i class="fa-solid fa-paper-plane"></i> Υποβολή
+                        <span class="spinner-border htmx-indicator spinner-border-sm" id="spinner" role="status"></span>
+                    </button>
                     <div style="display:none;" class="mt-2 text-danger" id="error_notice"></div> <!-- errors go here -->
                 </div>
             </div>
@@ -485,8 +488,8 @@ $(document).ready(function() {
                 // TODO smaller cell paddings, vertical borders
                 for(var i=0; i < rows_below.length; i++){
                     key_account_custom_report_table.row(rows_below[i]).node().classList.add('bg-danger', 'bg-opacity-10');
-                    map_price = key_account_custom_report_table.row(rows_below[i]).node().childNodes[4].innerText;
-                    for(j=5; j < key_account_custom_report_table.row(rows_below[i]).node().childNodes.length; j++){
+                    map_price = key_account_custom_report_table.row(rows_below[i]).node().childNodes[5].innerText;
+                    for(j=6; j < key_account_custom_report_table.row(rows_below[i]).node().childNodes.length; j++){
                         value = key_account_custom_report_table.row(rows_below[i]).node().childNodes[j].innerText;
                         if(value != '-' && parseFloat(value) < parseFloat(map_price)){
                             key_account_custom_report_table.row(rows_below[i]).node().childNodes[j].classList.add('text-danger');
