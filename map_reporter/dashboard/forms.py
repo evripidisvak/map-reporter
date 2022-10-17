@@ -84,7 +84,7 @@ class TimeDatePicker(forms.Form):
                 "locale": {
                     "format": "DD/MM/YYYY, HH:mm",
                 },
-                "ranges": widgets.common_dates("%d/%m/%Y, %H:%M"),
+                "ranges": widgets.common_datetimes("%d/%m/%Y, %H:%M"),
                 "alwaysShowCalendars": True,
                 "timePicker24Hour": True,
                 "timePickerIncrement": 15,
@@ -102,7 +102,7 @@ class TimeDatePickerClearable(forms.Form):
                 "locale": {
                     "format": "DD/MM/YYYY, HH:mm",
                 },
-                "ranges": widgets.common_dates("%d/%m/%Y, %H:%M"),
+                "ranges": widgets.common_datetimes("%d/%m/%Y, %H:%M"),
                 "alwaysShowCalendars": True,
                 "timePicker24Hour": True,
                 "timePickerIncrement": 15,

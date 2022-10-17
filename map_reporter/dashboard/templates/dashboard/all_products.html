@@ -130,7 +130,7 @@
             <div class="card-body overflow-auto">
 
                 <form name="date_range" id="price-picker-form" hx-post="/all_products_table_filter/" hx-trigger="submit" hx-swap="none" hx-target-error="error_notice">
-                    <div class="row">
+                    <div class="row mb-4">
                         <p>Επιλέξτε ημερομηνίες και ώρες. Αφήστε το πεδίο της ημερομηνίας κενό ή διαγράψτε το περιεχόμενό του για να δείτε την τελευταία διαθέσιμη πληροφορία για κάθε κατάστημα.</p>
                         <p>Επιλέξτε καταστήματα και κατηγορίες προϊόντων που σας ενδιαφέρουν.</p>
                         <p>Πατήστε 'Υποβολή' για να ανανεωθεί ο πίνακας τιμών.</p>
@@ -194,16 +194,16 @@
                                     {% endfor %}
                                 </ul>
                             </div>
-                            <button hx-indicator="#spinner" class="btn btn-primary ms-3" type="submit" value="Submit" style="width:auto;">
+                            <div class="form-check form-switch only-below-switch mb-2 ms-2">
+                                <input class="form-check-input" type="checkbox" name="only-below" id="only-below-checkbox">
+                                <label class="form-check-label fw-bold" for="only-below-checkbox">Μόνο γραμμές με πρόβλημα</label>
+                            </div>
+                            <button hx-indicator="#spinner" class="btn btn-primary mt-3" type="submit" value="Submit" style="width:auto;">
                                 <i class="fa-solid fa-paper-plane"></i> Υποβολή
                                 <span class="spinner-border htmx-indicator spinner-border-sm" id="spinner" role="status"></span>
                             </button>
                               <div style="display:none;" class="mt-2 text-danger" id="error_notice"></div> <!-- errors go here -->
                         </div>
-                    </div>
-                    <div class="form-check form-switch only-below-switch mb-2 ms-2">
-                        <input class="form-check-input" type="checkbox" name="only-below" id="only-below-checkbox">
-                        <label class="form-check-label fw-bold" for="only-below-checkbox">Μόνο γραμμές με πρόβλημα</label>
                     </div>
                 </form>
                 <table id="table_2" class="data-table display" ></table>
