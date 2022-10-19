@@ -35,7 +35,6 @@ import pandas as pd
 import numpy as np
 from base64 import b64encode
 from mimetypes import guess_type
-from silk.profiling.profiler import silk_profile
 
 # Pass a custom attribute, time in seconds of last modifications, in case we need to make sure this file gets updated correctly
 # import os, sys
@@ -292,13 +291,9 @@ class AllProducts(TemplateView):
         )
 
         products_below = 0
-        this_products_below = 0
         products_equal = 0
-        this_products_equal = 0
         products_above = 0
-        this_products_above = 0
         shops_below = 0
-        shops_ok = 0
 
         if seller_flag:
             retailprices_obj = RetailPrice.objects.filter(
@@ -310,12 +305,16 @@ class AllProducts(TemplateView):
                 ),
             )
         else:
-            retailprices_obj = RetailPrice.objects.filter(
-                product__in=products,
-                timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
-                ),
+            retailprices_obj = (
+                RetailPrice.objects.filter(
+                    product__in=products,
+                    timestamp__range=(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        datetime.datetime.now(),
+                    ),
+                )
+                .prefetch_related("shop")
+                .annotate(shop_name=F("shop__name"))
             )
 
         data_exists = False
@@ -326,28 +325,6 @@ class AllProducts(TemplateView):
 
         if data_exists:
             categories = Category.objects.all().order_by("name")
-
-            active_products = (
-                pd.DataFrame()
-                .from_records(
-                    products.values_list(),
-                    columns=[
-                        "product_id",
-                        "manufacturer",
-                        "model",
-                        "sku",
-                        "active",
-                        "map_price",
-                        "main_category",
-                        "image",
-                        "image_url",
-                    ],
-                )
-                .copy()
-            )
-            active_products = active_products.loc[
-                active_products["active"] == True
-            ].reset_index(drop=True)
 
             retailpricesdf = pd.DataFrame.from_records(
                 retailprices_obj.values_list(),
@@ -361,29 +338,38 @@ class AllProducts(TemplateView):
                     "official_reseller",
                     "curr_target_price",
                     "source_id",
+                    "shop_name",
                 ],
             )
 
-            grouped_retailprices_by_shop = retailpricesdf.loc[
+            grouped_retailprices = retailpricesdf.loc[
                 retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
             ].reset_index(drop=True)
-            grouped_retailprices_by_shop[
-                "comparison"
-            ] = grouped_retailprices_by_shop.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
+
+            conditions = [
+                grouped_retailprices["price"]
+                < grouped_retailprices["curr_target_price"],
+                grouped_retailprices["price"]
+                == grouped_retailprices["curr_target_price"],
+                grouped_retailprices["price"]
+                > grouped_retailprices["curr_target_price"],
+            ]
+            choices = ["below", "equal", "above"]
+
+            grouped_retailprices["comparison"] = np.select(
+                conditions, choices, default=np.nan
             )
+
+            products_below = grouped_retailprices["comparison"].tolist().count("below")
+            products_equal = grouped_retailprices["comparison"].tolist().count("equal")
+            products_above = grouped_retailprices["comparison"].tolist().count("above")
 
             for product in products:
                 shops_below = 0
                 shops_equal = 0
                 shops_above = 0
-                product_records = grouped_retailprices_by_shop.loc[
-                    grouped_retailprices_by_shop["product_id"] == product.id
+                product_records = grouped_retailprices.loc[
+                    grouped_retailprices["product_id"] == product.id
                 ].copy()
                 if not product_records.empty:
                     shops_below = product_records["comparison"].tolist().count("below")
@@ -397,48 +383,7 @@ class AllProducts(TemplateView):
                 im = get_thumbnail(product.image, table_image_size)
                 product.product_image = im.url
 
-            grouped_retailprices = retailpricesdf.loc[
-                retailpricesdf.groupby(["product_id", "shop_id"])["timestamp"].idxmax()
-            ].reset_index(drop=True)
-
-            grouped_retailprices["comparison"] = retailpricesdf.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
-            )
-            products_below = grouped_retailprices["comparison"].tolist().count("below")
-            products_equal = grouped_retailprices["comparison"].tolist().count("equal")
-            products_above = grouped_retailprices["comparison"].tolist().count("above")
-
-            grouped_retailprices.sort_values(
-                by=["product_id", "price"], inplace=True, ascending=True
-            )
-            # commended out because we need all the prices for the products, not just the min
-            # grouped_retailprices.drop_duplicates(subset=["product_id"], inplace=True)
-
-            retail_prices = (
-                retailprices_obj.filter(id__in=grouped_retailprices["id"])
-                .select_related()
-                .annotate(
-                    product_model=F("product__model"),
-                    product_manufacturer=F("product__manufacturer__name"),
-                    product_category=F("product__main_category__name"),
-                    product_sku=F("product__sku"),
-                    shop_name=F("shop__name"),
-                    source_domain=F("source__domain"),
-                    shop_seller=F("shop__seller"),
-                    shop_seller_last_name=F("shop__seller__last_name"),
-                )
-            )
-
-            shops = (
-                retail_prices.order_by("shop_name")
-                .distinct("shop_name")
-                .values("shop_name", "shop_id")
-            )
+            shops = retailprices_obj.order_by("shop_name").distinct("shop_name")
 
             latest_timestamp = grouped_retailprices.sort_values(
                 by="timestamp", ascending=False
@@ -454,7 +399,6 @@ class AllProducts(TemplateView):
             context.update(
                 {
                     "products": products,
-                    # "retail_prices": retail_prices,
                     "products_below": products_below,
                     "products_equal": products_equal,
                     "products_above": products_above,
@@ -591,7 +535,6 @@ def all_products_table_filter(request):
         unique_dict_shop = {}
 
         for id in unique_prod_ids:
-            mask = retailpricesdf["product_id"] == id
             img = (
                 retailpricesdf["product_image"]
                 .loc[retailpricesdf["product_id"] == id]
@@ -621,7 +564,6 @@ def all_products_table_filter(request):
             }
 
         for id in unique_manufacturer_ids:
-            mask = retailpricesdf["product_manufacturer_id"] == id
             name = (
                 retailpricesdf["product_manufacturer"]
                 .loc[retailpricesdf["product_manufacturer_id"] == id]
@@ -637,7 +579,6 @@ def all_products_table_filter(request):
             }
 
         for id in unique_category_ids:
-            mask = retailpricesdf["product_category_id"] == id
             name = (
                 retailpricesdf["product_category"]
                 .loc[retailpricesdf["product_category_id"] == id]
@@ -653,7 +594,6 @@ def all_products_table_filter(request):
             }
 
         for id in unique_shop_ids:
-            mask = retailpricesdf["shop_id"] == id
             name = (
                 retailpricesdf["shop_name"]
                 .loc[retailpricesdf["shop_id"] == id]
