@@ -35,6 +35,7 @@ import pandas as pd
 import numpy as np
 from base64 import b64encode
 from mimetypes import guess_type
+from silk.profiling.profiler import silk_profile
 
 # Pass a custom attribute, time in seconds of last modifications, in case we need to make sure this file gets updated correctly
 # import os, sys
@@ -324,7 +325,7 @@ class AllProducts(TemplateView):
             data_exists = False
 
         if data_exists:
-            categories = Category.objects.all()
+            categories = Category.objects.all().order_by("name")
 
             active_products = (
                 pd.DataFrame()
@@ -433,11 +434,11 @@ class AllProducts(TemplateView):
                 )
             )
 
-            # for retailprice in retail_prices:
-            #     im = get_thumbnail(retailprice.product.image, table_image_size)
-            #     retailprice.product_image = im.url
-
-            shops = retail_prices.values("shop_name", "shop_id").distinct("shop_id")
+            shops = (
+                retail_prices.order_by("shop_name")
+                .distinct("shop_name")
+                .values("shop_name", "shop_id")
+            )
 
             latest_timestamp = grouped_retailprices.sort_values(
                 by="timestamp", ascending=False
@@ -579,67 +580,117 @@ def all_products_table_filter(request):
             ],
         )
 
-        retailpricesdf["product_image"] = retailpricesdf.apply(
-            lambda x: {
-                "image": get_thumbnail(x["product_image"], table_image_size),
-                "product_link": reverse(
-                    "product_info",
-                    kwargs={"pk": x["product_id"]},
-                ),
-                "model": x["product_model"],
-                "aria_src": datalize(
-                    get_thumbnail(x["product_image"], table_image_size).url
-                ),
-            },
-            axis=1,
-        )
+        unique_prod_ids = retailpricesdf["product_id"].unique()
+        unique_manufacturer_ids = retailpricesdf["product_manufacturer_id"].unique()
+        unique_category_ids = retailpricesdf["product_category_id"].unique()
+        unique_shop_ids = retailpricesdf["shop_id"].unique()
+        unique_dict_img = {}
+        unique_dict_model = {}
+        unique_dict_manufacturer = {}
+        unique_dict_category = {}
+        unique_dict_shop = {}
 
-        retailpricesdf["official_reseller"] = retailpricesdf.apply(
-            lambda x: "Ναι" if x["official_reseller"] else "Όχι", axis=1
-        )
-
-        retailpricesdf["key_account"] = retailpricesdf.apply(
-            lambda x: "Ναι" if x["key_account"] else "Όχι", axis=1
-        )
-
-        cols_to_links = {
-            "model": {
-                "col_name": "product_model",
-                "new_col": "model_link",
-                "url": "product_info",
-                "id": "product_id",
-            },
-            "manufacturer": {
-                "col_name": "product_manufacturer",
-                "new_col": "manufacturer_link",
-                "url": "manufacturer_info",
-                "id": "product_manufacturer_id",
-            },
-            "category": {
-                "col_name": "product_category",
-                "new_col": "category_link",
-                "url": "category_info",
-                "id": "product_category_id",
-            },
-            "shop": {
-                "col_name": "shop_name",
-                "new_col": "shop_link",
-                "url": "shop_info",
-                "id": "shop_id",
-            },
-        }
-
-        for key, value in cols_to_links.items():
-            retailpricesdf[value["new_col"]] = retailpricesdf.apply(
-                lambda x: {
-                    "name": x[value["col_name"]],
-                    "link": reverse(
-                        value["url"],
-                        kwargs={"pk": x[value["id"]]},
-                    ),
-                },
-                axis=1,
+        for id in unique_prod_ids:
+            mask = retailpricesdf["product_id"] == id
+            img = (
+                retailpricesdf["product_image"]
+                .loc[retailpricesdf["product_id"] == id]
+                .values[:1][0]
             )
+            thumb = get_thumbnail(img, table_image_size).url
+            datalized = datalize(thumb)
+            model = (
+                retailpricesdf["product_model"]
+                .loc[retailpricesdf["product_id"] == id]
+                .values[:1][0]
+            )
+            link = reverse(
+                "product_info",
+                kwargs={"pk": id},
+            )
+
+            unique_dict_img[img] = {
+                "image": thumb,
+                "product_link": link,
+                "model": model,
+                "aria_src": datalized,
+            }
+            unique_dict_model[id] = {
+                "name": model,
+                "link": link,
+            }
+
+        for id in unique_manufacturer_ids:
+            mask = retailpricesdf["product_manufacturer_id"] == id
+            name = (
+                retailpricesdf["product_manufacturer"]
+                .loc[retailpricesdf["product_manufacturer_id"] == id]
+                .values[:1][0]
+            )
+            link = reverse(
+                "manufacturer_info",
+                kwargs={"pk": id},
+            )
+            unique_dict_manufacturer[id] = {
+                "name": name,
+                "link": link,
+            }
+
+        for id in unique_category_ids:
+            mask = retailpricesdf["product_category_id"] == id
+            name = (
+                retailpricesdf["product_category"]
+                .loc[retailpricesdf["product_category_id"] == id]
+                .values[:1][0]
+            )
+            link = reverse(
+                "category_info",
+                kwargs={"pk": id},
+            )
+            unique_dict_category[id] = {
+                "name": name,
+                "link": link,
+            }
+
+        for id in unique_shop_ids:
+            mask = retailpricesdf["shop_id"] == id
+            name = (
+                retailpricesdf["shop_name"]
+                .loc[retailpricesdf["shop_id"] == id]
+                .values[:1][0]
+            )
+            link = reverse(
+                "shop_info",
+                kwargs={"pk": id},
+            )
+            unique_dict_shop[id] = {
+                "name": name,
+                "link": link,
+            }
+
+        retailpricesdf["product_image"] = retailpricesdf["product_image"].map(
+            unique_dict_img
+        )
+        retailpricesdf["model_link"] = retailpricesdf["product_id"].map(
+            unique_dict_model
+        )
+        retailpricesdf["manufacturer_link"] = retailpricesdf[
+            "product_manufacturer_id"
+        ].map(unique_dict_manufacturer)
+
+        retailpricesdf["category_link"] = retailpricesdf["product_category_id"].map(
+            unique_dict_category
+        )
+
+        retailpricesdf["shop_link"] = retailpricesdf["shop_id"].map(unique_dict_shop)
+
+        retailpricesdf["official_reseller"] = np.where(
+            retailpricesdf["official_reseller"] == True, "Ναι", "Όχι"
+        )
+
+        retailpricesdf["key_account"] = np.where(
+            retailpricesdf["key_account"] == True, "Ναι", "Όχι"
+        )
 
         if date_range:
             grouped_retailprices = retailpricesdf.groupby(
@@ -652,23 +703,25 @@ def all_products_table_filter(request):
                 ].idxmax()
             ].reset_index(drop=True)
 
-        grouped_retailprices["comparison"] = grouped_retailprices.apply(
-            lambda x: "below"
-            if float(x["price"]) < float(x["curr_target_price"])
-            else "equal"
-            if float(x["price"]) == float(x["curr_target_price"])
-            else "above",
-            axis=1,
+        conditions = [
+            grouped_retailprices["price"] < grouped_retailprices["curr_target_price"],
+            grouped_retailprices["price"] == grouped_retailprices["curr_target_price"],
+            grouped_retailprices["price"] > grouped_retailprices["curr_target_price"],
+        ]
+        choices = ["below", "equal", "above"]
+
+        grouped_retailprices["comparison"] = np.select(
+            conditions, choices, default=np.nan
         )
 
-        grouped_retailprices["diff"] = grouped_retailprices.apply(
-            lambda x: f'{x["price"] - x["curr_target_price"]:.2}', axis=1
+        grouped_retailprices["diff"] = (
+            grouped_retailprices["price"] - grouped_retailprices["curr_target_price"]
         )
 
-        grouped_retailprices["diff%"] = grouped_retailprices.apply(
-            lambda x: f'{((x["price"] - x["curr_target_price"]) / x["price"]):.2%}',
-            axis=1,
-        )
+        grouped_retailprices["diff%"] = (
+            (grouped_retailprices["price"] - grouped_retailprices["curr_target_price"])
+            / grouped_retailprices["price"]
+        ).map("{:,.2%}".format)
 
         grouped_retailprices = grouped_retailprices.loc[
             grouped_retailprices.groupby(["product_id", "shop_id"])[
@@ -680,8 +733,8 @@ def all_products_table_filter(request):
             grouped_retailprices["comparison"] == "below"
         ].tolist()
 
-        grouped_retailprices["timestamp"] = grouped_retailprices.apply(
-            lambda x: f'{x["timestamp"]:%d/%m/%Y, %H:%M}', axis=1
+        grouped_retailprices["timestamp"] = grouped_retailprices["timestamp"].map(
+            "{:%d/%m/%Y, %H:%M}".format
         )
 
         grouped_retailprices["seller"].fillna("-", inplace=True)

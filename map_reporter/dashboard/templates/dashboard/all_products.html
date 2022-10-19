@@ -978,7 +978,7 @@ config = {
                 for(var i=0; i < config.columns.length; i++){
                     if(config.columns[i].title == "Φωτογραφία" ){
                         config.columns[i].render = function(data, type, row){
-                            return `<a href="${data.product_link}"><img src="${data.image.url}" aria-src="${data.aria_src}"" alt="${data.model}" loading="lazy" class="product_image" /></a>`;
+                            return `<a href="${data.product_link}"><img src="${data.image}" aria-src="${data.aria_src}"" alt="${data.model}" loading="lazy" class="product_image" /></a>`;
                         }
                     } else if(link_cols.includes(config.columns[i].title) ){
                         config.columns[i].render = function(data, type, row){
