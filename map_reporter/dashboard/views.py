@@ -111,8 +111,14 @@ class Index(TemplateView):
                 source__in=sources,
                 product__in=products,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             ).select_related()
         else:
@@ -121,8 +127,14 @@ class Index(TemplateView):
                 source__in=sources,
                 product__in=products,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             ).select_related()
 
@@ -300,8 +312,14 @@ class AllProducts(TemplateView):
                 product__in=products,
                 shop__seller=user,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             )
         else:
@@ -309,8 +327,14 @@ class AllProducts(TemplateView):
                 RetailPrice.objects.filter(
                     product__in=products,
                     timestamp__range=(
-                        datetime.datetime.now() - datetime.timedelta(days=14),
-                        datetime.datetime.now(),
+                        make_aware(
+                            datetime.datetime.now() - datetime.timedelta(days=14),
+                            timezone=datetime.timezone.utc,
+                        ),
+                        make_aware(
+                            datetime.datetime.now(),
+                            timezone=datetime.timezone.utc,
+                        ),
                     ),
                 )
                 .prefetch_related("shop")
@@ -460,17 +484,20 @@ def all_products_table_filter(request):
             )
             naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y, %H:%M")
 
-            query_date_from = make_aware(naive_query_date_from).replace(
-                second=59, microsecond=999999
-            )
-            query_date_to = make_aware(naive_query_date_to).replace(
-                second=59, microsecond=999999
-            )
+            query_date_from = make_aware(
+                naive_query_date_from, timezone=datetime.timezone.utc
+            ).replace(second=59, microsecond=999999)
+            query_date_to = make_aware(
+                naive_query_date_to, timezone=datetime.timezone.utc
+            ).replace(second=59, microsecond=999999)
         else:
             query_date_from = make_aware(
-                datetime.datetime.now() - datetime.timedelta(days=14)
+                datetime.datetime.now() - datetime.timedelta(days=14),
+                timezone=datetime.timezone.utc,
             )
-            query_date_to = make_aware(datetime.datetime.now())
+            query_date_to = make_aware(
+                datetime.datetime.now(), timezone=datetime.timezone.utc
+            )
 
         retail_prices = (
             RetailPrice.objects.filter(
@@ -755,8 +782,14 @@ class ShopsPage(TemplateView):
             shop__in=shops,
             product__in=products,
             timestamp__range=(
-                datetime.datetime.now() - datetime.timedelta(days=14),
-                datetime.datetime.now(),
+                make_aware(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    timezone=datetime.timezone.utc,
+                ),
+                make_aware(
+                    datetime.datetime.now(),
+                    timezone=datetime.timezone.utc,
+                ),
             ),
         ).select_related()
 
@@ -870,8 +903,14 @@ class ShopInfo(TemplateView):
             shop=kwargs["pk"],
             product__active=True,
             timestamp__range=(
-                datetime.datetime.now() - datetime.timedelta(days=14),
-                datetime.datetime.now(),
+                make_aware(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    timezone=datetime.timezone.utc,
+                ),
+                make_aware(
+                    datetime.datetime.now(),
+                    timezone=datetime.timezone.utc,
+                ),
             ),
         )
 
@@ -1009,15 +1048,27 @@ class CategoriesPage(TemplateView):
             retail_prices = RetailPrice.objects.filter(
                 shop__seller=user,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             )
         else:
             retail_prices = RetailPrice.objects.filter(
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 )
             )
 
@@ -1179,16 +1230,22 @@ class CategoryInfo(TemplateView):
                 shop__seller=user,
                 product__in=product_ids,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(datetime.datetime.now(), timezone=datetime.timezone.utc),
                 ),
             )
         else:
             retailprices = RetailPrice.objects.filter(
                 product__in=product_ids,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(datetime.datetime.now(), timezone=datetime.timezone.utc),
                 ),
             )
         data_exists = False
@@ -1341,15 +1398,27 @@ class ManufacturersPage(TemplateView):
             retail_prices = RetailPrice.objects.filter(
                 shop__seller=user,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             )
         else:
             retail_prices = RetailPrice.objects.filter(
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 )
             )
 
@@ -1511,16 +1580,28 @@ class ManufacturerInfo(TemplateView):
                 product__in=active_products,
                 shop__seller=user,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             )
         else:
             retailprices = RetailPrice.objects.filter(
                 product__in=active_products,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             )
 
@@ -1694,8 +1775,14 @@ class ShopProductInfo(TemplateView):
             product=kwargs["pk_product"],
             shop=shop,
             timestamp__range=(
-                datetime.datetime.now() - datetime.timedelta(days=14),
-                datetime.datetime.now(),
+                make_aware(
+                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    timezone=datetime.timezone.utc,
+                ),
+                make_aware(
+                    datetime.datetime.now(),
+                    timezone=datetime.timezone.utc,
+                ),
             ),
         )
 
@@ -1864,16 +1951,28 @@ class ProductInfo(TemplateView):
                 shop__seller=user,
                 product=product,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             )
         else:
             retailprices = RetailPrice.objects.filter(
                 product=product,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
+                    make_aware(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        timezone=datetime.timezone.utc,
+                    ),
+                    make_aware(
+                        datetime.datetime.now(),
+                        timezone=datetime.timezone.utc,
+                    ),
                 ),
             )
 
@@ -2174,10 +2273,12 @@ def update_date(request, product_id):
         naive_query_date_from = datetime.datetime.strptime(date_from, "%d/%m/%Y, %H:%M")
         naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y, %H:%M")
 
-        query_date_from = make_aware(naive_query_date_from)
-        query_date_to = make_aware(naive_query_date_to).replace(
-            second=59, microsecond=999999
+        query_date_from = make_aware(
+            naive_query_date_from, timezone=datetime.timezone.utc
         )
+        query_date_to = make_aware(
+            naive_query_date_to, timezone=datetime.timezone.utc
+        ).replace(second=59, microsecond=999999)
         # .replace(
         #     hour=23, minute=59, second=59, microsecond=999999
         # )
@@ -2492,15 +2593,20 @@ def key_accounts_custom_report(request):
             )
             naive_query_date_to = datetime.datetime.strptime(date_to, "%d/%m/%Y, %H:%M")
 
-            query_date_from = make_aware(naive_query_date_from)
-            query_date_to = make_aware(naive_query_date_to).replace(
-                second=59, microsecond=999999
+            query_date_from = make_aware(
+                naive_query_date_from, timezone=datetime.timezone.utc
             )
+            query_date_to = make_aware(
+                naive_query_date_to, timezone=datetime.timezone.utc
+            ).replace(second=59, microsecond=999999)
         else:
             query_date_from = make_aware(
-                datetime.datetime.now() - datetime.timedelta(days=14)
+                datetime.datetime.now() - datetime.timedelta(days=14),
+                timezone=datetime.timezone.utc,
             )
-            query_date_to = make_aware(datetime.datetime.now())
+            query_date_to = make_aware(
+                datetime.datetime.now(), timezone=datetime.timezone.utc
+            )
 
         table_image_size = "80x80"
 
