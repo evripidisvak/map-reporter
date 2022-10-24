@@ -1,10 +1,5 @@
+from bootstrap_daterangepicker import fields, widgets
 from django import forms
-from django.core.mail import send_mail
-from django.core.mail import EmailMessage
-from bootstrap_daterangepicker import widgets, fields
-from datetime import date, datetime, timedelta
-from collections import OrderedDict
-from dateutil import relativedelta
 
 
 class DatePicker(forms.Form):

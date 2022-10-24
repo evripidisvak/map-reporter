@@ -1,21 +1,20 @@
-from distutils.command.clean import clean
-from enum import unique
-import re
-from typing import List
-from django.db import models
+import os
+import sys
+import urllib
 from decimal import Decimal
-from django.forms import ValidationError
-from django.utils import timezone
-from mptt.models import MPTTModel, TreeForeignKey
-from django.core.validators import RegexValidator
-from django.utils.safestring import mark_safe
-import os, urllib, sys
-from urllib.parse import urlparse
-from urllib.request import urlretrieve
 from io import BytesIO
-from PIL import Image
+from typing import List
+from urllib.parse import urlparse
+
+from django.contrib.auth.models import User
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.contrib.auth.models import User, Group
+from django.core.validators import RegexValidator
+from django.db import models
+from django.utils import timezone
+from django.utils.safestring import mark_safe
+from mptt.models import MPTTModel, TreeForeignKey
+from PIL import Image
+
 from . import wc_api
 
 
