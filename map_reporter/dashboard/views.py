@@ -663,16 +663,13 @@ def all_products_table_filter(request):
             / grouped_retailprices["price"]
         ).map("{:,.2%}".format)
 
-        grouped_retailprices = grouped_retailprices.loc[
-            grouped_retailprices.groupby(["product_id", "shop_id"])[
-                "timestamp"
-            ].idxmax()
-        ].reset_index(drop=True)
-
         rows_below = grouped_retailprices.index[
             grouped_retailprices["comparison"] == "below"
         ].tolist()
 
+        grouped_retailprices["timestamp"] = grouped_retailprices[
+            "timestamp"
+        ].dt.tz_convert(settings.TIME_ZONE)
         grouped_retailprices["timestamp"] = grouped_retailprices["timestamp"].map(
             "{:%d/%m/%Y, %H:%M}".format
         )
