@@ -1,9 +1,9 @@
 import concurrent.futures
 import logging.handlers
-import os, subprocess
+import os
 import random
 import smtplib
-import sys
+import subprocess
 import time
 import traceback
 from datetime import datetime
@@ -17,7 +17,7 @@ from itertools import product, zip_longest
 import pandas as pd
 import psutil
 from bs4 import BeautifulSoup
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 # from Proxy_List_Scrapper import Scrapper

@@ -1,20 +1,19 @@
-from django.contrib import admin
-from django.db import models
-from django.contrib import messages
-from django.utils.translation import ngettext
-from mptt.admin import MPTTModelAdmin, DraggableMPTTAdmin, TreeRelatedFieldListFilter
+from django.contrib import admin, messages
 from django.contrib.admin.widgets import AdminFileWidget
+from django.db import models
 from django.utils.safestring import mark_safe
+from django.utils.translation import ngettext
+from mptt.admin import DraggableMPTTAdmin, TreeRelatedFieldListFilter
+
 from .models import (
-    Manufacturer,
     Category,
-    Product,
     Manufacturer,
-    Source,
-    Page,
-    Shop,
-    RetailPrice,
     MapPrice,
+    Page,
+    Product,
+    RetailPrice,
+    Shop,
+    Source,
 )
 
 
