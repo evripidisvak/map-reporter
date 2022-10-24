@@ -2652,6 +2652,10 @@ def key_accounts_custom_report(request):
 
         grouped_retailprices["timestamp"] = grouped_retailprices[
             "timestamp"
+        ].dt.tz_convert(settings.TIME_ZONE)
+
+        grouped_retailprices["timestamp"] = grouped_retailprices[
+            "timestamp"
         ].dt.strftime("%d/%m/%Y, %H:%M")
 
         grouped_retailprices.fillna("-", inplace=True)
