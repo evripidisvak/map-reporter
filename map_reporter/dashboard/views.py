@@ -140,24 +140,22 @@ class Index(TemplateView):
                 ],
             )
 
-            grouped_retailprices = retailpricesdf.loc[
-                retailpricesdf.groupby(["source_id", "product_id"])[
-                    "timestamp"
-                ].idxmax()
-            ].reset_index(drop=True)
-
             grouped_retailprices_by_shop = retailpricesdf.loc[
                 retailpricesdf.groupby(["shop_id", "product_id"])["timestamp"].idxmax()
             ].reset_index(drop=True)
-            grouped_retailprices_by_shop[
-                "comparison"
-            ] = grouped_retailprices_by_shop.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
+
+            conditions = [
+                grouped_retailprices_by_shop["price"]
+                < grouped_retailprices_by_shop["curr_target_price"],
+                grouped_retailprices_by_shop["price"]
+                == grouped_retailprices_by_shop["curr_target_price"],
+                grouped_retailprices_by_shop["price"]
+                > grouped_retailprices_by_shop["curr_target_price"],
+            ]
+            choices = ["below", "equal", "above"]
+
+            grouped_retailprices_by_shop["comparison"] = np.select(
+                conditions, choices, default=np.nan
             )
 
             for shop in shops:
@@ -192,14 +190,14 @@ class Index(TemplateView):
             )
             grouped.drop_duplicates(subset=["product_id"], inplace=True)
 
-            grouped["comparison"] = grouped.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
-            )
+            conditions = [
+                grouped["price"] < grouped["curr_target_price"],
+                grouped["price"] == grouped["curr_target_price"],
+                grouped["price"] > grouped["curr_target_price"],
+            ]
+            choices = ["below", "equal", "above"]
+
+            grouped["comparison"] = np.select(conditions, choices, default=np.nan)
             products_below = grouped["comparison"].tolist().count("below")
             products_equal = grouped["comparison"].tolist().count("equal")
             products_above = grouped["comparison"].tolist().count("above")
@@ -783,14 +781,17 @@ class ShopsPage(TemplateView):
                     groupedretailprices["shop_id"] == shop.id
                 ].copy()
                 if not shop_records.empty:
-                    shop_records["comparison"] = shop_records.apply(
-                        lambda x: "below"
-                        if x["price"] < x["curr_target_price"]
-                        else "equal"
-                        if x["price"] == x["curr_target_price"]
-                        else "above",
-                        axis=1,
+                    conditions = [
+                        shop_records["price"] < shop_records["curr_target_price"],
+                        shop_records["price"] == shop_records["curr_target_price"],
+                        shop_records["price"] > shop_records["curr_target_price"],
+                    ]
+                    choices = ["below", "equal", "above"]
+
+                    shop_records["comparison"] = np.select(
+                        conditions, choices, default=np.nan
                     )
+
                     this_shop_below = shop_records["comparison"].tolist().count("below")
                     this_shop_equal = shop_records["comparison"].tolist().count("equal")
                     this_shop_above = shop_records["comparison"].tolist().count("above")
@@ -933,14 +934,17 @@ class ShopInfo(TemplateView):
                 )
                 retailpricesdf.drop_duplicates(subset=["product_id"], inplace=True)
 
-                retailpricesdf["comparison"] = retailpricesdf.apply(
-                    lambda x: "below"
-                    if x["price"] < x["curr_target_price"]
-                    else "equal"
-                    if x["price"] == x["curr_target_price"]
-                    else "above",
-                    axis=1,
+                conditions = [
+                    retailpricesdf["price"] < retailpricesdf["curr_target_price"],
+                    retailpricesdf["price"] == retailpricesdf["curr_target_price"],
+                    retailpricesdf["price"] > retailpricesdf["curr_target_price"],
+                ]
+                choices = ["below", "equal", "above"]
+
+                retailpricesdf["comparison"] = np.select(
+                    conditions, choices, default=np.nan
                 )
+
                 products_below = retailpricesdf["comparison"].tolist().count("below")
                 products_equal = retailpricesdf["comparison"].tolist().count("equal")
                 products_above = retailpricesdf["comparison"].tolist().count("above")
@@ -1045,10 +1049,14 @@ class CategoriesPage(TemplateView):
                 by=["product_id", "price"], inplace=True, ascending=True
             )
             grouped.drop_duplicates(subset=["product_id"], inplace=True)
-            grouped["comparison"] = grouped.apply(
-                lambda x: "below" if x["price"] < x["curr_target_price"] else "ok",
-                axis=1,
-            )
+
+            conditions = [
+                grouped["price"] < grouped["curr_target_price"],
+                grouped["price"] >= grouped["curr_target_price"],
+            ]
+            choices = ["below", "ok"]
+
+            grouped["comparison"] = np.select(conditions, choices, default=np.nan)
 
             latest_timestamp = grouped.sort_values(by="timestamp", ascending=False)[
                 "timestamp"
@@ -1210,16 +1218,18 @@ class CategoryInfo(TemplateView):
                 .reset_index(drop=True)
                 .copy()
             )
+            conditions = [
+                latest_retailprices_for_products["price"]
+                < latest_retailprices_for_products["curr_target_price"],
+                latest_retailprices_for_products["price"]
+                == latest_retailprices_for_products["curr_target_price"],
+                latest_retailprices_for_products["price"]
+                > latest_retailprices_for_products["curr_target_price"],
+            ]
+            choices = ["below", "equal", "above"]
 
-            latest_retailprices_for_products[
-                "comparison"
-            ] = latest_retailprices_for_products.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
+            latest_retailprices_for_products["comparison"] = np.select(
+                conditions, choices, default=np.nan
             )
 
             for product in products:
@@ -1348,10 +1358,6 @@ class ManufacturersPage(TemplateView):
             data_exists = False
 
         if data_exists:
-            manufacturers_df = pd.DataFrame.from_records(
-                manufacturers.values_list(), columns=["id", "name"]
-            )
-
             products_df = pd.DataFrame().from_records(
                 products.values_list("id", "manufacturer"),
                 columns=["product_id", "manufacturer"],
@@ -1393,12 +1399,16 @@ class ManufacturersPage(TemplateView):
                     retail_prices_w_man["manufacturer"] == manufacturer.id
                 ].copy()
                 if not final_prices.empty:
-                    final_prices["comparison"] = final_prices.apply(
-                        lambda x: "below"
-                        if x["price"] < x["curr_target_price"]
-                        else "ok",
-                        axis=1,
+                    conditions = [
+                        final_prices["price"] < final_prices["curr_target_price"],
+                        final_prices["price"] >= final_prices["curr_target_price"],
+                    ]
+                    choices = ["below", "ok"]
+
+                    final_prices["comparison"] = np.select(
+                        conditions, choices, default=np.nan
                     )
+
                     products_below = final_prices["comparison"].tolist().count("below")
                     products_ok = product_count - products_below
                 manufacturer.seller_product_count = (
@@ -1562,13 +1572,16 @@ class ManufacturerInfo(TemplateView):
                 im = get_thumbnail(retailprice.product.image, table_image_size)
                 retailprice.product_image = im.url
 
-            latest_retailprices["comparison"] = latest_retailprices.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
+            conditions = [
+                latest_retailprices["price"] < latest_retailprices["curr_target_price"],
+                latest_retailprices["price"]
+                == latest_retailprices["curr_target_price"],
+                latest_retailprices["price"] > latest_retailprices["curr_target_price"],
+            ]
+            choices = ["below", "equal", "above"]
+
+            latest_retailprices["comparison"] = np.select(
+                conditions, choices, default=np.nan
             )
 
             latest_retailprices_for_comparison = latest_retailprices.sort_values(
@@ -1906,15 +1919,18 @@ class ProductInfo(TemplateView):
 
             shops_for_product = Shop.objects.filter(id__in=shop_ids)
 
-            latest_retail_prices
+            conditions = [
+                latest_retail_prices["price"]
+                < latest_retail_prices["curr_target_price"],
+                latest_retail_prices["price"]
+                == latest_retail_prices["curr_target_price"],
+                latest_retail_prices["price"]
+                > latest_retail_prices["curr_target_price"],
+            ]
+            choices = ["below", "equal", "above"]
 
-            latest_retail_prices["comparison"] = latest_retail_prices.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
+            latest_retail_prices["comparison"] = np.select(
+                conditions, choices, default=np.nan
             )
 
             prices_below = latest_retail_prices["comparison"].tolist().count("below")
@@ -2624,11 +2640,12 @@ def key_accounts_custom_report(request):
         index_table["min_price"] = (
             grouped_retailprices.iloc[:, title_cols:].min(axis=1).values.astype(float)
         )
-        index_table["result"] = index_table.apply(
-            lambda x: True
-            if float(x["min_price"]) < float(x["curr_target_price"])
-            else False,
-            axis=1,
+
+        index_table["result"] = np.where(
+            index_table.min_price.astype(float).round(decimals=2)
+            < index_table.curr_target_price.astype(float).round(decimals=2),
+            True,
+            False,
         )
 
         index_table_list = index_table.index[index_table["result"] == True].tolist()
