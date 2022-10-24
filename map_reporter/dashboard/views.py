@@ -1,40 +1,31 @@
-from array import array
-from ast import And
-from itertools import product
-from this import d
-from django.http import Http404, HttpResponseRedirect, HttpResponse
-from django.core.exceptions import PermissionDenied
-from django.core.mail import send_mail
-from django.core.mail import EmailMessage
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.shortcuts import render, get_object_or_404, get_list_or_404, redirect
-from django.views import View
-from django.views.generic.base import TemplateView
-from django.views.generic.edit import FormView
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth import login, authenticate, logout
+import datetime
+import json
+from base64 import b64encode
+from mimetypes import guess_type
+
+import numpy as np
+import pandas as pd
+from django.conf import settings
 from django.contrib import messages
-from django.views import generic
+from django.contrib.auth import logout
+from django.contrib.auth.views import *
+from django.core import serializers
+from django.core.exceptions import PermissionDenied
+from django.core.mail import EmailMessage
+from django.db.models import *
+from django.db.models import F, Q
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_list_or_404, get_object_or_404, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.timezone import make_aware
-from django.db.models import *
+from django.views.generic.base import TemplateView
+from django.views.generic.edit import FormView
 from reporter.models import *
-from .forms import *
-from django.http import JsonResponse
-import json
-import datetime
-from datetime import timedelta
-from django.core import serializers
-from django.contrib.auth.views import *
-from django.db.models import Q, F
-from dashboard.templatetags import dashboard_tags
 from sorl.thumbnail import get_thumbnail
-from django.conf import settings
-import pandas as pd
-import numpy as np
-from base64 import b64encode
-from mimetypes import guess_type
+from this import d
+
+from .forms import *
 
 # Pass a custom attribute, time in seconds of last modifications, in case we need to make sure this file gets updated correctly
 # import os, sys
@@ -1765,13 +1756,18 @@ class ShopProductInfo(TemplateView):
                 by="price", ascending=False
             )["price"].iloc[0]
 
-            min_retailprice_list["comparison"] = min_retailprice_list.apply(
-                lambda x: "below"
-                if x["price"] < x["curr_target_price"]
-                else "equal"
-                if x["price"] == x["curr_target_price"]
-                else "above",
-                axis=1,
+            conditions = [
+                min_retailprice_list["price"]
+                < min_retailprice_list["curr_target_price"],
+                min_retailprice_list["price"]
+                == min_retailprice_list["curr_target_price"],
+                min_retailprice_list["price"]
+                > min_retailprice_list["curr_target_price"],
+            ]
+            choices = ["below", "equal", "above"]
+
+            min_retailprice_list["comparison"] = np.select(
+                conditions, choices, default=np.nan
             )
 
             prices_below = min_retailprice_list["comparison"].tolist().count("below")
@@ -2499,8 +2495,6 @@ def key_accounts_custom_report(request):
             )
             query_date_to = make_aware(datetime.datetime.now())
 
-        table_image_size = "80x80"
-
         retail_prices = (
             RetailPrice.objects.filter(
                 shop__in=key_accounts,
@@ -2705,7 +2699,6 @@ class FeedbackFormView(FormView):
         return context
 
     def post(self, request, *args, **kwargs):
-        form_class = self.get_form_class()
         form = self.form_class(request.POST, request.FILES)
 
         if form.is_valid():
