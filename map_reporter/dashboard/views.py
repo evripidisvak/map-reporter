@@ -1846,24 +1846,21 @@ class ProductInfo(TemplateView):
         date_picker = TimeDatePicker
         context = super(ProductInfo, self).get_context_data(**kwargs)
         product = get_object_or_404(Product, id=kwargs["pk"])
-        urls = get_list_or_404(Page, product_id=kwargs["pk"])
+        urls = Page.objects.filter(product_id=kwargs["pk"])
 
         valid_urls = []
         invalid_urls = []
-        for url in urls:
-            if url.valid:
-                valid_urls.append(url)
-            else:
-                invalid_urls.append(url)
+        if urls:
+            for url in urls:
+                if url.valid:
+                    valid_urls.append(url)
+                else:
+                    invalid_urls.append(url)
 
         user = self.request.user
         seller_flag = is_seller(user)
 
-        sources = Source.objects.all()
         table_retailprices = RetailPrice.objects.none()
-        shops_below = 0
-        shops_equal = 0
-        shops_above = 0
 
         if seller_flag:
             retailprices = RetailPrice.objects.filter(
@@ -1878,7 +1875,7 @@ class ProductInfo(TemplateView):
             retailprices = RetailPrice.objects.filter(
                 product=product,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
+                    datetime.datetime.now() - datetime.timedelta(days=40),
                     datetime.datetime.now(),
                 ),
             )
