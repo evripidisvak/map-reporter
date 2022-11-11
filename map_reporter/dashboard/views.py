@@ -285,13 +285,17 @@ class AllProducts(TemplateView):
         shops_below = 0
 
         if seller_flag:
-            retailprices_obj = RetailPrice.objects.filter(
-                product__in=products,
-                shop__seller=user,
-                timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=14),
-                    datetime.datetime.now(),
-                ),
+            retailprices_obj = (
+                RetailPrice.objects.filter(
+                    product__in=products,
+                    shop__seller=user,
+                    timestamp__range=(
+                        datetime.datetime.now() - datetime.timedelta(days=14),
+                        datetime.datetime.now(),
+                    ),
+                )
+                .prefetch_related("shop")
+                .annotate(shop_name=F("shop__name"))
             )
         else:
             retailprices_obj = (
@@ -1875,7 +1879,7 @@ class ProductInfo(TemplateView):
             retailprices = RetailPrice.objects.filter(
                 product=product,
                 timestamp__range=(
-                    datetime.datetime.now() - datetime.timedelta(days=40),
+                    datetime.datetime.now() - datetime.timedelta(days=14),
                     datetime.datetime.now(),
                 ),
             )
