@@ -13,7 +13,6 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
 from itertools import product, zip_longest
-from numpy import source
 
 import pandas as pd
 import psutil
