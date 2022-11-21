@@ -125,7 +125,7 @@ def parse_urls(page_list_item):
             # print('+++ Proxy used: ', proxy)
             # print('+++ URL: ', url)
             options = Options()
-            # options.headless = True
+            options.headless = True
 
             path = (
                 subprocess.run(["which", "geckodriver"], capture_output=True)
