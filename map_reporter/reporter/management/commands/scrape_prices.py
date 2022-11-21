@@ -461,6 +461,21 @@ def parse_urls(page_list_item):
                 shop = ["Electronet"]
                 off_seller = ["1"]
 
+        # elif source_id == 3058:  # e-shop LOCAL
+        elif source_id == 10:  # e-shop LIVE
+            soup = BeautifulSoup(driver.page_source, "lxml")
+            pricear_old = soup.select("td.web-price-block span.web-price-value-old")
+            pricear = soup.select("td.web-price-block span.web-price-value-new")
+            if pricear:
+                price = pricear[0].text.strip().replace(",", ".").strip("€").rstrip()
+            if pricear_old:
+                price_old = pricear_old[0].text.strip().replace(",", ".").strip("€").rstrip()
+                orig_price = float(price_old)
+
+            if price is not None:
+                price = [price]
+                shop = ["e-shop"]
+                off_seller = ["1"]
         else:
             print("A scraper for this source does not exist")
             return True
