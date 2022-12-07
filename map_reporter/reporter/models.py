@@ -64,7 +64,7 @@ class Product(models.Model):
     sku = models.CharField(max_length=20)
     active = models.BooleanField(default=True)
     map_price = models.DecimalField(
-        max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
+        max_digits=7, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     )
     main_category = models.ForeignKey(
         Category,
@@ -224,7 +224,7 @@ class Page(models.Model):
 
 class MapPrice(models.Model):
     price = models.DecimalField(
-        max_digits=5, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
+        max_digits=7, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     )
     timestamp = models.DateTimeField()
     product = models.ForeignKey(
@@ -237,17 +237,17 @@ class MapPrice(models.Model):
 
 class RetailPrice(models.Model):
     price = models.DecimalField(
-        max_digits=6, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
+        max_digits=7, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     )
     original_price = models.DecimalField(
-        max_digits=6, decimal_places=2, default=Decimal("0.00"), null=True, blank=True
+        max_digits=7, decimal_places=2, default=Decimal("0.00"), null=True, blank=True
     )
     timestamp = models.DateTimeField()
     product = models.ForeignKey(Product, on_delete=models.CASCADE, default=None)
     shop = models.ForeignKey(Shop, on_delete=models.CASCADE, default=None)
     official_reseller = models.BooleanField(default=False)
     curr_target_price = models.DecimalField(
-        max_digits=6, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
+        max_digits=7, decimal_places=2, default=Decimal("0.00"), null=False, blank=False
     )
     source = models.ForeignKey(
         Source, on_delete=models.CASCADE, default=None, blank=False, null=False
