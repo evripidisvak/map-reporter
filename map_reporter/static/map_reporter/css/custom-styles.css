@@ -198,3 +198,7 @@ tr.bg-light.head-filters th {
 #key_account_custom_report_card {
     display: none;
 }
+
+#all_products_prices_card {
+    min-height: 1560px;
+}
